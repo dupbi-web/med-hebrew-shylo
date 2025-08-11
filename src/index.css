@@ -39,29 +39,20 @@ All colors MUST be HSL.
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
+    
     --sidebar-foreground: 240 5.3% 26.1%;
+    
     --sidebar-primary: 240 5.9% 10%;
+    
     --sidebar-primary-foreground: 0 0% 98%;
+    
     --sidebar-accent: 240 4.8% 95.9%;
+    
     --sidebar-accent-foreground: 240 5.9% 10%;
+    
     --sidebar-border: 220 13% 91%;
+    
     --sidebar-ring: 217.2 91.2% 59.8%;
-
-    /* Brand and enhancements */
-    --brand: 262 83% 56%;
-    --brand-foreground: 0 0% 100%;
-
-    /* Gradients (used via Tailwind backgroundImage keys) */
-    --gradient-hero: radial-gradient(1200px 800px at var(--pointer-x, 50%) var(--pointer-y, 20%), hsl(var(--brand) / 0.12), transparent 60%),
-      linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted) / 0.3));
-    --gradient-glow: radial-gradient(600px 400px at center, hsl(var(--brand) / 0.18), transparent 60%);
-
-    /* Shadows */
-    --shadow-elegant: 0 20px 40px -20px hsl(var(--brand) / 0.35);
-    --shadow-glow: 0 0 40px hsl(var(--brand) / 0.3);
-
-    /* Motion */
-    --transition-smooth: all 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .dark {
@@ -92,7 +83,6 @@ All colors MUST be HSL.
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
-
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -101,16 +91,6 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-
-    /* Brand + gradients in dark mode */
-    --brand: 262 83% 66%;
-    --brand-foreground: 0 0% 100%;
-    --gradient-hero: radial-gradient(1200px 800px at var(--pointer-x, 50%) var(--pointer-y, 20%), hsl(var(--brand) / 0.22), transparent 60%),
-      linear-gradient(180deg, hsl(var(--background)), hsl(222 50% 6%));
-    --gradient-glow: radial-gradient(600px 400px at center, hsl(var(--brand) / 0.35), transparent 60%);
-
-    --shadow-elegant: 0 30px 60px -25px hsl(var(--brand) / 0.45);
-    --shadow-glow: 0 0 60px hsl(var(--brand) / 0.5);
   }
 }
 

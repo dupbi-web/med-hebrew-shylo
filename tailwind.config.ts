@@ -91,15 +91,13 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out'
 			},
 			backgroundImage: {
-				'hero': 'var(--gradient-hero)',
-				'glow': 'var(--gradient-glow)'
+				'hero': 'linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted)))'
 			},
 			boxShadow: {
-				'elegant': 'var(--shadow-elegant)',
-				'glow': 'var(--shadow-glow)'
+				'elegant': '0 20px 40px -20px hsl(var(--ring) / 0.15)'
 			}
 		}
 	}
-	},
+	,
 	plugins: [require("tailwindcss-animate")],
 } satisfies Config;

@@ -89,8 +89,17 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
+			},
+			backgroundImage: {
+				'hero': 'var(--gradient-hero)',
+				'glow': 'var(--gradient-glow)'
+			},
+			boxShadow: {
+				'elegant': 'var(--shadow-elegant)',
+				'glow': 'var(--shadow-glow)'
 			}
 		}
+	}
 	},
 	plugins: [require("tailwindcss-animate")],
 } satisfies Config;

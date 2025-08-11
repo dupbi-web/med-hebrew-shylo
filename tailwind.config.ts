@@ -97,7 +97,6 @@ export default {
 				'elegant': '0 20px 40px -20px hsl(var(--ring) / 0.15)'
 			}
 		}
-	}
-	,
+	},
 	plugins: [require("tailwindcss-animate")],
 } satisfies Config;

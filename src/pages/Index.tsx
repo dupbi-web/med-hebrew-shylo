@@ -3,15 +3,41 @@ import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import Flashcard from "@/components/Flashcard";
 import { sampleWords, type Word } from "@/data/medical-words";
+import { toast } from "@/hooks/use-toast";
+
+const ADMIN_PASSWORD = "medadmin";
+
+function shuffleCopy<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 const Index = () => {
-  const [words, setWords] = useState<Word[]>(sampleWords);
+  const [words, setWords] = useState<Word[]>(() => {
+    try {
+      const saved = localStorage.getItem("medical-words");
+      const parsed = saved ? (JSON.parse(saved) as Word[]) : sampleWords;
+      const valid = Array.isArray(parsed) && parsed.every((w) => typeof w.en === "string" && typeof w.he === "string");
+      return shuffleCopy(valid ? parsed : sampleWords);
+    } catch {
+      return shuffleCopy(sampleWords);
+    }
+  });
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [reviewed, setReviewed] = useState(0);
   const [importText, setImportText] = useState("");
+  const [isAuthed, setIsAuthed] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [englishTerm, setEnglishTerm] = useState("");
+  const [hebrewTerm, setHebrewTerm] = useState("");
 
   const current = words[index];
 
@@ -51,21 +77,57 @@ const Index = () => {
     setFlipped(false);
   };
 
+  const saveWords = (arr: Word[]) => {
+    localStorage.setItem("medical-words", JSON.stringify(arr));
+  };
+
   const total = words.length;
 
   const handleImport = () => {
     try {
       const parsed = JSON.parse(importText) as Word[];
       if (!Array.isArray(parsed) || !parsed.every((w) => typeof w.en === "string" && typeof w.he === "string")) {
-        alert("Invalid JSON format. Expect an array of { en, he }.");
+        toast({ title: "Invalid JSON", description: "Expect an array of { en, he }." });
         return;
       }
       setWords(parsed);
+      saveWords(parsed);
       setIndex(0);
       setFlipped(false);
+      toast({ title: "Imported", description: `Loaded ${parsed.length} words.` });
     } catch (e) {
-      alert("Could not parse JSON. Please check your data.");
+      toast({ title: "Parse error", description: "Could not parse JSON. Please check your data." });
     }
+  };
+
+  const handleAuth = () => {
+    if (adminPassword === ADMIN_PASSWORD) {
+      setIsAuthed(true);
+      setAdminPassword("");
+      toast({ title: "Admin unlocked" });
+    } else {
+      toast({ title: "Wrong password", description: "Please try again." });
+    }
+  };
+
+  const handleAddWord = () => {
+    const en = englishTerm.trim();
+    const he = hebrewTerm.trim();
+    if (!en || !he) {
+      toast({ title: "Missing fields", description: "Both English and Hebrew are required." });
+      return;
+    }
+    const hebrewRegex = /[\u0590-\u05FF]/;
+    if (!hebrewRegex.test(he)) {
+      toast({ title: "Hebrew validation", description: "Please use Hebrew characters." });
+      return;
+    }
+    const updated = [...words, { en, he }];
+    setWords(updated);
+    saveWords(updated);
+    setEnglishTerm("");
+    setHebrewTerm("");
+    toast({ title: "Word added", description: "The term has been added to your deck." });
   };
 
   // Signature gradient follows pointer
@@ -136,6 +198,55 @@ const Index = () => {
                   <Button variant="secondary" onClick={() => setImportText("")}>Clear</Button>
                   <Button onClick={handleImport}>Load</Button>
                 </div>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" aria-label="Admin panel">Admin</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Admin Panel</DialogTitle>
+                </DialogHeader>
+                {!isAuthed ? (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">Enter password to access admin tools.</p>
+                    <Input
+                      type="password"
+                      placeholder="Password"
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                    />
+                    <div className="flex justify-end">
+                      <Button onClick={handleAuth}>Continue</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid gap-2">
+                      <label className="text-sm">English Term</label>
+                      <Input
+                        value={englishTerm}
+                        onChange={(e) => setEnglishTerm(e.target.value)}
+                        placeholder="Antiseptic"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <label className="text-sm">Hebrew Term</label>
+                      <Input
+                        dir="rtl"
+                        value={hebrewTerm}
+                        onChange={(e) => setHebrewTerm(e.target.value)}
+                        placeholder="חיטוי"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="secondary" onClick={() => { setEnglishTerm(""); setHebrewTerm(""); }}>Clear</Button>
+                      <Button onClick={handleAddWord}>Add Word</Button>
+                    </div>
+                  </div>
+                )}
               </DialogContent>
             </Dialog>
           </div>

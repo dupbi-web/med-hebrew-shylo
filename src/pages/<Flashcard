@@ -8,7 +8,7 @@ import Flashcard from "@/components/Flashcard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
-type Word = { en: string; he: string };
+type Word = { en: string; he: string; rus: string };
 
 const ADMIN_PASSWORD = "medadmin";
 
@@ -32,20 +32,20 @@ const Index = () => {
   const [adminPassword, setAdminPassword] = useState("");
   const [englishTerm, setEnglishTerm] = useState("");
   const [hebrewTerm, setHebrewTerm] = useState("");
-
+const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
   const current = words[index];
 
   const fetchWords = async () => {
     const { data, error } = await supabase
       .from("medical_terms")
-      .select("en, he")
+      .select("en, he, rus")
       .order("created_at", { ascending: true });
     if (error) {
       toast({ title: "Failed to load words", description: error.message });
       setLoading(false);
       return;
     }
-    const mapped = (data ?? []).map((w) => ({ en: w.en, he: w.he })) as Word[];
+    const mapped = (data ?? []).map((w) => ({ en: w.en, he: w.he, rus: w.rus })) as Word[];
     setWords(shuffleCopy(mapped));
     setIndex(0);
     setFlipped(false);
@@ -184,12 +184,12 @@ const Index = () => {
           </div>
 
           {current ? (
-            <Flashcard
-              en={current.en}
-              he={current.he}
-              flipped={flipped}
-              onToggle={() => setFlipped((f) => !f)}
-            />
+              <Flashcard
+                en={targetLang === "en" ? current.en : current.rus}
+                he={current.he}
+                flipped={flipped}
+                onToggle={() => setFlipped((f) => !f)}
+              />
           ) : (
             <p className="text-center text-muted-foreground">{loading ? "Loading words..." : "No words yet. Add some in the Admin panel."}</p>
           )}

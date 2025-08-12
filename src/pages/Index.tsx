@@ -5,8 +5,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import Flashcard from "@/components/Flashcard";
-import { sampleWords, type Word } from "@/data/medical-words";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+
+type Word = { en: string; he: string };
 
 const ADMIN_PASSWORD = "medadmin";
 
@@ -20,16 +22,8 @@ function shuffleCopy<T>(arr: T[]): T[] {
 }
 
 const Index = () => {
-  const [words, setWords] = useState<Word[]>(() => {
-    try {
-      const saved = localStorage.getItem("medical-words");
-      const parsed = saved ? (JSON.parse(saved) as Word[]) : sampleWords;
-      const valid = Array.isArray(parsed) && parsed.every((w) => typeof w.en === "string" && typeof w.he === "string");
-      return shuffleCopy(valid ? parsed : sampleWords);
-    } catch {
-      return shuffleCopy(sampleWords);
-    }
-  });
+  const [words, setWords] = useState<Word[]>([]);
+  const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [reviewed, setReviewed] = useState(0);
@@ -40,6 +34,27 @@ const Index = () => {
   const [hebrewTerm, setHebrewTerm] = useState("");
 
   const current = words[index];
+
+  const fetchWords = async () => {
+    const { data, error } = await supabase
+      .from("medical_terms")
+      .select("en, he")
+      .order("created_at", { ascending: true });
+    if (error) {
+      toast({ title: "Failed to load words", description: error.message });
+      setLoading(false);
+      return;
+    }
+    const mapped = (data ?? []).map((w) => ({ en: w.en, he: w.he })) as Word[];
+    setWords(shuffleCopy(mapped));
+    setIndex(0);
+    setFlipped(false);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchWords();
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -77,23 +92,23 @@ const Index = () => {
     setFlipped(false);
   };
 
-  const saveWords = (arr: Word[]) => {
-    localStorage.setItem("medical-words", JSON.stringify(arr));
-  };
 
   const total = words.length;
 
-  const handleImport = () => {
+  const handleImport = async () => {
     try {
       const parsed = JSON.parse(importText) as Word[];
       if (!Array.isArray(parsed) || !parsed.every((w) => typeof w.en === "string" && typeof w.he === "string")) {
         toast({ title: "Invalid JSON", description: "Expect an array of { en, he }." });
         return;
       }
-      setWords(parsed);
-      saveWords(parsed);
-      setIndex(0);
-      setFlipped(false);
+      const { error } = await supabase.from("medical_terms").insert(parsed);
+      if (error) {
+        toast({ title: "Import failed", description: error.message });
+        return;
+      }
+      setImportText("");
+      await fetchWords();
       toast({ title: "Imported", description: `Loaded ${parsed.length} words.` });
     } catch (e) {
       toast({ title: "Parse error", description: "Could not parse JSON. Please check your data." });
@@ -110,7 +125,7 @@ const Index = () => {
     }
   };
 
-  const handleAddWord = () => {
+  const handleAddWord = async () => {
     const en = englishTerm.trim();
     const he = hebrewTerm.trim();
     if (!en || !he) {
@@ -122,11 +137,14 @@ const Index = () => {
       toast({ title: "Hebrew validation", description: "Please use Hebrew characters." });
       return;
     }
-    const updated = [...words, { en, he }];
-    setWords(updated);
-    saveWords(updated);
+    const { error } = await supabase.from("medical_terms").insert([{ en, he }]);
+    if (error) {
+      toast({ title: "Add failed", description: error.message });
+      return;
+    }
     setEnglishTerm("");
     setHebrewTerm("");
+    await fetchWords();
     toast({ title: "Word added", description: "The term has been added to your deck." });
   };
 
@@ -165,13 +183,15 @@ const Index = () => {
             <span>Reviewed {reviewed}</span>
           </div>
 
-          {current && (
+          {current ? (
             <Flashcard
               en={current.en}
               he={current.he}
               flipped={flipped}
               onToggle={() => setFlipped((f) => !f)}
             />
+          ) : (
+            <p className="text-center text-muted-foreground">{loading ? "Loading words..." : "No words yet. Add some in the Admin panel."}</p>
           )}
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -196,7 +216,7 @@ const Index = () => {
                 />
                 <div className="flex justify-end gap-2">
                   <Button variant="secondary" onClick={() => setImportText("")}>Clear</Button>
-                  <Button onClick={handleImport}>Load</Button>
+                  <Button onClick={handleImport}>Upload to Database</Button>
                 </div>
               </DialogContent>
             </Dialog>

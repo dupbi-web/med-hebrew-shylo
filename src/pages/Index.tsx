@@ -41,11 +41,11 @@ const Index = () => {
   const [russianTerm, setRussianTerm] = useState("");
   const [category, setCategory] = useState("");
   const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
-  const isDone = !current && words.length > 0;
   // *** Added selectedCategory state for filtering ***
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const current = words[index];
+  const isDone = !current && words.length > 0;
 
   // *** Modified fetchWords to accept category and filter ***
   const fetchWords = async (categoryFilter?: string | null) => {

@@ -40,12 +40,32 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
       .from("medical_terms_tripple")
       .select("en, he, rus")
       .order("created_at", { ascending: true });
+
     if (error) {
       toast({ title: "Failed to load words", description: error.message });
       setLoading(false);
       return;
     }
-    const mapped = (data ?? []).map((w) => ({ en: w.en, he: w.he, rus: (w as any).rus ?? "" })) as Word[];
+
+    // Fallback to old table if the new one is empty
+    let rows: any[] = data ?? [];
+    if (rows.length === 0) {
+      const { data: legacy, error: legacyError } = await supabase
+        .from("medical_terms")
+        .select("en, he")
+        .order("created_at", { ascending: true });
+      if (legacyError) {
+        toast({ title: "Failed to load words", description: legacyError.message });
+        setLoading(false);
+        return;
+      }
+      rows = legacy ?? [];
+      if ((rows?.length ?? 0) > 0) {
+        toast({ title: "Loaded legacy deck", description: "Using medical_terms until the new table has data." });
+      }
+    }
+
+    const mapped = (rows ?? []).map((w: any) => ({ en: w.en, he: w.he, rus: w.rus ?? "" })) as Word[];
     setWords(shuffleCopy(mapped));
     setIndex(0);
     setFlipped(false);

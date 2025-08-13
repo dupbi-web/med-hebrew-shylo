@@ -41,7 +41,7 @@ const Index = () => {
   const [russianTerm, setRussianTerm] = useState("");
   const [category, setCategory] = useState("");
   const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
-
+  const isDone = !current && words.length > 0;
   // *** Added selectedCategory state for filtering ***
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -109,7 +109,7 @@ const Index = () => {
   }, [words, index]);
 
   const next = () => {
-    setIndex((i) => (i + 1) % words.length);
+    setIndex((i) => i + 1); // Allow going past the last card
     setFlipped(false);
     setReviewed((r) => r + 1);
   };
@@ -118,6 +118,11 @@ const Index = () => {
     setIndex((i) => (i - 1 + words.length) % words.length);
     setFlipped(false);
     setReviewed((r) => r + 1);
+  };
+  const restart = () => {
+    setIndex(0);
+    setFlipped(false);
+    setReviewed(0);
   };
 
   const shuffle = () => {
@@ -260,16 +265,25 @@ const Index = () => {
             <span>Reviewed {reviewed}</span>
           </div>
 
-          {current ? (
-              <Flashcard
-                translation={targetLang === "en" ? current.en : current.rus}
-                targetLang={targetLang}
-                he={current.he}
-                flipped={flipped}
-                onToggle={() => setFlipped((f) => !f)}
-              />
+          {loading ? (
+            <p className="text-center text-muted-foreground">Loading words...</p>
+          ) : isDone ? (
+            <div className="text-center p-10 border rounded shadow-md bg-green-100 text-green-800 font-semibold text-2xl">
+              🎉 DONE! You’ve reached the end.
+              <div className="mt-4">
+                <Button onClick={restart}>Restart</Button>
+              </div>
+            </div>
+          ) : current ? (
+            <Flashcard
+              translation={targetLang === "en" ? current.en : current.rus}
+              targetLang={targetLang}
+              he={current.he}
+              flipped={flipped}
+              onToggle={() => setFlipped((f) => !f)}
+            />
           ) : (
-            <p className="text-center text-muted-foreground">{loading ? "Loading words..." : "No words yet."}</p>
+            <p className="text-center text-muted-foreground">No words yet.</p>
           )}
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">

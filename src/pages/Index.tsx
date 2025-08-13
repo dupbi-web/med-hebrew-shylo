@@ -242,6 +242,11 @@ const Index = () => {
       </Helmet>
       <main className="min-h-screen bg-hero">
         <section className="container py-12 md:py-16">
+          <div className="mt-8 flex justify-center">
+  <Link to="/quiz">
+    <Button variant="outline">Take Quiz</Button>
+  </Link>
+</div>
           <header className="text-center mb-8">
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Medical Hebrew Flashcards</h1>
             <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">English → Hebrew practice cards with a clean flip animation. Use arrow keys or buttons, press Space to flip, and shuffle anytime.</p>

@@ -8,7 +8,7 @@ import Flashcard from "@/components/Flashcard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
-type Word = { en: string; he: string; rus: string };
+type Word = { en: string; he: string; rus: string; category?: string | null };
 
 const ADMIN_PASSWORD = "medadmin";
 
@@ -20,6 +20,12 @@ function shuffleCopy<T>(arr: T[]): T[] {
   }
   return a;
 }
+
+// *** Added Category List ***
+const CATEGORIES = [
+  "Anatomy", "Symptom", "Treatment", "Procedure", "Facility", "Measurement", "Injury",
+  "Condition", "Pathogen", "Tool", "Equipment", "General", "Personnel", "Specialty"
+] as const;
 
 const Index = () => {
   const [words, setWords] = useState<Word[]>([]);
@@ -34,14 +40,24 @@ const Index = () => {
   const [hebrewTerm, setHebrewTerm] = useState("");
   const [russianTerm, setRussianTerm] = useState("");
   const [category, setCategory] = useState("");
-const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
+  const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
+
+  // *** Added selectedCategory state for filtering ***
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
   const current = words[index];
 
-  const fetchWords = async () => {
-    const { data, error } = await supabase
-      .from("medical_terms")
-      .select("en, he, rus")
-      .order("created_at", { ascending: true });
+  // *** Modified fetchWords to accept category and filter ***
+  const fetchWords = async (categoryFilter?: string | null) => {
+    setLoading(true);
+
+    let query = supabase.from("medical_terms").select("en, he, rus, category");
+
+    if (categoryFilter) {
+      query = query.eq("category", categoryFilter);
+    }
+
+    const { data, error } = await query.order("created_at", { ascending: true });
 
     if (error) {
       toast({ title: "Failed to load words", description: error.message });
@@ -67,16 +83,17 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
       }
     }
 
-    const mapped = (rows ?? []).map((w: any) => ({ en: w.en, he: w.he, rus: w.rus ?? "" })) as Word[];
+    const mapped = (rows ?? []).map((w: any) => ({ en: w.en, he: w.he, rus: w.rus ?? "", category: w.category ?? null })) as Word[];
     setWords(shuffleCopy(mapped));
     setIndex(0);
     setFlipped(false);
     setLoading(false);
   };
 
+  // *** Updated useEffect to refetch when selectedCategory changes ***
   useEffect(() => {
-    fetchWords();
-  }, []);
+    fetchWords(selectedCategory);
+  }, [selectedCategory]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -145,7 +162,7 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
         return;
       }
       setImportText("");
-      await fetchWords();
+      await fetchWords(selectedCategory);
       toast({ title: "Imported", description: `Added ${cleaned.length} words.` });
     } catch (e) {
       toast({ title: "Parse error", description: "Could not parse JSON. Please check your data." });
@@ -185,7 +202,7 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
     setHebrewTerm("");
     setRussianTerm("");
     setCategory("");
-    await fetchWords();
+    await fetchWords(selectedCategory);
     toast({ title: "Word added", description: "The term has been added to your deck." });
   };
 
@@ -218,6 +235,25 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
             <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">English → Hebrew practice cards with a clean flip animation. Use arrow keys or buttons, press Space to flip, and shuffle anytime.</p>
           </header>
 
+          {/* *** Added category filter dropdown *** */}
+          <div className="mb-6 flex flex-wrap justify-center gap-4">
+            <label className="flex items-center gap-2">
+              <span className="text-muted-foreground text-sm">Filter by Category:</span>
+              <select
+                value={selectedCategory ?? ""}
+                onChange={(e) => setSelectedCategory(e.target.value || null)}
+                className="border border-gray-300 rounded px-2 py-1 text-sm"
+              >
+                <option value="">All</option>
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
           <div className="mb-4 flex items-center justify-center gap-3 text-sm text-muted-foreground">
             <span>Card {index + 1} of {total}</span>
             <span aria-hidden>•</span>
@@ -243,8 +279,6 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
             <Button onClick={() => setFlipped((f) => !f)} aria-label="Flip card">{flipped ? "Hide" : "Show"} Answer</Button>
             <Button variant="secondary" onClick={next} aria-label="Next card">Next</Button>
             <Button onClick={shuffle} aria-label="Shuffle cards">Shuffle</Button>
-
-
           </div>
         </section>
       </main>

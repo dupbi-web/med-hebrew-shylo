@@ -41,7 +41,7 @@ const Index = () => {
   const [hebrewTerm, setHebrewTerm] = useState("");
   const [russianTerm, setRussianTerm] = useState("");
   const [category, setCategory] = useState("");
-  const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
+  const [targetLang, setTargetLang] = useState<"rus" | "en">("rus");
   // *** Added selectedCategory state for filtering ***
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 

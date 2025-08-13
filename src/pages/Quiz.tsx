@@ -3,7 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-
+import { Link } from "react-router-dom";
 type Word = { en: string; he: string; rus: string; category?: string | null };
 type Lang = "en" | "rus";
 
@@ -182,6 +182,12 @@ const Quiz = () => {
           ) : (
             <p className="text-center text-muted-foreground">Loading quiz...</p>
           )}
+          <div className="mt-8 flex justify-center">
+            <Link to="/">
+              <Button variant="outline">Home</Button>
+            </Link>
+          </div>
+
         </section>
       </main>
     </>

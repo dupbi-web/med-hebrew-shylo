@@ -295,7 +295,7 @@ const Index = () => {
           <div className="mt-8 flex justify-center gap-4">
             <Link to="/quiz"><Button variant="outline">Take Quiz</Button></Link>
             <Link to="/practice"><Button variant="outline">Practice</Button></Link>
-            <Link to="/TypingGame"><Button variant="outline">Practice</Button></Link>
+            <Link to="/TypingGame"><Button variant="outline">Typing Game</Button></Link>
           </div>
         </section>
       </main>

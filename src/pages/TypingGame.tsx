@@ -88,7 +88,7 @@ const TypingGame = () => {
         </div>
         </section>
         <div className="mt-8 flex justify-center gap-4">
-            <Link to="/home">
+            <Link to="/index">
             <Button variant="outline">Home</Button>
           </Link>
           <Link to="/quiz">

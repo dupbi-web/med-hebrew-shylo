@@ -39,7 +39,7 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
 
   const fetchWords = async () => {
     const { data, error } = await supabase
-      .from("medical_terms_tripple")
+      .from("medical_terms")
       .select("en, he, rus")
       .order("created_at", { ascending: true });
 

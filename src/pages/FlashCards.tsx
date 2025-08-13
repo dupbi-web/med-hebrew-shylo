@@ -25,13 +25,12 @@ function shuffleCopy<T>(arr: T[]): T[] {
   }
   return a;
 }
-
 const CATEGORIES = [
   "Anatomy", "Symptom", "Treatment", "Procedure", "Facility", "Measurement", "Injury",
   "Condition", "Pathogen", "Tool", "Equipment", "General", "Personnel", "Specialty"
 ] as const;
 
-const Index = () => {
+const FlashCards = () => {
   const [words, setWords] = useState<Word[]>([]);
   const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
@@ -288,18 +287,8 @@ const Index = () => {
         <Button variant="secondary" onClick={next}>Next</Button>
         <Button onClick={shuffle}>Shuffle</Button>
       </div>
-
-      {/* Extra Links */}
-      <main className="min-h-screen bg-hero">
-        <section className="container py-12 md:py-16">
-          <div className="mt-8 flex justify-center gap-4">
-            <Link to="/quiz"><Button variant="outline">Take Quiz</Button></Link>
-            <Link to="/TypingGame"><Button variant="outline">Typing Game</Button></Link>
-          </div>
-        </section>
-      </main>
     </>
   );
 };
 
-export default Index;
+export default FlashCards;

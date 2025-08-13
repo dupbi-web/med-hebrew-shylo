@@ -6,7 +6,6 @@ import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 type Word = { en: string; he: string; rus: string; category?: string | null };
 type Lang = "en" | "rus";
-
 const CATEGORIES = [
   "Anatomy", "Symptom", "Treatment", "Procedure", "Facility", "Measurement", "Injury",
   "Condition", "Pathogen", "Tool", "Equipment", "General", "Personnel", "Specialty"
@@ -182,11 +181,7 @@ const Quiz = () => {
           ) : (
             <p className="text-center text-muted-foreground">Loading quiz...</p>
           )}
-          <div className="mt-8 flex justify-center">
-            <Link to="/">
-              <Button variant="outline">Home</Button>
-            </Link>
-          </div>
+
 
         </section>
       </main>

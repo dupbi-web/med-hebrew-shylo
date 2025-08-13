@@ -3,13 +3,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import FlashCards from "./pages/FlashCards";
 import Quiz from "./pages/Quiz";
-import Practice from "./pages/Practice";
 import TypingGame from "./pages/TypingGame";
-
+import MatchingGame from "./pages/MatchingGame";
 import NotFound from "./pages/NotFound";
+import Home from "./pages/Home";
 import { HelmetProvider } from "react-helmet-async";
+import Layout from "@/components/Layout";
 
 const queryClient = new QueryClient();
 
@@ -20,13 +21,14 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/Quiz" element={<Quiz />} />
-            <Route path="/Practice" element={<Practice />} />
-            <Route path="/TypingGame" element={<TypingGame />} />
-
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Routes >
+            <Route element={<Layout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/FlashCards" element={<FlashCards />} />
+              <Route path="/Quiz" element={<Quiz />} />
+              <Route path="/TypingGame" element={<TypingGame />} />
+              <Route path="/MatchingGame" element={<MatchingGame />} />
+            </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

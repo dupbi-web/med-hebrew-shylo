@@ -49,7 +49,7 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
 
     // Fallback to old table if the new one is empty
     let rows: any[] = data ?? [];
-    if (rows.length === 0) {
+    if (false) {
       const { data: legacy, error: legacyError } = await supabase
         .from("medical_terms")
         .select("en, he")

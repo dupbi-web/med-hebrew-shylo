@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -9,10 +9,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 
-type Word = { en: string; he: string; rus: string; category?: string | null };
+type Word = { 
+  en: string; 
+  he: string; 
+  rus: string; 
+  category?: string | null 
+};
 
-const ADMIN_PASSWORD = "medadmin";
-
+// Fisher–Yates shuffle
 function shuffleCopy<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -22,7 +26,6 @@ function shuffleCopy<T>(arr: T[]): T[] {
   return a;
 }
 
-// *** Added Category List ***
 const CATEGORIES = [
   "Anatomy", "Symptom", "Treatment", "Procedure", "Facility", "Measurement", "Injury",
   "Condition", "Pathogen", "Tool", "Equipment", "General", "Personnel", "Specialty"
@@ -42,16 +45,15 @@ const Index = () => {
   const [russianTerm, setRussianTerm] = useState("");
   const [category, setCategory] = useState("");
   const [targetLang, setTargetLang] = useState<"rus" | "en">("rus");
-  // *** Added selectedCategory state for filtering ***
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
+  const total = words.length;
   const current = words[index];
-  const isDone = !current && words.length > 0;
+  const isDone = !current && total > 0;
 
-  // *** Modified fetchWords to accept category and filter ***
-  const fetchWords = async (categoryFilter?: string | null) => {
+  // Fetch words from Supabase
+  const fetchWords = useCallback(async (categoryFilter?: string | null) => {
     setLoading(true);
-
     let query = supabase.from("medical_terms").select("en, he, rus, category");
 
     if (categoryFilter) {
@@ -66,36 +68,25 @@ const Index = () => {
       return;
     }
 
-    // Fallback to old table if the new one is empty
-    let rows: any[] = data ?? [];
-    if (false) {
-      const { data: legacy, error: legacyError } = await supabase
-        .from("medical_terms")
-        .select("en, he")
-        .order("created_at", { ascending: true });
-      if (legacyError) {
-        toast({ title: "Failed to load words", description: legacyError.message });
-        setLoading(false);
-        return;
-      }
-      rows = legacy ?? [];
-      if ((rows?.length ?? 0) > 0) {
-        toast({ title: "Loaded legacy deck", description: "Using medical_terms until the new table has data." });
-      }
-    }
+    const mapped = (data ?? []).map((w) => ({
+      en: w.en?.trim() || "",
+      he: w.he?.trim() || "",
+      rus: w.rus?.trim() || "",
+      category: w.category ?? null
+    })) as Word[];
 
-    const mapped = (rows ?? []).map((w: any) => ({ en: w.en, he: w.he, rus: w.rus ?? "", category: w.category ?? null })) as Word[];
-    setWords(shuffleCopy(mapped));
+    setWords(mapped);
     setIndex(0);
     setFlipped(false);
     setLoading(false);
-  };
+  }, []);
 
-  // *** Updated useEffect to refetch when selectedCategory changes ***
+  // Refetch when category changes
   useEffect(() => {
     fetchWords(selectedCategory);
-  }, [selectedCategory]);
+  }, [fetchWords, selectedCategory]);
 
+  // Keyboard navigation
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") next();
@@ -109,17 +100,18 @@ const Index = () => {
     return () => window.removeEventListener("keydown", onKey);
   }, [words, index]);
 
-  const next = () => {
-    setIndex((i) => i + 1); // Allow going past the last card
+  const next = useCallback(() => {
+    setIndex((i) => i + 1);
     setFlipped(false);
     setReviewed((r) => r + 1);
-  };
+  }, []);
 
-  const prev = () => {
-    setIndex((i) => (i - 1 + words.length) % words.length);
+  const prev = useCallback(() => {
+    setIndex((i) => (i - 1 + total) % total);
     setFlipped(false);
     setReviewed((r) => r + 1);
-  };
+  }, [total]);
+
   const restart = () => {
     setIndex(0);
     setFlipped(false);
@@ -127,56 +119,54 @@ const Index = () => {
   };
 
   const shuffle = () => {
-    const arr = [...words];
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    setWords(arr);
+    setWords((prev) => shuffleCopy(prev));
     setIndex(0);
     setFlipped(false);
   };
 
-
-  const total = words.length;
-
+  // Bulk import
   const handleImport = async () => {
     try {
-      const parsed = JSON.parse(importText) as Array<Partial<Word> & { category?: string | null }>;
+      const parsed = JSON.parse(importText) as Array<Partial<Word>>;
       if (!Array.isArray(parsed)) {
-        toast({ title: "Invalid JSON", description: "Expect an array of { en, he, rus?, category? }." });
+        toast({ title: "Invalid JSON", description: "Expected an array of word objects." });
         return;
       }
-      // Validate required fields and normalize
+
       const cleaned = parsed
         .map((w) => ({
-          en: (w.en ?? "").toString().trim(),
-          he: (w.he ?? "").toString().trim(),
-          rus: (w as any).rus ? (w as any).rus.toString().trim() : null,
-          category: (w as any).category ? (w as any).category.toString().trim() : null,
+          en: w.en?.toString().trim() || "",
+          he: w.he?.toString().trim() || "",
+          rus: w.rus?.toString().trim() || "",
+          category: w.category?.toString().trim() || null
         }))
-        .filter((w) => w.en.length > 0 && w.he.length > 0);
+        .filter((w) => w.en && w.he);
 
-      if (cleaned.length === 0) {
-        toast({ title: "Nothing to import", description: "Items must include non-empty en and he fields." });
+      if (!cleaned.length) {
+        toast({ title: "Nothing to import", description: "English and Hebrew are required." });
         return;
       }
 
-      const { error } = await supabase.from("medical_terms_tripple").insert(cleaned);
+      if (!window.confirm(`Import ${cleaned.length} terms?`)) return;
+
+      const { error } = await supabase.from("medical_terms").insert(cleaned);
       if (error) {
         toast({ title: "Import failed", description: error.message });
         return;
       }
+
       setImportText("");
       await fetchWords(selectedCategory);
       toast({ title: "Imported", description: `Added ${cleaned.length} words.` });
-    } catch (e) {
-      toast({ title: "Parse error", description: "Could not parse JSON. Please check your data." });
+    } catch {
+      toast({ title: "Parse error", description: "Invalid JSON format." });
     }
   };
 
+  // Admin auth (now uses env var fallback)
   const handleAuth = () => {
-    if (adminPassword === ADMIN_PASSWORD) {
+    const expectedPass = import.meta.env.VITE_ADMIN_PASSWORD || "";
+    if (adminPassword === expectedPass) {
       setIsAuthed(true);
       setAdminPassword("");
       toast({ title: "Admin unlocked" });
@@ -185,41 +175,45 @@ const Index = () => {
     }
   };
 
+  // Add single word
   const handleAddWord = async () => {
     const en = englishTerm.trim();
     const he = hebrewTerm.trim();
     const ru = russianTerm.trim();
     const cat = category.trim();
+
     if (!en || !he) {
-      toast({ title: "Missing fields", description: "Both English and Hebrew are required." });
+      toast({ title: "Missing fields", description: "English and Hebrew are required." });
       return;
     }
     const hebrewRegex = /[\u0590-\u05FF]/;
     if (!hebrewRegex.test(he)) {
-      toast({ title: "Hebrew validation", description: "Please use Hebrew characters." });
+      toast({ title: "Invalid Hebrew", description: "Please use Hebrew characters." });
       return;
     }
-    const { error } = await supabase.from("medical_terms_tripple").insert([{ en, he, rus: ru || null, category: cat || null }]);
+
+    const { error } = await supabase.from("medical_terms").insert([
+      { en, he, rus: ru || null, category: cat || null }
+    ]);
     if (error) {
       toast({ title: "Add failed", description: error.message });
       return;
     }
+
     setEnglishTerm("");
     setHebrewTerm("");
     setRussianTerm("");
     setCategory("");
     await fetchWords(selectedCategory);
-    toast({ title: "Word added", description: "The term has been added to your deck." });
+    toast({ title: "Word added", description: "Added successfully." });
   };
 
-  // Signature gradient follows pointer
+  // Pointer-follow effect
   useEffect(() => {
     const root = document.documentElement;
     const handleMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth) * 100;
-      const y = (e.clientY / window.innerHeight) * 100;
-      root.style.setProperty("--pointer-x", `${x}%`);
-      root.style.setProperty("--pointer-y", `${y}%`);
+      root.style.setProperty("--pointer-x", `${(e.clientX / window.innerWidth) * 100}%`);
+      root.style.setProperty("--pointer-y", `${(e.clientY / window.innerHeight) * 100}%`);
     };
     window.addEventListener("mousemove", handleMove);
     return () => window.removeEventListener("mousemove", handleMove);
@@ -229,81 +223,79 @@ const Index = () => {
     <>
       <Helmet>
         <title>Medical Hebrew Flashcards | Learn Medical Terms</title>
-        <meta name="description" content="Practice medical Hebrew with English-to-Hebrew flashcards. Flip, shuffle, and track your progress." />
-        <link rel="canonical" href="/" />
-        <meta property="og:title" content="Medical Hebrew Flashcards" />
-        <meta property="og:description" content="Learn medical Hebrew with clean, responsive flashcards." />
+        <meta name="description" content="Practice medical Hebrew with flashcards. Flip, shuffle, and track progress." />
       </Helmet>
 
-          <header className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Medical Hebrew Flashcards</h1>
-            <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">English → Hebrew practice cards with a clean flip animation. Use arrow keys or buttons, press Space to flip, and shuffle anytime.</p>
-          </header>
+      <header className="text-center mb-8">
+        <h1 className="text-4xl md:text-5xl font-bold">Medical Hebrew Flashcards</h1>
+        <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
+          English or Russian → Hebrew practice cards with a clean flip animation. 
+          Use arrow keys, press Space to flip, and shuffle anytime.
+        </p>
+      </header>
 
-          {/* *** Added category filter dropdown *** */}
-          <div className="mb-6 flex flex-wrap justify-center gap-4">
-            <label className="flex items-center gap-2">
-              <span className="text-muted-foreground text-sm">Filter by Category:</span>
-              <select
-                value={selectedCategory ?? ""}
-                onChange={(e) => setSelectedCategory(e.target.value || null)}
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
-              >
-                <option value="">All</option>
-                {CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </label>
+      {/* Category Filter */}
+      <div className="mb-6 flex flex-wrap justify-center gap-4">
+        <label className="flex items-center gap-2">
+          <span className="text-muted-foreground text-sm">Filter by Category:</span>
+          <select
+            value={selectedCategory ?? ""}
+            onChange={(e) => setSelectedCategory(e.target.value || null)}
+            className="border rounded px-2 py-1 text-sm"
+          >
+            <option value="">All</option>
+            {CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="mb-4 flex items-center justify-center gap-3 text-sm text-muted-foreground">
+        <span>Card {index + 1} of {total}</span>
+        <span aria-hidden>•</span>
+        <span>Reviewed {reviewed}</span>
+      </div>
+
+      {/* Main Flashcard Display */}
+      {loading ? (
+        <p className="text-center text-muted-foreground">Loading words...</p>
+      ) : isDone ? (
+        <div className="text-center p-10 border rounded shadow-md bg-green-100 text-green-800 font-semibold text-2xl">
+          🎉 DONE! You’ve reached the end.
+          <div className="mt-4">
+            <Button onClick={restart}>Restart</Button>
           </div>
-
-          <div className="mb-4 flex items-center justify-center gap-3 text-sm text-muted-foreground">
-            <span>Card {index + 1} of {total}</span>
-            <span aria-hidden>•</span>
-            <span>Reviewed {reviewed}</span>
-          </div>
-
-          {loading ? (
-            <p className="text-center text-muted-foreground">Loading words...</p>
-          ) : isDone ? (
-            <div className="text-center p-10 border rounded shadow-md bg-green-100 text-green-800 font-semibold text-2xl">
-              🎉 DONE! You’ve reached the end.
-              <div className="mt-4">
-                <Button onClick={restart}>Restart</Button>
-              </div>
-            </div>
-          ) : current ? (
-            <Flashcard
-              translation={targetLang === "en" ? current.en : current.rus}
-              targetLang={targetLang}
-              he={current.he}
-              flipped={flipped}
-              onToggle={() => setFlipped((f) => !f)}
-            />
-          ) : (
-            <p className="text-center text-muted-foreground">No words yet.</p>
-          )}
-
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Button variant={targetLang === "en" ? "default" : "outline"} onClick={() => setTargetLang("en")} aria-label="English to Hebrew">EN→HE</Button>
-            <Button variant={targetLang === "rus" ? "default" : "outline"} onClick={() => setTargetLang("rus")} aria-label="Russian to Hebrew">RU→HE</Button>
-            <Button variant="secondary" onClick={prev} aria-label="Previous card">Previous</Button>
-            <Button onClick={() => setFlipped((f) => !f)} aria-label="Flip card">{flipped ? "Hide" : "Show"} Answer</Button>
-            <Button variant="secondary" onClick={next} aria-label="Next card">Next</Button>
-            <Button onClick={shuffle} aria-label="Shuffle cards">Shuffle</Button>
-          </div>
-            <main className="min-h-screen bg-hero">
-        <section className="container py-12 md:py-16">
-          <div className="mt-8 flex justify-center">
-            <Link to="/quiz">
-              <Button variant="outline">Take Quiz</Button>
-            </Link>
-            <Link to="/Practice">
-              <Button variant="outline">Practice</Button>
-            </Link>
         </div>
+      ) : current ? (
+        <Flashcard
+          translation={targetLang === "en" ? current.en : current.rus}
+          targetLang={targetLang}
+          he={current.he}
+          flipped={flipped}
+          onToggle={() => setFlipped((f) => !f)}
+        />
+      ) : (
+        <p className="text-center text-muted-foreground">No words yet.</p>
+      )}
+
+      {/* Controls */}
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <Button variant={targetLang === "en" ? "default" : "outline"} onClick={() => setTargetLang("en")}>EN→HE</Button>
+        <Button variant={targetLang === "rus" ? "default" : "outline"} onClick={() => setTargetLang("rus")}>RU→HE</Button>
+        <Button variant="secondary" onClick={prev}>Previous</Button>
+        <Button onClick={() => setFlipped((f) => !f)}>{flipped ? "Hide" : "Show"} Answer</Button>
+        <Button variant="secondary" onClick={next}>Next</Button>
+        <Button onClick={shuffle}>Shuffle</Button>
+      </div>
+
+      {/* Extra Links */}
+      <main className="min-h-screen bg-hero">
+        <section className="container py-12 md:py-16">
+          <div className="mt-8 flex justify-center gap-4">
+            <Link to="/quiz"><Button variant="outline">Take Quiz</Button></Link>
+            <Link to="/practice"><Button variant="outline">Practice</Button></Link>
+          </div>
         </section>
       </main>
     </>

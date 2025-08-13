@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import Flashcard from "@/components/Flashcard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-// import { Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 type Word = { en: string; he: string; rus: string; category?: string | null };
 
@@ -228,11 +228,11 @@ const Index = () => {
   return (
     <>
       <Helmet>
-          <div className="mt-8 flex justify-center">
+{/*           <div className="mt-8 flex justify-center">
           <Link to="/quiz">
             <Button variant="outline">Take Quiz</Button>
           </Link>
-        </div>
+        </div> */}
 
         <title>Medical Hebrew Flashcards | Learn Medical Terms</title>
         <meta name="description" content="Practice medical Hebrew with English-to-Hebrew flashcards. Flip, shuffle, and track your progress." />

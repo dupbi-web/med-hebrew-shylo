@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+
 type Word = {
   en: string;
   he: string;
@@ -27,12 +28,12 @@ const Practice = () => {
   const [loading, setLoading] = useState(true);
   const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
 
-  const current = words[currentIndex];
+  const current = words[currentIndex] || null;
 
-  const fetchWords = async () => {
+  const fetchWords = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("medical_terms_tripple")
+      .from("medical_terms")
       .select("en, he, rus, category");
 
     if (error) {
@@ -41,23 +42,51 @@ const Practice = () => {
       return;
     }
 
-    const cleaned = (data ?? []).filter((w) => w.en && w.he);
+    const cleaned = (data ?? [])
+      .map((w) => ({
+        en: w.en?.trim() || "",
+        he: w.he?.trim() || "",
+        rus: w.rus?.trim() || "",
+        category: w.category ?? null
+      }))
+      .filter((w) => w.en && w.he);
+
+    if (!cleaned.length) {
+      toast({ title: "No words found", description: "Add words in the admin panel first." });
+    }
+
     setWords(shuffleArray(cleaned));
     setCurrentIndex(0);
     setShowAnswer(false);
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     fetchWords();
-  }, []);
+  }, [fetchWords]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") {
+        next();
+      }
+      if (e.key === " ") {
+        e.preventDefault();
+        setShowAnswer((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [currentIndex, words]);
 
   const next = () => {
     if (currentIndex + 1 < words.length) {
       setCurrentIndex((i) => i + 1);
       setShowAnswer(false);
     } else {
-      toast({ title: "Finished!", description: "You’ve gone through all the words." });
+      toast({ title: "Finished!", description: "You've gone through all the words. Restarting..." });
+      fetchWords();
     }
   };
 
@@ -103,7 +132,7 @@ const Practice = () => {
                 {targetLang === "en" ? "Translate from English" : "Translate from Russian"}
               </p>
               <h2 className="text-3xl font-bold mb-6">
-                {targetLang === "en" ? current.en : current.rus}
+                {targetLang === "en" ? current.en : current.rus || "(no Russian translation)"}
               </h2>
 
               {showAnswer ? (
@@ -122,13 +151,14 @@ const Practice = () => {
             </div>
           )}
         </section>
-                            <div className="mt-8 flex justify-center">
-            <Link to="/quiz">
-              <Button variant="outline">Take Quiz</Button>
-            </Link>
-            <Link to="/Practice">
-              <Button variant="outline">Practice</Button>
-            </Link>
+
+        <div className="mt-8 flex justify-center gap-4">
+          <Link to="/quiz">
+            <Button variant="outline">Take Quiz</Button>
+          </Link>
+          <Link to="/practice">
+            <Button variant="outline">Practice</Button>
+          </Link>
         </div>
       </main>
     </>
@@ -136,4 +166,3 @@ const Practice = () => {
 };
 
 export default Practice;
-

@@ -4,13 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet-async";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 
 type Lang = "en" | "he" | "rus";
 type Word = { en: string; he: string; rus: string };
@@ -29,7 +22,7 @@ const TypingGame = () => {
 
   useEffect(() => {
     if (running && timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft((t) => t - 1), 3000);
+      const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
       return () => clearTimeout(timer);
     }
     if (timeLeft === 0) setRunning(false);
@@ -80,27 +73,25 @@ const TypingGame = () => {
           {!running ? (
             <>
               <div className="flex gap-4 justify-center mb-4">
-                <Select value={fromLang} onValueChange={(v: Lang) => setFromLang(v)}>
-                  <SelectTrigger className="w-[120px]">
-                    <SelectValue placeholder="From" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="rus">Russian</SelectItem>
-                    <SelectItem value="he">Hebrew</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  value={fromLang}
+                  onChange={(e) => setFromLang(e.target.value as Lang)}
+                  className="border p-2 rounded"
+                >
+                  <option value="en">English</option>
+                  <option value="rus">Russian</option>
+                  <option value="he">Hebrew</option>
+                </select>
 
-                <Select value={toLang} onValueChange={(v: Lang) => setToLang(v)}>
-                  <SelectTrigger className="w-[120px]">
-                    <SelectValue placeholder="To" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="rus">Russian</SelectItem>
-                    <SelectItem value="he">Hebrew</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  value={toLang}
+                  onChange={(e) => setToLang(e.target.value as Lang)}
+                  className="border p-2 rounded"
+                >
+                  <option value="en">English</option>
+                  <option value="rus">Russian</option>
+                  <option value="he">Hebrew</option>
+                </select>
               </div>
 
               {fromLang === toLang && (

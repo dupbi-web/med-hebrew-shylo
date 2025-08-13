@@ -5,9 +5,6 @@ import { Helmet } from "react-helmet-async";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 
-type Lang = "en" | "he" | "rus";
-type Word = { en: string; he: string; rus: string };
-
 const TypingGame = () => {
   const [words, setWords] = useState<Word[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -15,14 +12,13 @@ const TypingGame = () => {
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
   const [running, setRunning] = useState(false);
-  const [fromLang, setFromLang] = useState<Lang>("en");
-  const [toLang, setToLang] = useState<Lang>("he");
+  const [targetLang, setTargetLang] = useState<"rus" | "en">("rus");
 
   const current = words[currentIndex];
 
   useEffect(() => {
     if (running && timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
+      const timer = setTimeout(() => setTimeLeft(t => t - 1), 3000);
       return () => clearTimeout(timer);
     }
     if (timeLeft === 0) setRunning(false);
@@ -36,7 +32,7 @@ const TypingGame = () => {
       toast({ title: "Error loading words", description: error.message });
       return;
     }
-    setWords((data ?? []).sort(() => Math.random() - 0.5));
+    setWords(data.sort(() => Math.random() - 0.5));
     setCurrentIndex(0);
     setScore(0);
     setTimeLeft(60);
@@ -45,104 +41,65 @@ const TypingGame = () => {
 
   const checkAnswer = () => {
     if (!current) return;
-    const correct = current[toLang].trim();
-    if (input.trim() === correct) {
-      setScore((s) => s + 10);
-      setCurrentIndex((i) => (i + 1) % words.length);
+    if (input.trim() === current.he.trim()) {
+      setScore(s => s + 10);
+      setCurrentIndex(i => (i + 1) % words.length);
     } else {
-      setScore((s) => s - 5);
-      toast({ title: "Wrong", description: `Correct: ${correct}` });
+      setScore(s => s - 5);
+      toast({ title: "Wrong", description: `Correct: ${current.he}` });
     }
     setInput("");
   };
-
   return (
-    <main className="min-h-screen bg-background">
-      <Helmet>
-        <title>Typing Game</title>
-      </Helmet>
-
-      <section className="container py-12 md:py-16">
+    <>
+      <main className="min-h-screen bg-background">
+        <section className="container py-12 md:py-16">
         <header className="text-center mb-10">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-            Typing Game
-          </h1>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Typing Game</h1>
         </header>
 
         <div className="max-w-lg mx-auto text-center py-10">
-          {!running ? (
+        {!running ? (
+            <Button onClick={fetchWords}>Start Game</Button>
+        ) : (
             <>
-              <div className="flex gap-4 justify-center mb-4">
-                <select
-                  value={fromLang}
-                  onChange={(e) => setFromLang(e.target.value as Lang)}
-                  className="border p-2 rounded"
-                >
-                  <option value="en">English</option>
-                  <option value="rus">Russian</option>
-                  <option value="he">Hebrew</option>
-                </select>
-
-                <select
-                  value={toLang}
-                  onChange={(e) => setToLang(e.target.value as Lang)}
-                  className="border p-2 rounded"
-                >
-                  <option value="en">English</option>
-                  <option value="rus">Russian</option>
-                  <option value="he">Hebrew</option>
-                </select>
-              </div>
-
-              {fromLang === toLang && (
-                <p className="text-red-500 mb-2">
-                  Languages must be different
-                </p>
-              )}
-
-              <Button onClick={fetchWords} disabled={fromLang === toLang}>
-                Start Game
-              </Button>
-            </>
-          ) : (
-            <>
-              <div className="flex justify-between mb-4">
+            <div className="flex justify-between mb-4">
                 <span>Score: {score}</span>
                 <span>Time: {timeLeft}s</span>
-              </div>
-
-              {current && (
+            </div>
+            {current && (
                 <>
-                  <p className="text-xl mb-2">{current[fromLang]}</p>
-                  <input
-                    dir={toLang === "he" ? "rtl" : "ltr"}
+                <p className="text-xl mb-2">
+                    {targetLang === "en" ? current.en : current.rus}
+                </p>
+                <input
+                    dir="rtl"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && checkAnswer()}
-                    className={`border p-2 w-full ${
-                      toLang === "he" ? "text-right" : "text-left"
-                    }`}
-                    placeholder={`Type in ${toLang.toUpperCase()}`}
-                  />
-                  <Button onClick={checkAnswer} className="mt-4">
-                    Submit
-                  </Button>
+                    className="border p-2 w-full text-right"
+                    placeholder="הקלד כאן"
+                />
+                <Button onClick={checkAnswer} className="mt-4">Submit</Button>
                 </>
-              )}
+            )}
             </>
-          )}
+        )}
         </div>
-      </section>
-
-      <div className="mt-8 flex justify-center gap-4">
-        <Link to="/">
-          <Button variant="outline">Home</Button>
-        </Link>
-        <Link to="/quiz">
-          <Button variant="outline">Take Quiz</Button>
-        </Link>
-      </div>
-    </main>
+        </section>
+        <div className="mt-8 flex justify-center gap-4">
+            <Link to="/index">
+            <Button variant="outline">Home</Button>
+          </Link>
+          <Link to="/quiz">
+            <Button variant="outline">Take Quiz</Button>
+          </Link>
+          <Link to="/practice">
+            <Button variant="outline">Practice</Button>
+          </Link>
+        </div>
+      </main>
+    </>
   );
 };
 

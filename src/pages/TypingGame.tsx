@@ -12,7 +12,7 @@ const TypingGame = () => {
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
   const [running, setRunning] = useState(false);
-  const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
+  const [targetLang, setTargetLang] = useState<"rus" | "en">("rus");
 
   const current = words[currentIndex];
 

@@ -31,7 +31,7 @@ const Quiz = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState(0);
-  const [targetLang, setTargetLang] = useState<Lang>("en");
+  const [targetLang, setTargetLang] = useState<Lang>("rus");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const current = words[currentIndex];

@@ -297,10 +297,13 @@ const Index = () => {
             <main className="min-h-screen bg-hero">
         <section className="container py-12 md:py-16">
           <div className="mt-8 flex justify-center">
-  <Link to="/quiz">
-    <Button variant="outline">Take Quiz</Button>
-  </Link>
-</div>
+            <Link to="/quiz">
+              <Button variant="outline">Take Quiz</Button>
+            </Link>
+            <Link to="/Practice">
+              <Button variant="outline">Practice</Button>
+            </Link>
+        </div>
         </section>
       </main>
     </>

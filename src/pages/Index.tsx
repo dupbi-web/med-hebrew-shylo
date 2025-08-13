@@ -32,6 +32,8 @@ const Index = () => {
   const [adminPassword, setAdminPassword] = useState("");
   const [englishTerm, setEnglishTerm] = useState("");
   const [hebrewTerm, setHebrewTerm] = useState("");
+  const [russianTerm, setRussianTerm] = useState("");
+  const [category, setCategory] = useState("");
 const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
   const current = words[index];
 
@@ -117,20 +119,34 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
 
   const handleImport = async () => {
     try {
-      const parsed = JSON.parse(importText) as Word[];
-      if (!Array.isArray(parsed) || !parsed.every((w) => typeof w.en === "string" && typeof w.he === "string")) {
-        toast({ title: "Invalid JSON", description: "Expect an array of { en, he }." });
+      const parsed = JSON.parse(importText) as Array<Partial<Word> & { category?: string | null }>;
+      if (!Array.isArray(parsed)) {
+        toast({ title: "Invalid JSON", description: "Expect an array of { en, he, rus?, category? }." });
         return;
       }
-      const payload = parsed.map((w) => ({ en: w.en, he: w.he, rus: (w as any).rus ?? null }));
-      const { error } = await supabase.from("medical_terms_tripple").insert(payload);
+      // Validate required fields and normalize
+      const cleaned = parsed
+        .map((w) => ({
+          en: (w.en ?? "").toString().trim(),
+          he: (w.he ?? "").toString().trim(),
+          rus: (w as any).rus ? (w as any).rus.toString().trim() : null,
+          category: (w as any).category ? (w as any).category.toString().trim() : null,
+        }))
+        .filter((w) => w.en.length > 0 && w.he.length > 0);
+
+      if (cleaned.length === 0) {
+        toast({ title: "Nothing to import", description: "Items must include non-empty en and he fields." });
+        return;
+      }
+
+      const { error } = await supabase.from("medical_terms_tripple").insert(cleaned);
       if (error) {
         toast({ title: "Import failed", description: error.message });
         return;
       }
       setImportText("");
       await fetchWords();
-      toast({ title: "Imported", description: `Loaded ${parsed.length} words.` });
+      toast({ title: "Imported", description: `Added ${cleaned.length} words.` });
     } catch (e) {
       toast({ title: "Parse error", description: "Could not parse JSON. Please check your data." });
     }
@@ -149,6 +165,8 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
   const handleAddWord = async () => {
     const en = englishTerm.trim();
     const he = hebrewTerm.trim();
+    const ru = russianTerm.trim();
+    const cat = category.trim();
     if (!en || !he) {
       toast({ title: "Missing fields", description: "Both English and Hebrew are required." });
       return;
@@ -158,13 +176,15 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
       toast({ title: "Hebrew validation", description: "Please use Hebrew characters." });
       return;
     }
-    const { error } = await supabase.from("medical_terms_tripple").insert([{ en, he, rus: null }]);
+    const { error } = await supabase.from("medical_terms_tripple").insert([{ en, he, rus: ru || null, category: cat || null }]);
     if (error) {
       toast({ title: "Add failed", description: error.message });
       return;
     }
     setEnglishTerm("");
     setHebrewTerm("");
+    setRussianTerm("");
+    setCategory("");
     await fetchWords();
     toast({ title: "Word added", description: "The term has been added to your deck." });
   };
@@ -235,7 +255,7 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
                 <Textarea
                   value={importText}
                   onChange={(e) => setImportText(e.target.value)}
-                  placeholder='Paste an array like [{"en":"Doctor","he":"רופא"}]'
+                  placeholder='Paste an array like [{"en":"Doctor","he":"רופא","rus":"Врач","category":"general"}]'
                   className="min-h-40"
                 />
                 <div className="flex justify-end gap-2">
@@ -285,8 +305,24 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
                         placeholder="חיטוי"
                       />
                     </div>
+                    <div className="grid gap-2">
+                      <label className="text-sm">Russian Term (optional)</label>
+                      <Input
+                        value={russianTerm}
+                        onChange={(e) => setRussianTerm(e.target.value)}
+                        placeholder="Антисептик"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <label className="text-sm">Category (optional)</label>
+                      <Input
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        placeholder="general"
+                      />
+                    </div>
                     <div className="flex justify-end gap-2">
-                      <Button variant="secondary" onClick={() => { setEnglishTerm(""); setHebrewTerm(""); }}>Clear</Button>
+                      <Button variant="secondary" onClick={() => { setEnglishTerm(""); setHebrewTerm(""); setRussianTerm(""); setCategory(""); }}>Clear</Button>
                       <Button onClick={handleAddWord}>Add Word</Button>
                     </div>
                   </div>

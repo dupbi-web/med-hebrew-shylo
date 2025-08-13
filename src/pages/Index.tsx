@@ -37,7 +37,7 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
 
   const fetchWords = async () => {
     const { data, error } = await supabase
-      .from("medical_terms")
+      .from("medical_terms_tripple")
       .select("en, he, rus")
       .order("created_at", { ascending: true });
     if (error) {
@@ -45,7 +45,7 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
       setLoading(false);
       return;
     }
-    const mapped = (data ?? []).map((w) => ({ en: w.en, he: w.he, rus: w.rus })) as Word[];
+    const mapped = (data ?? []).map((w) => ({ en: w.en, he: w.he, rus: (w as any).rus ?? "" })) as Word[];
     setWords(shuffleCopy(mapped));
     setIndex(0);
     setFlipped(false);
@@ -102,7 +102,8 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
         toast({ title: "Invalid JSON", description: "Expect an array of { en, he }." });
         return;
       }
-      const { error } = await supabase.from("medical_terms").insert(parsed);
+      const payload = parsed.map((w) => ({ en: w.en, he: w.he, rus: (w as any).rus ?? null }));
+      const { error } = await supabase.from("medical_terms_tripple").insert(payload);
       if (error) {
         toast({ title: "Import failed", description: error.message });
         return;
@@ -137,7 +138,7 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
       toast({ title: "Hebrew validation", description: "Please use Hebrew characters." });
       return;
     }
-    const { error } = await supabase.from("medical_terms").insert([{ en, he }]);
+    const { error } = await supabase.from("medical_terms_tripple").insert([{ en, he, rus: null }]);
     if (error) {
       toast({ title: "Add failed", description: error.message });
       return;
@@ -185,7 +186,8 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
 
           {current ? (
               <Flashcard
-                en={targetLang === "en" ? current.en : current.rus}
+                translation={targetLang === "en" ? current.en : current.rus}
+                targetLang={targetLang}
                 he={current.he}
                 flipped={flipped}
                 onToggle={() => setFlipped((f) => !f)}
@@ -195,6 +197,8 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
           )}
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Button variant={targetLang === "en" ? "default" : "outline"} onClick={() => setTargetLang("en")} aria-label="English to Hebrew">EN→HE</Button>
+            <Button variant={targetLang === "rus" ? "default" : "outline"} onClick={() => setTargetLang("rus")} aria-label="Russian to Hebrew">RU→HE</Button>
             <Button variant="secondary" onClick={prev} aria-label="Previous card">Previous</Button>
             <Button onClick={() => setFlipped((f) => !f)} aria-label="Flip card">{flipped ? "Hide" : "Show"} Answer</Button>
             <Button variant="secondary" onClick={next} aria-label="Next card">Next</Button>

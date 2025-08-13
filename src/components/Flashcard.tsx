@@ -13,12 +13,13 @@ export const Flashcard: React.FC<FlashcardProps> = ({ translation, targetLang, h
   const cardRef = React.useRef<HTMLDivElement | null>(null);
   const [tilt, setTilt] = React.useState({ x: 0, y: 0 });
 
-  const prefersReduced = React.useMemo(() =>
-    typeof window !== "undefined" &&
-    window.matchMedia &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  [], []);
-
+  const prefersReduced = React.useMemo(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    []
+  );
   const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (prefersReduced) return;
     const el = cardRef.current;

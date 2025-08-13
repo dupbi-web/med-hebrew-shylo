@@ -39,7 +39,7 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
 
   const fetchWords = async () => {
     const { data, error } = await supabase
-      .from("medical_terms")
+      .from("medical_terms_tripple")
       .select("en, he, rus")
       .order("created_at", { ascending: true });
 
@@ -233,7 +233,7 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
                 onToggle={() => setFlipped((f) => !f)}
               />
           ) : (
-            <p className="text-center text-muted-foreground">{loading ? "Loading words..." : "No words yet. Add some in the Admin panel."}</p>
+            <p className="text-center text-muted-foreground">{loading ? "Loading words..." : "No words yet."}</p>
           )}
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -244,91 +244,7 @@ const [targetLang, setTargetLang] = useState<"en" | "rus">("en");
             <Button variant="secondary" onClick={next} aria-label="Next card">Next</Button>
             <Button onClick={shuffle} aria-label="Shuffle cards">Shuffle</Button>
 
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" aria-label="Import JSON">Import JSON</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Import words JSON</DialogTitle>
-                </DialogHeader>
-                <Textarea
-                  value={importText}
-                  onChange={(e) => setImportText(e.target.value)}
-                  placeholder='Paste an array like [{"en":"Doctor","he":"רופא","rus":"Врач","category":"general"}]'
-                  className="min-h-40"
-                />
-                <div className="flex justify-end gap-2">
-                  <Button variant="secondary" onClick={() => setImportText("")}>Clear</Button>
-                  <Button onClick={handleImport}>Upload to Database</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
 
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" aria-label="Admin panel">Admin</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Admin Panel</DialogTitle>
-                </DialogHeader>
-                {!isAuthed ? (
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">Enter password to access admin tools.</p>
-                    <Input
-                      type="password"
-                      placeholder="Password"
-                      value={adminPassword}
-                      onChange={(e) => setAdminPassword(e.target.value)}
-                    />
-                    <div className="flex justify-end">
-                      <Button onClick={handleAuth}>Continue</Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="grid gap-2">
-                      <label className="text-sm">English Term</label>
-                      <Input
-                        value={englishTerm}
-                        onChange={(e) => setEnglishTerm(e.target.value)}
-                        placeholder="Antiseptic"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <label className="text-sm">Hebrew Term</label>
-                      <Input
-                        dir="rtl"
-                        value={hebrewTerm}
-                        onChange={(e) => setHebrewTerm(e.target.value)}
-                        placeholder="חיטוי"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <label className="text-sm">Russian Term (optional)</label>
-                      <Input
-                        value={russianTerm}
-                        onChange={(e) => setRussianTerm(e.target.value)}
-                        placeholder="Антисептик"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <label className="text-sm">Category (optional)</label>
-                      <Input
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                        placeholder="general"
-                      />
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="secondary" onClick={() => { setEnglishTerm(""); setHebrewTerm(""); setRussianTerm(""); setCategory(""); }}>Clear</Button>
-                      <Button onClick={handleAddWord}>Add Word</Button>
-                    </div>
-                  </div>
-                )}
-              </DialogContent>
-            </Dialog>
           </div>
         </section>
       </main>

@@ -18,7 +18,7 @@ const TypingGame = () => {
 
   useEffect(() => {
     if (running && timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(t => t - 1), 1000);
+      const timer = setTimeout(() => setTimeLeft(t => t - 1), 3000);
       return () => clearTimeout(timer);
     }
     if (timeLeft === 0) setRunning(false);

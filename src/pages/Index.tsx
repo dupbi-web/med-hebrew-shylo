@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import Flashcard from "@/components/Flashcard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
 
 type Word = { en: string; he: string; rus: string; category?: string | null };
 

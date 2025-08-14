@@ -285,6 +285,8 @@ const MatchingGame = () => {
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [timer, setTimer] = useState(0);
+  const [isLocked, setIsLocked] = useState(false);
+  const [revealedCardId, setRevealedCardId] = useState<number | null>(null);
 
   const intervalRef = useRef<number | null>(null);
 
@@ -292,7 +294,7 @@ const MatchingGame = () => {
     setTimer(0);
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = window.setInterval(() => {
-      setTimer((t) => t + 10); // increment by 10ms
+      setTimer((t) => t + 10);
     }, 10);
   };
 
@@ -327,6 +329,7 @@ const MatchingGame = () => {
 
   const handleCardClick = (card: Card) => {
     if (
+      isLocked ||
       card.matched ||
       card.type === "disappear" ||
       card.type === "empty" ||
@@ -339,6 +342,7 @@ const MatchingGame = () => {
     } else if (!secondChoice) {
       setSecondChoice(card);
       setAttempts((a) => a + 1);
+      setIsLocked(true);
 
       if (firstChoice.wordId === card.wordId && firstChoice.type !== card.type) {
         // correct match
@@ -359,14 +363,25 @@ const MatchingGame = () => {
         }, 250);
       } else {
         // wrong match
-        setFirstChoice({ ...firstChoice, type: "wrong" });
-        setSecondChoice({ ...card, type: "wrong" });
+        setCards((prev) =>
+          prev.map((c) =>
+            c.id === firstChoice.id || c.id === card.id
+              ? { ...c, type: "wrong" }
+              : c
+          )
+        );
 
         setTimeout(() => {
           setCards((prev) =>
-            prev.map((c) =>
-              c.type === "wrong" ? { ...c, type: c.matched ? "en" : c.type } : c
-            )
+            prev.map((c) => {
+              if (c.type === "wrong") {
+                return {
+                  ...c,
+                  type: c.matched ? "disappear" : c.content === "" ? "empty" : c.type === "en" || c.type === "he" ? c.type : "en",
+                };
+              }
+              return c;
+            })
           );
           resetChoices();
         }, 300);
@@ -377,6 +392,7 @@ const MatchingGame = () => {
   const resetChoices = () => {
     setFirstChoice(null);
     setSecondChoice(null);
+    setIsLocked(false);
   };
 
   useEffect(() => {
@@ -386,7 +402,6 @@ const MatchingGame = () => {
     }
   }, [cards]);
 
-  // Format timer as mm:ss:ms
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
     const minutes = Math.floor(totalSeconds / 60)
@@ -397,10 +412,10 @@ const MatchingGame = () => {
     return `${minutes}:${seconds}:${milliseconds}`;
   };
 
-  // Reveal full content on tap if truncated
-  const [revealedCardId, setRevealedCardId] = useState<number | null>(null);
   const handleCardContentClick = (e: React.MouseEvent, cardId: number) => {
-    e.stopPropagation();
+    // Only prevent bubbling if toggle happens
+    const toggled = revealedCardId !== cardId;
+    if (toggled) e.stopPropagation();
     setRevealedCardId((prev) => (prev === cardId ? null : cardId));
   };
 
@@ -452,7 +467,6 @@ const MatchingGame = () => {
             </p>
           )}
 
-          {/* Responsive grid with auto-fit */}
           <div
             className="
               grid 
@@ -498,7 +512,6 @@ const MatchingGame = () => {
                   }}
                   style={{ minWidth: 120, minHeight: 112, userSelect: "none" }}
                 >
-                  {/* Content with wrapping, ellipsis, and reveal on tap */}
                   <span
                     onClick={(e) => handleCardContentClick(e, card.id)}
                     className={`
@@ -516,7 +529,7 @@ const MatchingGame = () => {
                     title={card.content}
                     style={{ cursor: "pointer", userSelect: "text" }}
                   >
-                    {card.content || "\u00A0" /* Non-breaking space for empty cards */}
+                    {card.content || "\u00A0"}
                   </span>
                 </div>
               );
@@ -527,7 +540,6 @@ const MatchingGame = () => {
 
       <style>
         {`
-          /* Line clamp polyfill */
           .line-clamp-2 {
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -541,7 +553,6 @@ const MatchingGame = () => {
             100% { transform: scale(0); opacity: 0; }
           }
 
-          /* Touch feedback for cards */
           div[role="button"]:active {
             transform: scale(0.95);
             transition-duration: 150ms;
@@ -553,4 +564,3 @@ const MatchingGame = () => {
 };
 
 export default MatchingGame;
-

@@ -53,7 +53,7 @@ const MatchingGame = () => {
 
   const fetchWords = async () => {
     const { data, error } = await supabase
-      .from("medical_terms_tripple")
+      .from("medical_terms")
       .select("id, en, he");
 
     if (error || !data || data.length < 8) return;

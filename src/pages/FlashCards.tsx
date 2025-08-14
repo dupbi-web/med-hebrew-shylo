@@ -240,7 +240,7 @@ const FlashCards = () => {
           <select
             value={selectedCategory ?? ""}
             onChange={(e) => setSelectedCategory(e.target.value || null)}
-            className="border rounded px-2 py-1 text-sm"
+            className="min-w-[160px] px-3 py-2 bg-background border border-input rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <option value="">All</option>
             {CATEGORIES.map((cat) => (

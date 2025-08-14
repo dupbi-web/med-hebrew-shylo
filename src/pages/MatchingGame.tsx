@@ -345,7 +345,6 @@ const MatchingGame = () => {
       setIsLocked(true);
 
       if (firstChoice.wordId === card.wordId && firstChoice.type !== card.type) {
-        // correct match
         setCards((prev) =>
           prev.map((c) =>
             c.wordId === card.wordId ? { ...c, matched: true, type: "disappear" } : c
@@ -362,7 +361,6 @@ const MatchingGame = () => {
           resetChoices();
         }, 250);
       } else {
-        // wrong match
         setCards((prev) =>
           prev.map((c) =>
             c.id === firstChoice.id || c.id === card.id
@@ -413,7 +411,6 @@ const MatchingGame = () => {
   };
 
   const handleCardContentClick = (e: React.MouseEvent, cardId: number) => {
-    // Only prevent bubbling if toggle happens
     const toggled = revealedCardId !== cardId;
     if (toggled) e.stopPropagation();
     setRevealedCardId((prev) => (prev === cardId ? null : cardId));
@@ -487,9 +484,10 @@ const MatchingGame = () => {
 
               let bgColor = "";
               if (card.type === "wrong")
-                bgColor = "bg-red-400 text-white font-bold shadow-lg";
+                bgColor = "bg-gray-300 text-black opacity-70"; // ✅ No red
               else if (card.type === "empty")
-                bgColor = "bg-gray-200 border-dashed cursor-default text-transparent select-none";
+                bgColor =
+                  "bg-gray-200 border-dashed cursor-default text-transparent select-none";
               else if (card.matched)
                 bgColor = "bg-green-400 text-white font-bold shadow-md";
               else if (isSelected)

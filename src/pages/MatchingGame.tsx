@@ -246,12 +246,10 @@
 //   );
 // };
 
-// export default MatchingGame;
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet-async";
-import { Link } from "react-router-dom";
 
 type Word = {
   id: number;
@@ -292,7 +290,7 @@ const MatchingGame = () => {
     setTimer(0);
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = window.setInterval(() => {
-      setTimer((t) => t + 10); // increment by 10ms
+      setTimer((t) => t + 10);
     }, 10);
   };
 
@@ -305,9 +303,9 @@ const MatchingGame = () => {
       .from("medical_terms")
       .select("id, en, he");
 
-    if (error || !data || data.length < 8) return;
+    if (error || !data || data.length < 4) return; // now minimum 4
 
-    const selectedWords = shuffleArray(data).slice(0, 8);
+    const selectedWords = shuffleArray(data).slice(0, 4); // 4 words instead of 8
     setWords(selectedWords);
 
     setGameOver(false);
@@ -321,8 +319,8 @@ const MatchingGame = () => {
       { id: w.id * 2 + 1, content: w.he, wordId: w.id, matched: false, type: "he" },
     ]);
 
-    // Ensure exactly 16 cards (4x4)
-    setCards(shuffleArray(cardData).slice(0, 16));
+    // 8 cards total (2×4 grid)
+    setCards(shuffleArray(cardData).slice(0, 8));
     startTimer();
   };
 
@@ -342,7 +340,6 @@ const MatchingGame = () => {
       setAttempts((a) => a + 1);
 
       if (firstChoice.wordId === card.wordId && firstChoice.type !== card.type) {
-        // correct match
         setCards((prev) =>
           prev.map((c) =>
             c.wordId === card.wordId ? { ...c, matched: true, type: "disappear" } : c
@@ -357,9 +354,8 @@ const MatchingGame = () => {
             )
           );
           resetChoices();
-        }, 250); // faster disappearance
+        }, 250);
       } else {
-        // wrong match
         setFirstChoice({ ...firstChoice, type: "wrong" });
         setSecondChoice({ ...card, type: "wrong" });
 
@@ -387,7 +383,6 @@ const MatchingGame = () => {
     }
   }, [cards]);
 
-  // Format timer as mm:ss:ms
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
     const minutes = Math.floor(totalSeconds / 60)
@@ -444,8 +439,8 @@ const MatchingGame = () => {
             </p>
           )}
 
-          {/* Responsive grid: 2 cols on xs, 3 on sm, 4 on md+ */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-8 max-w-3xl mx-auto w-full px-2 sm:px-4">
+          {/* Responsive grid: 1 col xs, 2 cols sm+ */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8 max-w-xl mx-auto w-full px-2 sm:px-4">
             {cards.map((card) => {
               const isSelected =
                 firstChoice?.id === card.id || secondChoice?.id === card.id;
@@ -499,11 +494,10 @@ const MatchingGame = () => {
           .animate-disappear {
             animation: disappear 0.25s ease-out forwards;
           }
-          /* Tailwind line-clamp fallback if plugin not used */
           .line-clamp-2 {
             display: -webkit-box;
             -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;  
+            -webkit-box-orient: vertical;
             overflow: hidden;
           }
         `}

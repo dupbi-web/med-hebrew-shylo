@@ -274,17 +274,44 @@ const shuffleArray = <T,>(arr: T[]): T[] => {
   return copy;
 };
 
+const getVisibleCardCount = (width: number) => {
+  if (width >= 1024) return 16; // desktop 4x4
+  if (width >= 640) return 12;  // tablet 3x4
+  return 8;                     // phone 2x4
+};
+
+const getGridColumns = (width: number) => {
+  if (width >= 1024) return 4;
+  if (width >= 640) return 3;
+  return 2;
+};
+
 const MatchingGame = () => {
   const [words, setWords] = useState<Word[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
+  const [visibleCards, setVisibleCards] = useState<Card[]>([]);
   const [firstChoice, setFirstChoice] = useState<Card | null>(null);
   const [secondChoice, setSecondChoice] = useState<Card | null>(null);
   const [attempts, setAttempts] = useState(0);
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [timer, setTimer] = useState(0);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   const intervalRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    // Update visible cards count and slice cards accordingly
+    const count = getVisibleCardCount(windowWidth);
+    setVisibleCards(cards.slice(0, count));
+  }, [windowWidth, cards]);
+
+  useEffect(() => {
+    // Listen to window resize for responsive card count
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const startTimer = () => {
     setTimer(0);
@@ -303,9 +330,9 @@ const MatchingGame = () => {
       .from("medical_terms")
       .select("id, en, he");
 
-    if (error || !data || data.length < 4) return; // now minimum 4
+    if (error || !data || data.length < 8) return;
 
-    const selectedWords = shuffleArray(data).slice(0, 4); // 4 words instead of 8
+    const selectedWords = shuffleArray(data).slice(0, 8); // always 8 words
     setWords(selectedWords);
 
     setGameOver(false);
@@ -319,8 +346,9 @@ const MatchingGame = () => {
       { id: w.id * 2 + 1, content: w.he, wordId: w.id, matched: false, type: "he" },
     ]);
 
-    // 8 cards total (2×4 grid)
-    setCards(shuffleArray(cardData).slice(0, 8));
+    const shuffled = shuffleArray(cardData);
+    setCards(shuffled);
+    setVisibleCards(shuffled.slice(0, getVisibleCardCount(windowWidth)));
     startTimer();
   };
 
@@ -393,6 +421,8 @@ const MatchingGame = () => {
     return `${minutes}:${seconds}:${milliseconds}`;
   };
 
+  const gridColumns = getGridColumns(windowWidth);
+
   return (
     <>
       <Helmet>
@@ -400,7 +430,7 @@ const MatchingGame = () => {
       </Helmet>
 
       <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-start py-8 sm:py-12 px-4">
-        <section className="container max-w-4xl text-center w-full">
+        <section className="container max-w-5xl text-center w-full">
           <header className="mb-8 sm:mb-10">
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900">
               Matching Game
@@ -439,14 +469,16 @@ const MatchingGame = () => {
             </p>
           )}
 
-          {/* Responsive grid: 1 col xs, 2 cols sm+ */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8 max-w-xl mx-auto w-full px-2 sm:px-4">
-            {cards.map((card) => {
+          <div
+            className="grid gap-4 mt-8 max-w-5xl mx-auto w-full px-2 sm:px-4"
+            style={{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }}
+          >
+            {visibleCards.map((card) => {
               const isSelected =
                 firstChoice?.id === card.id || secondChoice?.id === card.id;
 
               const baseStyle =
-                "p-4 sm:p-6 flex items-center justify-center h-24 sm:h-28 md:h-32 rounded-lg cursor-pointer border transition-all duration-300";
+                "p-4 sm:p-6 flex items-center justify-center h-24 sm:h-28 md:h-32 rounded-lg cursor-pointer border transition-all duration-300 select-none";
 
               let bgColor = "";
               if (card.type === "wrong")
@@ -455,15 +487,16 @@ const MatchingGame = () => {
                 bgColor = "bg-gray-200 border-dashed cursor-default";
               else if (card.matched)
                 bgColor = "bg-green-200 text-white font-bold shadow-md";
-              else if (isSelected) bgColor = "bg-yellow-200 text-black font-semibold shadow";
-              else bgColor = "bg-white text-black shadow-sm";
+              else if (isSelected)
+                bgColor = "bg-yellow-200 text-black font-semibold shadow";
+              else
+                bgColor = "bg-white text-black shadow-sm";
 
               return (
                 <div
                   key={card.id}
                   onClick={() => handleCardClick(card)}
                   className={`${baseStyle} ${bgColor} text-center break-words overflow-hidden`}
-                  style={{ userSelect: "none" }}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
@@ -507,5 +540,3 @@ const MatchingGame = () => {
 };
 
 export default MatchingGame;
-
-

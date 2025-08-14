@@ -280,21 +280,6 @@ const Quiz = () => {
                   Question <span className="font-medium">{currentIndex + 1}</span> of{" "}
                   <span className="font-medium">{words.length}</span>
                 </p>
-                <div className="mt-2 max-w-md mx-auto">
-                  <div 
-                    className="w-full bg-muted rounded-full h-2"
-                    role="progressbar"
-                    aria-valuenow={currentIndex + 1}
-                    aria-valuemin={1}
-                    aria-valuemax={words.length}
-                    aria-label="Quiz progress"
-                  >
-                    <div 
-                      className="bg-primary h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${((currentIndex + 1) / words.length) * 100}%` }}
-                    />
-                  </div>
-                </div>
               </div>
             </div>
           ) : (

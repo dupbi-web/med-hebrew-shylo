@@ -37,12 +37,12 @@ const MatchingGame = () => {
   const [gameOver, setGameOver] = useState(false);
   const [timer, setTimer] = useState(0);
 
-  const intervalRef = useRef<NodeJS.Timer | null>(null);
+  const intervalRef = useRef<number | null>(null);
 
   const startTimer = () => {
     setTimer(0);
     if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
+    intervalRef.current = window.setInterval(() => {
       setTimer((t) => t + 10); // increment by 10ms
     }, 10);
   };
@@ -53,7 +53,7 @@ const MatchingGame = () => {
 
   const fetchWords = async () => {
     const { data, error } = await supabase
-      .from("medical_terms")
+      .from("medical_terms_tripple")
       .select("id, en, he");
 
     if (error || !data || data.length < 8) return;
@@ -80,7 +80,6 @@ const MatchingGame = () => {
   const handleCardClick = (card: Card) => {
     if (
       card.matched ||
-      card.type === "pop" ||
       card.type === "disappear" ||
       card.type === "empty" ||
       (firstChoice && firstChoice.id === card.id)

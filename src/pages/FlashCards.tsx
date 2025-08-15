@@ -289,6 +289,7 @@ const FlashCards = () => {
         <Button variant="secondary" onClick={next}>Next</Button>
         <Button onClick={shuffle}>Shuffle</Button>
       </div>
+      </div>
     </>
   );
 };

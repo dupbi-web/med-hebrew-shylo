@@ -38,6 +38,7 @@
 // export default Navbar;
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const games = [
   { name: "Home", path: "/" },
@@ -60,62 +61,68 @@ const Navbar = () => {
   };
 
   return (
-    <header className="bg-indigo-600 text-white shadow-md sticky top-0 z-50">
+    <header className="bg-primary border-b shadow-sm sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-primary/95">
       <div className="container mx-auto flex items-center justify-between py-4 px-6">
         {/* Logo */}
-        <h1 className="text-2xl font-bold tracking-tight">Game Hub</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-primary-foreground">Medical Hebrew Hub</h1>
 
-        {/* Hamburger Menu Button (visible on mobile) */}
-        <button
-          onClick={toggleMenu}
-          className="md:hidden focus:outline-none focus:ring-2 focus:ring-yellow-300"
-          aria-label="Toggle menu"
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        {/* Desktop Nav and Theme Toggle */}
+        <div className="hidden md:flex items-center gap-4">
+          <nav className="flex space-x-6">
+            {games.map((game) => (
+              <Link
+                key={game.path}
+                to={game.path}
+                className={`font-semibold transition-colors duration-200 ${
+                  location.pathname === game.path
+                    ? "text-accent-foreground"
+                    : "text-primary-foreground hover:text-accent-foreground"
+                }`}
+              >
+                {game.name}
+              </Link>
+            ))}
+          </nav>
+          <ThemeToggle />
+        </div>
+
+        {/* Mobile Menu Button */}
+        <div className="md:hidden flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            onClick={toggleMenu}
+            className="focus:outline-none focus:ring-2 focus:ring-accent text-primary-foreground"
+            aria-label="Toggle menu"
           >
-            {isMobileMenuOpen ? (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            ) : (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            )}
-          </svg>
-        </button>
-
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex space-x-6">
-          {games.map((game) => (
-            <Link
-              key={game.path}
-              to={game.path}
-              className={`font-semibold transition-colors duration-200 ${
-                location.pathname === game.path
-                  ? "text-yellow-300"
-                  : "hover:text-yellow-200"
-              }`}
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              {game.name}
-            </Link>
-          ))}
-        </nav>
+              {isMobileMenuOpen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              )}
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-indigo-700 px-6 pb-4">
+        <div className="md:hidden bg-primary/95 backdrop-blur border-t px-6 pb-4">
           <nav className="flex flex-col space-y-4">
             {games.map((game) => (
               <Link
@@ -124,8 +131,8 @@ const Navbar = () => {
                 onClick={closeMenu}
                 className={`font-semibold transition-colors duration-200 ${
                   location.pathname === game.path
-                    ? "text-yellow-300"
-                    : "hover:text-yellow-200"
+                    ? "text-accent-foreground"
+                    : "text-primary-foreground hover:text-accent-foreground"
                 }`}
               >
                 {game.name}

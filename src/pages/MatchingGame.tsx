@@ -237,7 +237,7 @@ const MatchingGame = () => {
           )}
 
           <div
-            className="grid gap-4 mt-8 max-w-5xl mx-auto w-full px-2 sm:px-4"
+            className="grid gap-4 mt-8 max-w-5xl mx-auto w-full px-2 sm:px-4 "
             style={{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }}
           >
             {visibleCards.map((card) => {
@@ -251,11 +251,11 @@ const MatchingGame = () => {
               if (card.type === "wrong")
                 bgColor = "bg-red-300 text-white font-bold shadow-lg";
               else if (card.type === "empty")
-                bgColor = "bg-gray-200 border-dashed cursor-default";
+                bgColor = "bg-white-200 border-dashed cursor-default";
               else if (card.matched)
-                bgColor = "bg-green-200 text-white font-bold shadow-md";
-              else if (isSelected) bgColor = "bg-yellow-200 text-black font-semibold shadow";
-              else bgColor = "bg-white text-black shadow-sm";
+                bgColor = "bg-gray-100 dark:bg-gray-600 text-white font-bold shadow-md";
+              else if (isSelected) bgColor = "bg-gray-300 dark:bg-gray-600 text-black font-semibold shadow ";
+              else bgColor = "bg-white text-black dark:bg-gray-800 dark:text-white shadow-sm";
 
               return (
                 <div

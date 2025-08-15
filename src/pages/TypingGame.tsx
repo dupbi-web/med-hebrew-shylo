@@ -88,54 +88,114 @@ const TypingGame = () => {
         <title>Typing Game</title>
       </Helmet>
 
-      <main className="min-h-screen bg-background">
-        <section className="container py-12 md:py-16">
-          <header className="text-center mb-10">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Typing Game</h1>
+      <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <section className="container py-8 md:py-12">
+          <header className="text-center mb-8">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent mb-4">
+              Typing Challenge
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Test your speed and accuracy with medical terminology
+            </p>
           </header>
 
-          <div className="max-w-lg mx-auto text-center py-10">
+          <div className="max-w-2xl mx-auto">
             {!running ? (
-              <Button onClick={fetchWords}>Start Game</Button>
-            ) : (
-              <>
-                <div className="flex justify-between mb-4">
-                  <span>Score: {score}</span>
-                  <span>Time: {timeLeft}s</span>
-                </div>
-
-                <div className="mb-4 flex flex-wrap justify-center gap-2">
-                  {["EN→HE","RU→HE","HE→EN","HE→RU"].map((m) => (
-                    <Button
-                      key={m}
-                      onClick={() => setMode(m as Mode)}
-                      variant={mode === m ? "default" : "outline"}
-                    >
-                      {m}
-                    </Button>
-                  ))}
-                </div>
-
-                {current && (
-                  <>
-                    <p className="text-xl mb-2">{getPrompt(current)}</p>
-
-                    <input
-                      dir={isRTL() ? "rtl" : "ltr"}
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && checkAnswer()}
-                      className="border p-2 w-full text-right"
-                      placeholder={isRTL() ? "הקלד כאן" : "Type here"}
-                    />
-
-                    <div className="mt-4 flex justify-center gap-4">
-                      <Button onClick={checkAnswer}>Submit</Button>
-                      <Button onClick={stopGame} variant="secondary">Stop Game</Button>
+              <div className="text-center">
+                <div className="bg-card border rounded-2xl p-8 shadow-lg">
+                  <div className="mb-6">
+                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-2xl">⚡</span>
                     </div>
-                  </>
+                    <h2 className="text-2xl font-semibold mb-2">Ready to Start?</h2>
+                    <p className="text-muted-foreground">
+                      You'll have 60 seconds to type as many correct translations as possible
+                    </p>
+                  </div>
+                  <Button onClick={fetchWords} size="lg" className="text-lg px-8 py-6">
+                    Start Game
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Score and Timer */}
+                <div className="bg-card border rounded-xl p-4 shadow-sm">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-muted-foreground">Score</span>
+                      <span className="text-2xl font-bold text-primary">{score}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-muted-foreground">Time</span>
+                      <span className={`text-2xl font-bold ${timeLeft <= 10 ? 'text-destructive' : 'text-foreground'}`}>
+                        {timeLeft}s
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mode Selection */}
+                <div className="bg-card border rounded-xl p-4 shadow-sm">
+                  <h3 className="text-sm font-medium text-muted-foreground mb-3">Translation Mode</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {["EN→HE","RU→HE","HE→EN","HE→RU"].map((m) => (
+                      <Button
+                        key={m}
+                        onClick={() => setMode(m as Mode)}
+                        variant={mode === m ? "default" : "outline"}
+                        size="sm"
+                        className="font-mono"
+                      >
+                        {m}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Game Area */}
+                {current && (
+                  <div className="bg-card border rounded-xl p-6 shadow-sm">
+                    <div className="text-center mb-6">
+                      <h3 className="text-sm font-medium text-muted-foreground mb-2">Translate this word:</h3>
+                      <p className="text-3xl md:text-4xl font-bold text-foreground mb-1">
+                        {getPrompt(current)}
+                      </p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <input
+                        dir={isRTL() ? "rtl" : "ltr"}
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && checkAnswer()}
+                        className="w-full h-14 px-4 text-lg border border-input rounded-lg bg-background text-center focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+                        placeholder={isRTL() ? "הקלד כאן..." : "Type here..."}
+                        autoFocus
+                      />
+
+                      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                        <Button 
+                          onClick={checkAnswer} 
+                          size="lg" 
+                          className="flex-1 sm:flex-none px-8"
+                          disabled={!input.trim()}
+                        >
+                          Submit Answer
+                        </Button>
+                        <Button 
+                          onClick={stopGame} 
+                          variant="outline" 
+                          size="lg"
+                          className="flex-1 sm:flex-none"
+                        >
+                          End Game
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 )}
-              </>
+              </div>
             )}
           </div>
         </section>

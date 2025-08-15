@@ -96,7 +96,7 @@ const Quiz = () => {
         <title>Medical Hebrew Quiz</title>
         <meta name="description" content="Test your knowledge of medical Hebrew with multiple choice questions." />
       </Helmet>
-      <main className="min-h-screen bg-hero">
+      <main className="container mx-auto max-w-6xl">
         <section className="container py-8 md:py-12 px-4 max-w-4xl mx-auto">
           <header className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">

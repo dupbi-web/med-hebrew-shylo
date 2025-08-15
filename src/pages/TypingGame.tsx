@@ -91,7 +91,7 @@ const TypingGame = () => {
       <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <section className="container py-8 md:py-12">
           <header className="text-center mb-8">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent mb-4">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
               Typing Challenge
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">

@@ -11,9 +11,11 @@ const Home = () => {
         <title>Game Hub</title>
       </Helmet>
 
-      <main className="min-h-screen bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 flex flex-col items-center py-12">
+      <main className="container mx-auto max-w-6xl">
+
         <header className="text-center mb-12">
-          <h1 className="text-5xl font-extrabold text-gray-900 tracking-tight">
+          {/* <h1 className="text-5xl font-extrabold text-gray-900 tracking-tight"> */}
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent mb-4">
             Welcome to the Game Hub
           </h1>
           <p className="mt-4 text-lg text-gray-600 max-w-xl mx-auto">

@@ -225,13 +225,15 @@ const FlashCards = () => {
         <meta name="description" content="Practice medical Hebrew with flashcards. Flip, shuffle, and track progress." />
       </Helmet>
 
-      <header className="text-center mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold">Medical Hebrew Flashcards</h1>
-        <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
-          English or Russian → Hebrew practice cards with a clean flip animation. 
-          Use arrow keys, press Space to flip, and shuffle anytime.
-        </p>
-      </header>
+      <div className="container mx-auto max-w-6xl">
+        <header className="text-center mb-12">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent mb-4">
+            Medical Hebrew Flashcards
+          </h1>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Master medical terminology with interactive flashcards. Practice English or Russian to Hebrew translations with intuitive flip animations.
+          </p>
+        </header>
 
       {/* Category Filter */}
       <div className="mb-6 flex flex-wrap justify-center gap-4">

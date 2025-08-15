@@ -5,7 +5,7 @@ const Layout = () => {
   return (
     <>
       <Navbar />
-      <main className="pt-6">
+      <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 px-4 py-6 md:py-8">
         <Outlet />
       </main>
     </>

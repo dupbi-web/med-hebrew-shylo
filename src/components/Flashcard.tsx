@@ -94,18 +94,21 @@ export const Flashcard: React.FC<FlashcardProps> = ({ translation, targetLang, h
           }}
         >
           <div className="space-y-6 max-w-full">
+            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+            </div>
             <div>
-              <p className="text-sm font-medium text-primary mb-3 uppercase tracking-wider">
+              <p className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wider">
                 Hebrew
               </p>
-              <h2 dir="rtl" className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight break-words">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight break-words">
                 {he}
               </h2>
             </div>
-            <p className="text-sm text-muted-foreground bg-primary/10 px-4 py-2 rounded-full inline-block">
-              Tap to see original term
+            <p className="text-sm text-muted-foreground bg-muted/50 px-4 py-2 rounded-full inline-block">
+              Tap to see Hebrew translation
             </p>
           </div>
+
         </div>
       </div>
     </div>

@@ -98,15 +98,6 @@ const Quiz = () => {
       </Helmet>
       <main className="container mx-auto max-w-6xl">
         <section className="container py-8 md:py-12 px-4 max-w-4xl mx-auto">
-          <header className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
-              Medical Hebrew Quiz
-            </h1>
-            <p className="mt-4 text-muted-foreground max-w-2xl mx-auto text-base md:text-lg leading-relaxed">
-              Test your knowledge of medical Hebrew terms. Choose the correct translation and track your progress.
-            </p>
-          </header>
-
           <nav aria-label="Quiz toolbar" className="mb-8">
             <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-4 md:p-6">
               <h2 className="sr-only">Quiz Settings</h2>

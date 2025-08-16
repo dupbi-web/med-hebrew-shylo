@@ -198,22 +198,24 @@ const MatchingGame = () => {
       <main className="container mx-auto max-w-6xl">
 
         <section className="container max-w-5xl text-center w-full">
-          <header className="mb-8 sm:mb-10">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
-              Matching Game
-            </h1>
-            <p className="mt-2 sm:mt-3 text-base sm:text-lg max-w-xl mx-auto tracking-tight text-foreground">
-              Match English words to their Hebrew translations
-            </p>
-          </header>
 
           {cards.length === 0 && (
-            <Button
-              onClick={() => fetchWords(windowWidth)}
-              className="px-6 py-2 sm:px-8 sm:py-3 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition"
-            >
-              Start New Game
-            </Button>
+            <section className="container max-w-5xl text-center w-full">
+              <header className="mb-8 sm:mb-10">
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
+                  Matching Game
+                </h1>
+                <p className="mt-2 sm:mt-3 text-base sm:text-lg max-w-xl mx-auto tracking-tight text-foreground">
+                  Match English words to their Hebrew translations
+                </p>
+              </header>
+              <Button
+                onClick={() => fetchWords(windowWidth)}
+                className="px-6 py-2 sm:px-8 sm:py-3 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition"
+              >
+                Start New Game
+              </Button>
+            </section>
           )}
 
           {gameOver && (

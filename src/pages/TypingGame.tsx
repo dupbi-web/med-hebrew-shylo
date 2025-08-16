@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet-async";
-import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 
 type Word = {
@@ -21,6 +20,8 @@ const TypingGame = () => {
   const [timeLeft, setTimeLeft] = useState(60);
   const [running, setRunning] = useState(false);
   const [mode, setMode] = useState<Mode>("EN→HE");
+  const [toastMsg, setToastMsg] = useState<{ title: string; description: string; type: "success" | "error" | null } | null>(null);
+  const [showAnswerOnWrong, setShowAnswerOnWrong] = useState(true); // <-- Added state
 
   const current = words[currentIndex];
 
@@ -32,10 +33,17 @@ const TypingGame = () => {
     if (timeLeft === 0) setRunning(false);
   }, [running, timeLeft]);
 
+  useEffect(() => {
+    if (toastMsg) {
+      const timer = setTimeout(() => setToastMsg(null), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMsg]);
+
   const fetchWords = async () => {
     const { data, error } = await supabase.from("medical_terms").select("en, he, rus");
     if (error) {
-      toast({ title: "Error loading words", description: error.message });
+      setToastMsg({ title: "Error loading words", description: error.message, type: "error" });
       return;
     }
     setWords(data.sort(() => Math.random() - 0.5));
@@ -73,9 +81,14 @@ const TypingGame = () => {
     if (input.trim() === correctAnswer.trim()) {
       setScore((s) => s + 10);
       setCurrentIndex((i) => (i + 1) % words.length);
+      setToastMsg({ title: "נכון!", description: "כל הכבוד!", type: "success" });
     } else {
       setScore((s) => s - 5);
-      toast({ title: "Wrong", description: `Correct: ${correctAnswer}` });
+      setToastMsg({
+        title: "שגוי",
+        description: showAnswerOnWrong ? `התשובה הנכונה: ${correctAnswer}` : "",
+        type: "error"
+      });
     }
     setInput("");
   };
@@ -90,18 +103,17 @@ const TypingGame = () => {
 
       <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <section className="container py-8 md:py-12">
-          <header className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
-              Typing Challenge
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Test your speed and accuracy with medical terminology
-            </p>
-          </header>
-
           <div className="max-w-2xl mx-auto">
             {!running ? (
               <div className="text-center">
+                <header className="text-center mb-8">
+                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
+                    Typing Challenge
+                  </h1>
+                  <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                    Test your speed and accuracy with medical terminology
+                  </p>
+                </header>
                 <div className="bg-card border rounded-2xl p-8 shadow-lg">
                   <div className="mb-6">
                     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -153,6 +165,8 @@ const TypingGame = () => {
                   </div>
                 </div>
 
+          
+
                 {/* Game Area */}
                 {current && (
                   <div className="bg-card border rounded-xl p-6 shadow-sm">
@@ -191,6 +205,18 @@ const TypingGame = () => {
                         >
                           End Game
                         </Button>
+                        {/* Show answer on wrong checkbox */}
+                        <div className="flex items-center gap-2 mb-2">
+                          <input
+                            type="checkbox"
+                            id="showAnswerOnWrong"
+                            checked={showAnswerOnWrong}
+                            onChange={() => setShowAnswerOnWrong((v) => !v)}
+                          />
+                          <label htmlFor="showAnswerOnWrong" className="text-sm text-muted-foreground cursor-pointer">
+                            Show Answer
+                          </label>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -200,6 +226,28 @@ const TypingGame = () => {
           </div>
         </section>
       </main>
+
+      {/* Toast Popup - middle bottom */}
+      {toastMsg && (
+        <div
+          className={`fixed z-50 left-1/2 bottom-10 transform -translate-x-1/2 transition-all`}
+          style={{
+            minWidth: "260px",
+            maxWidth: "90vw",
+            background: toastMsg.type === "success" ? "#d1fae5" : "#fee2e2",
+            color: toastMsg.type === "success" ? "#065f46" : "#991b1b",
+            borderRadius: "1rem",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
+            padding: "1rem 1.5rem",
+            textAlign: "center",
+            fontWeight: 500,
+            fontSize: "1.1rem",
+          }}
+        >
+          <div>{toastMsg.title}</div>
+          <div style={{ fontSize: "0.95rem", fontWeight: 400 }}>{toastMsg.description}</div>
+        </div>
+      )}
     </>
   );
 };

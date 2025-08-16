@@ -226,14 +226,14 @@ const FlashCards = () => {
       </Helmet>
 
       <div className="container mx-auto max-w-6xl">
-        <header className="text-center mb-12">
+        {/* <header className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent mb-4">
             Medical Hebrew Flashcards
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Master medical terminology with interactive flashcards. Practice English or Russian to Hebrew translations with intuitive flip animations.
           </p>
-        </header>
+        </header> */}
 
       {/* Category Filter */}
       <div className="mb-6 flex flex-wrap justify-center gap-4">

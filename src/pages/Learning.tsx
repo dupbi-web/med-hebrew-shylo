@@ -4,13 +4,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { sampleWords, Word } from "@/data/medical-words";
+import { supabase } from "@/integrations/supabase/client";
 import { BookOpen, Target, Trophy, ArrowLeft } from "lucide-react";
+
+interface Word {
+  en: string;
+  he: string;
+  rus: string;
+  category: string;
+}
 
 interface GameCard extends Word {
   correctCount: number;
   mastered: boolean;
-  category: string;
 }
 
 interface Category {
@@ -29,40 +35,44 @@ const Learning = () => {
   const [gameMode, setGameMode] = useState<'categories' | 'playing'>('categories');
   const [showAnswer, setShowAnswer] = useState(false);
 
-  // Initialize categories from sample words
+  // Fetch categories from supabase
   useEffect(() => {
-    const categoryMap = new Map<string, GameCard[]>();
-    
-    // Group words by category (we'll use a simple categorization for demo)
-    sampleWords.forEach((word, index) => {
-      let categoryName = '';
-      if (index < 10) categoryName = 'Body Parts & Conditions';
-      else if (index < 20) categoryName = 'Medical Procedures';
-      else if (index < 30) categoryName = 'Symptoms & Diagnosis';
-      else if (index < 40) categoryName = 'Treatments & Medicine';
-      else categoryName = 'Emergency & Specialties';
+    const fetchCategories = async () => {
+      const { data, error } = await supabase.from("medical_terms").select("category");
+      if (error || !data) return;
 
-      const gameCard: GameCard = {
-        ...word,
-        correctCount: 0,
-        mastered: false,
-        category: categoryName
+      // Get unique category names
+      const uniqueCategories = Array.from(new Set(data.map((row: { category: string }) => row.category)));
+
+      // For each category, fetch its words
+      const fetchAllCategoryWords = async () => {
+        const categoriesArray: Category[] = [];
+        for (const name of uniqueCategories) {
+          const { data: wordsData, error: wordsError } = await supabase
+            .from("medical_terms")
+            .select("en, he, rus, category")
+            .eq("category", name);
+
+          const cards: GameCard[] = (wordsData || []).map((word: Word) => ({
+            ...word,
+            correctCount: 0,
+            mastered: false
+          }));
+
+          categoriesArray.push({
+            name,
+            cards,
+            completed: false,
+            progress: 0
+          });
+        }
+        setCategories(categoriesArray);
       };
 
-      if (!categoryMap.has(categoryName)) {
-        categoryMap.set(categoryName, []);
-      }
-      categoryMap.get(categoryName)!.push(gameCard);
-    });
+      fetchAllCategoryWords();
+    };
 
-    const categoriesArray: Category[] = Array.from(categoryMap.entries()).map(([name, cards]) => ({
-      name,
-      cards,
-      completed: false,
-      progress: 0
-    }));
-
-    setCategories(categoriesArray);
+    fetchCategories();
   }, []);
 
   const startCategory = (category: Category) => {
@@ -80,15 +90,16 @@ const Learning = () => {
 
     const randomCard = unmastered[Math.floor(Math.random() * unmastered.length)];
     setCurrentCard(randomCard);
-    
-    // Generate options (correct answer + 3 random wrong answers)
+
+    // Generate options (correct answer + 3 random wrong answers from all words)
     const correctAnswer = randomCard.he;
-    const wrongAnswers = sampleWords
+    const allWords = categories.flatMap(cat => cat.cards);
+    const wrongAnswers = allWords
       .filter(word => word.he !== correctAnswer)
       .map(word => word.he)
       .sort(() => Math.random() - 0.5)
       .slice(0, 3);
-    
+
     const allOptions = [correctAnswer, ...wrongAnswers].sort(() => Math.random() - 0.5);
     setOptions(allOptions);
     setFeedback({ type: null, message: '' });
@@ -103,50 +114,50 @@ const Learning = () => {
 
     if (isCorrect) {
       setFeedback({ type: 'correct', message: 'Correct! Well done!' });
-      
+
       // Update card progress
       const updatedCard = { ...currentCard, correctCount: currentCard.correctCount + 1 };
       if (updatedCard.correctCount >= 2) {
         updatedCard.mastered = true;
       }
 
-      // Update categories
-      const updatedCategories = categories.map(cat => {
-        if (cat.name === selectedCategory.name) {
-          const updatedCards = cat.cards.map(card => 
-            card.en === currentCard.en ? updatedCard : card
-          );
-          const masteredCount = updatedCards.filter(card => card.mastered).length;
-          const progress = (masteredCount / updatedCards.length) * 100;
-          const completed = masteredCount === updatedCards.length;
-          
-          return { ...cat, cards: updatedCards, progress, completed };
-        }
-        return cat;
-      });
+      // Update selected category cards
+      const updatedCards = selectedCategory.cards.map(card =>
+        card.en === currentCard.en ? updatedCard : card
+      );
+      const masteredCount = updatedCards.filter(card => card.mastered).length;
+      const progress = (masteredCount / updatedCards.length) * 100;
+      const completed = masteredCount === updatedCards.length;
+
+      // Update categories array
+      const updatedCategories = categories.map(cat =>
+        cat.name === selectedCategory.name
+          ? { ...cat, cards: updatedCards, progress, completed }
+          : cat
+      );
 
       setCategories(updatedCategories);
-      setSelectedCategory(updatedCategories.find(cat => cat.name === selectedCategory.name)!);
-      
-      setTimeout(() => nextCard(updatedCategories.find(cat => cat.name === selectedCategory.name)!), 1500);
+      setSelectedCategory({ ...selectedCategory, cards: updatedCards, progress, completed });
+
+      setTimeout(() => nextCard({ ...selectedCategory, cards: updatedCards, progress, completed }), 1000);
     } else {
       setFeedback({ type: 'incorrect', message: `Incorrect. The correct answer is: ${currentCard.he}` });
-      
+
       // Reset correct count for this card
-      const updatedCategories = categories.map(cat => {
-        if (cat.name === selectedCategory.name) {
-          const updatedCards = cat.cards.map(card => 
-            card.en === currentCard.en ? { ...card, correctCount: 0 } : card
-          );
-          return { ...cat, cards: updatedCards };
-        }
-        return cat;
-      });
+      const updatedCards = selectedCategory.cards.map(card =>
+        card.en === currentCard.en ? { ...card, correctCount: 0 } : card
+      );
+
+      const updatedCategories = categories.map(cat =>
+        cat.name === selectedCategory.name
+          ? { ...cat, cards: updatedCards }
+          : cat
+      );
 
       setCategories(updatedCategories);
-      setSelectedCategory(updatedCategories.find(cat => cat.name === selectedCategory.name)!);
-      
-      setTimeout(() => nextCard(updatedCategories.find(cat => cat.name === selectedCategory.name)!), 2000);
+      setSelectedCategory({ ...selectedCategory, cards: updatedCards });
+
+      setTimeout(() => nextCard({ ...selectedCategory, cards: updatedCards }), 2000);
     }
   };
 
@@ -166,8 +177,8 @@ const Learning = () => {
     setFeedback({ type: null, message: '' });
   };
 
-  const overallProgress = categories.length > 0 
-    ? categories.reduce((sum, cat) => sum + cat.progress, 0) / categories.length 
+  const overallProgress = categories.length > 0
+    ? categories.reduce((sum, cat) => sum + cat.progress, 0) / categories.length
     : 0;
 
   if (gameMode === 'categories') {
@@ -184,7 +195,7 @@ const Learning = () => {
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Master medical terms through interactive card-based learning. Complete categories by correctly identifying translations twice in a row.
             </p>
-            
+
             <div className="flex items-center justify-center gap-4 p-6 bg-card rounded-lg border">
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">{Math.round(overallProgress)}%</div>
@@ -202,8 +213,8 @@ const Learning = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {categories.map((category) => (
-              <Card 
-                key={category.name} 
+              <Card
+                key={category.name}
                 className={`cursor-pointer transition-all hover:shadow-elegant ${
                   category.completed ? 'bg-primary/5 border-primary' : 'hover:border-primary/50'
                 }`}
@@ -277,7 +288,7 @@ const Learning = () => {
                 </span>
               </div>
               <CardTitle className="text-3xl font-bold text-center">
-                {currentCard.en}
+                {currentCard.rus}
               </CardTitle>
               <CardDescription className="text-lg">
                 Select the correct Hebrew translation
@@ -288,15 +299,15 @@ const Learning = () => {
                 {options.map((option, index) => (
                   <Button
                     key={index}
-                    variant={showAnswer ? 
-                      (option === currentCard.he ? "default" : "outline") : 
+                    variant={showAnswer ?
+                      (option === currentCard.he ? "default" : "outline") :
                       "outline"
                     }
                     size="lg"
                     onClick={() => handleAnswer(option)}
                     disabled={showAnswer}
                     className={`p-6 text-lg ${
-                      showAnswer && option === currentCard.he ? 
+                      showAnswer && option === currentCard.he ?
                       "bg-primary text-primary-foreground" : ""
                     }`}
                   >
@@ -307,8 +318,8 @@ const Learning = () => {
 
               {feedback.type && (
                 <div className={`p-4 rounded-lg text-center font-medium ${
-                  feedback.type === 'correct' 
-                    ? 'bg-primary/10 text-primary border border-primary/20' 
+                  feedback.type === 'correct'
+                    ? 'bg-primary/10 text-primary border border-primary/20'
                     : 'bg-destructive/10 text-destructive border border-destructive/20'
                 }`}>
                   {feedback.message}

@@ -9,6 +9,7 @@ import TypingGame from "./pages/TypingGame";
 import MatchingGame from "./pages/MatchingGame";
 import NotFound from "./pages/NotFound";
 import Home from "./pages/Home";
+import ContactUs from "./pages/ContactUs";
 import { HelmetProvider } from "react-helmet-async";
 import Layout from "@/components/Layout";
 
@@ -28,6 +29,7 @@ const App = () => (
               <Route path="/Quiz" element={<Quiz />} />
               <Route path="/TypingGame" element={<TypingGame />} />
               <Route path="/MatchingGame" element={<MatchingGame />} />
+              <Route path="/ContactUs" element={<ContactUs />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

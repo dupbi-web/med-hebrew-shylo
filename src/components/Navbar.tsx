@@ -8,6 +8,7 @@ const games = [
   { name: "Quiz", path: "/Quiz" },
   { name: "Typing Game", path: "/TypingGame" },
   { name: "Matching Game", path: "/MatchingGame" },
+  { name: "Contact Us", path: "/ContactUs" },
 ];
 
 const Navbar = () => {

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { getMedicalTerms } from "@/cache/medicalTermsCache"; // <-- Use the cache!
 import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet-async";
 
@@ -55,7 +55,6 @@ const MatchingGame = () => {
   useEffect(() => {
     // When windowWidth changes, refetch words and reset game
     if (cards.length > 0) {
-      // Only refetch if game in progress? Or auto-reset? We'll auto-reset here for simplicity
       fetchWords(windowWidth);
     }
   }, [windowWidth]);
@@ -89,16 +88,17 @@ const MatchingGame = () => {
     const visibleCount = getVisibleCardCount(width);
     const pairsNeeded = visibleCount / 2;
 
-    const { data, error } = await supabase
-      .from("medical_terms")
-      .select("id, en, he");
+    // Use cached data instead of Supabase query
+    const allWords = await getMedicalTerms();
+    // Only use words with both en and he and an id
+    const filtered = allWords.filter((w: any) => w.en && w.he && w.id);
 
-    if (error || !data || data.length < pairsNeeded) {
-      console.warn("Not enough words in database or fetch error");
+    if (filtered.length < pairsNeeded) {
+      console.warn("Not enough words in cache for matching game");
       return;
     }
 
-    const selectedWords = shuffleArray(data).slice(0, pairsNeeded);
+    const selectedWords = shuffleArray(filtered).slice(0, pairsNeeded);
     setWords(selectedWords);
 
     setGameOver(false);

@@ -8,6 +8,7 @@ import Flashcard from "@/components/Flashcard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { getMedicalTerms } from "@/cache/medicalTermsCache"; // <-- Use the cache!
 
 type Word = { 
   en: string; 
@@ -25,13 +26,9 @@ function shuffleCopy<T>(arr: T[]): T[] {
   }
   return a;
 }
-const CATEGORIES = [
-  "Anatomy", "Symptom", "Treatment", "Procedure", "Facility", "Measurement", "Injury",
-  "Condition", "Pathogen", "Tool", "Equipment", "General", "Personnel", "Specialty"
-] as const;
-
 const FlashCards = () => {
   const [words, setWords] = useState<Word[]>([]);
+  const [categories, setCategories] = useState<string[]>([]); // <-- dynamic categories
   const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -50,24 +47,23 @@ const FlashCards = () => {
   const current = words[index];
   const isDone = !current && total > 0;
 
-  // Fetch words from Supabase
+  // Fetch words and categories from cache
   const fetchWords = useCallback(async (categoryFilter?: string | null) => {
     setLoading(true);
-    let query = supabase.from("medical_terms").select("en, he, rus, category");
+    const allWords = await getMedicalTerms();
 
+    // Extract unique categories from cached data
+    const uniqueCategories = Array.from(
+      new Set(allWords.map((w: Word) => w.category).filter(Boolean))
+    ) as string[];
+    setCategories(uniqueCategories);
+
+    let filtered = allWords;
     if (categoryFilter) {
-      query = query.eq("category", categoryFilter);
+      filtered = filtered.filter((w: Word) => w.category === categoryFilter);
     }
 
-    const { data, error } = await query.order("created_at", { ascending: true });
-
-    if (error) {
-      toast({ title: "Failed to load words", description: error.message });
-      setLoading(false);
-      return;
-    }
-
-    const mapped = (data ?? []).map((w) => ({
+    const mapped = (filtered ?? []).map((w: Word) => ({
       en: w.en?.trim() || "",
       he: w.he?.trim() || "",
       rus: w.rus?.trim() || "",
@@ -226,69 +222,60 @@ const FlashCards = () => {
       </Helmet>
 
       <div className="container mx-auto max-w-6xl">
-        {/* <header className="text-center mb-12">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent mb-4">
-            Medical Hebrew Flashcards
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Master medical terminology with interactive flashcards. Practice English or Russian to Hebrew translations with intuitive flip animations.
-          </p>
-        </header> */}
-
-      {/* Category Filter */}
-      <div className="mb-6 flex flex-wrap justify-center gap-4">
-        <label className="flex items-center gap-2">
-          <span className="text-muted-foreground text-sm">Filter by Category:</span>
-          <select
-            value={selectedCategory ?? ""}
-            onChange={(e) => setSelectedCategory(e.target.value || null)}
-            className="min-w-[160px] px-3 py-2 bg-background border border-input rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            <option value="">All</option>
-            {CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <div className="mb-4 flex items-center justify-center gap-3 text-sm text-muted-foreground">
-        <span>Card {index + 1} of {total}</span>
-        <span aria-hidden>•</span>
-        <span>Reviewed {reviewed}</span>
-      </div>
-
-      {/* Main Flashcard Display */}
-      {loading ? (
-        <p className="text-center text-muted-foreground">Loading words...</p>
-      ) : isDone ? (
-        <div className="text-center p-10 border rounded shadow-md bg-green-100 text-green-800 font-semibold text-2xl">
-          🎉 DONE! You’ve reached the end.
-          <div className="mt-4">
-            <Button onClick={restart}>Restart</Button>
-          </div>
+        {/* Category Filter */}
+        <div className="mb-6 flex flex-wrap justify-center gap-4">
+          <label className="flex items-center gap-2">
+            <span className="text-muted-foreground text-sm">Filter by Category:</span>
+            <select
+              value={selectedCategory ?? ""}
+              onChange={(e) => setSelectedCategory(e.target.value || null)}
+              className="min-w-[160px] px-3 py-2 bg-background border border-input rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              <option value="">All</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </label>
         </div>
-      ) : current ? (
-        <Flashcard
-          translation={targetLang === "en" ? current.en : current.rus}
-          targetLang={targetLang}
-          he={current.he}
-          flipped={flipped}
-          onToggle={() => setFlipped((f) => !f)}
-        />
-      ) : (
-        <p className="text-center text-muted-foreground">No words yet.</p>
-      )}
 
-      {/* Controls */}
-      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <Button variant={targetLang === "en" ? "default" : "outline"} onClick={() => setTargetLang("en")}>EN→HE</Button>
-        <Button variant={targetLang === "rus" ? "default" : "outline"} onClick={() => setTargetLang("rus")}>RU→HE</Button>
-        <Button variant="secondary" onClick={prev}>Previous</Button>
-        <Button onClick={() => setFlipped((f) => !f)}>{flipped ? "Hide" : "Show"} Answer</Button>
-        <Button variant="secondary" onClick={next}>Next</Button>
-        <Button onClick={shuffle}>Shuffle</Button>
-      </div>
+        <div className="mb-4 flex items-center justify-center gap-3 text-sm text-muted-foreground">
+          <span>Card {index + 1} of {total}</span>
+          <span aria-hidden>•</span>
+          <span>Reviewed {reviewed}</span>
+        </div>
+
+        {/* Main Flashcard Display */}
+        {loading ? (
+          <p className="text-center text-muted-foreground">Loading words...</p>
+        ) : isDone ? (
+          <div className="text-center p-10 border rounded shadow-md bg-green-100 text-green-800 font-semibold text-2xl">
+            🎉 DONE! You’ve reached the end.
+            <div className="mt-4">
+              <Button onClick={restart}>Restart</Button>
+            </div>
+          </div>
+        ) : current ? (
+          <Flashcard
+            translation={targetLang === "en" ? current.en : current.rus}
+            targetLang={targetLang}
+            he={current.he}
+            flipped={flipped}
+            onToggle={() => setFlipped((f) => !f)}
+          />
+        ) : (
+          <p className="text-center text-muted-foreground">No words yet.</p>
+        )}
+
+        {/* Controls */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Button variant={targetLang === "en" ? "default" : "outline"} onClick={() => setTargetLang("en")}>EN→HE</Button>
+          <Button variant={targetLang === "rus" ? "default" : "outline"} onClick={() => setTargetLang("rus")}>RU→HE</Button>
+          <Button variant="secondary" onClick={prev}>Previous</Button>
+          <Button onClick={() => setFlipped((f) => !f)}>{flipped ? "Hide" : "Show"} Answer</Button>
+          <Button variant="secondary" onClick={next}>Next</Button>
+          <Button onClick={shuffle}>Shuffle</Button>
+        </div>
       </div>
     </>
   );

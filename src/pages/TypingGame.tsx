@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { getMedicalTerms } from "@/cache/medicalTermsCache"; // <-- Use the cache!
 import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
@@ -21,7 +21,7 @@ const TypingGame = () => {
   const [running, setRunning] = useState(false);
   const [mode, setMode] = useState<Mode>("EN→HE");
   const [toastMsg, setToastMsg] = useState<{ title: string; description: string; type: "success" | "error" | null } | null>(null);
-  const [showAnswerOnWrong, setShowAnswerOnWrong] = useState(true); // <-- Added state
+  const [showAnswerOnWrong, setShowAnswerOnWrong] = useState(true);
 
   const current = words[currentIndex];
 
@@ -41,12 +41,8 @@ const TypingGame = () => {
   }, [toastMsg]);
 
   const fetchWords = async () => {
-    const { data, error } = await supabase.from("medical_terms").select("en, he, rus");
-    if (error) {
-      setToastMsg({ title: "Error loading words", description: error.message, type: "error" });
-      return;
-    }
-    setWords(data.sort(() => Math.random() - 0.5));
+    const allWords = await getMedicalTerms(); // <-- Use cached data
+    setWords(allWords.sort(() => Math.random() - 0.5));
     setCurrentIndex(0);
     setScore(0);
     setTimeLeft(60);
@@ -164,8 +160,6 @@ const TypingGame = () => {
                     ))}
                   </div>
                 </div>
-
-          
 
                 {/* Game Area */}
                 {current && (

@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
+import { getMedicalTerms } from "@/cache/medicalTermsCache";
 import { BookOpen, Target, Trophy, ArrowLeft } from "lucide-react";
 
 interface Word {
@@ -35,44 +35,32 @@ const Learning = () => {
   const [gameMode, setGameMode] = useState<'categories' | 'playing'>('categories');
   const [showAnswer, setShowAnswer] = useState(false);
 
-  // Fetch categories from supabase
   useEffect(() => {
-    const fetchCategories = async () => {
-      const { data, error } = await supabase.from("medical_terms").select("category");
-      if (error || !data) return;
+    const loadCategories = async () => {
+      const words = await getMedicalTerms();
 
-      // Get unique category names
-      const uniqueCategories = Array.from(new Set(data.map((row: { category: string }) => row.category)));
+      // Group words by category
+      const categoryMap: Record<string, GameCard[]> = {};
+      for (const word of words) {
+        if (!categoryMap[word.category]) categoryMap[word.category] = [];
+        categoryMap[word.category].push({
+          ...word,
+          correctCount: 0,
+          mastered: false
+        });
+      }
 
-      // For each category, fetch its words
-      const fetchAllCategoryWords = async () => {
-        const categoriesArray: Category[] = [];
-        for (const name of uniqueCategories) {
-          const { data: wordsData, error: wordsError } = await supabase
-            .from("medical_terms")
-            .select("en, he, rus, category")
-            .eq("category", name);
+      const categoriesArray: Category[] = Object.entries(categoryMap).map(([name, cards]) => ({
+        name,
+        cards,
+        completed: false,
+        progress: 0
+      }));
 
-          const cards: GameCard[] = (wordsData || []).map((word: Word) => ({
-            ...word,
-            correctCount: 0,
-            mastered: false
-          }));
-
-          categoriesArray.push({
-            name,
-            cards,
-            completed: false,
-            progress: 0
-          });
-        }
-        setCategories(categoriesArray);
-      };
-
-      fetchAllCategoryWords();
+      setCategories(categoriesArray);
     };
 
-    fetchCategories();
+    loadCategories();
   }, []);
 
   const startCategory = (category: Category) => {
@@ -139,7 +127,7 @@ const Learning = () => {
       setCategories(updatedCategories);
       setSelectedCategory({ ...selectedCategory, cards: updatedCards, progress, completed });
 
-      setTimeout(() => nextCard({ ...selectedCategory, cards: updatedCards, progress, completed }), 1000);
+      setTimeout(() => nextCard({ ...selectedCategory, cards: updatedCards, progress, completed }), 1500);
     } else {
       setFeedback({ type: 'incorrect', message: `Incorrect. The correct answer is: ${currentCard.he}` });
 

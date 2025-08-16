@@ -1,15 +1,11 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { getMedicalTerms } from "@/cache/medicalTermsCache"; // <-- Use the cache!
 type Word = { en: string; he: string; rus: string; category?: string | null };
 type Lang = "en" | "rus";
-const CATEGORIES = [
-  "Anatomy", "Symptom", "Treatment", "Procedure", "Facility", "Measurement", "Injury",
-  "Condition", "Pathogen", "Tool", "Equipment", "General", "Personnel", "Specialty"
-] as const;
 
 function shuffleCopy<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -27,6 +23,7 @@ function getRandomDistractors(words: Word[], correct: Word, lang: Lang, count: n
 
 const Quiz = () => {
   const [words, setWords] = useState<Word[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState(0);
@@ -38,20 +35,20 @@ const Quiz = () => {
 
   useEffect(() => {
     const fetchWords = async () => {
-      let query = supabase.from("medical_terms").select("en, he, rus, category");
+      const allWords = await getMedicalTerms();
 
+      // Extract unique categories from cached data
+      const uniqueCategories = Array.from(
+        new Set(allWords.map((w: Word) => w.category).filter(Boolean))
+      ) as string[];
+      setCategories(uniqueCategories);
+
+      let filtered = allWords;
       if (selectedCategory) {
-        query = query.eq("category", selectedCategory);
+        filtered = filtered.filter((w: Word) => w.category === selectedCategory);
       }
 
-      const { data, error } = await query;
-
-      if (error) {
-        toast({ title: "Failed to load words", description: error.message });
-        return;
-      }
-
-      const cleaned = (data ?? []).filter((w) => w.he && w[targetLang]);
+      const cleaned = (filtered ?? []).filter((w) => w.he && w[targetLang]);
       setWords(shuffleCopy(cleaned));
       setCurrentIndex(0);
       setScore(0);
@@ -59,7 +56,7 @@ const Quiz = () => {
     };
 
     fetchWords();
-  }, [selectedCategory]);
+  }, [selectedCategory, targetLang]);
 
   useEffect(() => {
     if (current) {
@@ -67,7 +64,7 @@ const Quiz = () => {
       const opts = shuffleCopy([current[targetLang], ...distractors.map(w => w[targetLang])]);
       setOptions(opts);
     }
-  }, [current, targetLang]);
+  }, [current, targetLang, words]);
 
   const handleSelect = (choice: string) => {
     if (selected) return;
@@ -114,7 +111,7 @@ const Quiz = () => {
                     aria-describedby="category-help"
                   >
                     <option value="">All Categories</option>
-                    {CATEGORIES.map((cat) => (
+                    {categories.map((cat) => (
                       <option key={cat} value={cat}>
                         {cat}
                       </option>
@@ -281,8 +278,6 @@ const Quiz = () => {
               </div>
             </div>
           )}
-
-
         </section>
       </main>
     </>

@@ -69,9 +69,6 @@ export const Flashcard: React.FC<FlashcardProps> = ({ translation, targetLang, h
         >
           <div className="space-y-6 max-w-full">
             <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-              <span className="text-xl">
-                {targetLang === "en" ? "en" : "rus"}
-              </span>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wider">
@@ -97,9 +94,6 @@ export const Flashcard: React.FC<FlashcardProps> = ({ translation, targetLang, h
           }}
         >
           <div className="space-y-6 max-w-full">
-            <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
-              <span className="text-xl">he</span>
-            </div>
             <div>
               <p className="text-sm font-medium text-primary mb-3 uppercase tracking-wider">
                 Hebrew

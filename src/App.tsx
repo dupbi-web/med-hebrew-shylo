@@ -7,6 +7,7 @@ import FlashCards from "./pages/FlashCards";
 import Quiz from "./pages/Quiz";
 import TypingGame from "./pages/TypingGame";
 import MatchingGame from "./pages/MatchingGame";
+import Learning from "./pages/Learning";
 import NotFound from "./pages/NotFound";
 import Home from "./pages/Home";
 import ContactUs from "./pages/ContactUs";
@@ -29,6 +30,7 @@ const App = () => (
               <Route path="/Quiz" element={<Quiz />} />
               <Route path="/TypingGame" element={<TypingGame />} />
               <Route path="/MatchingGame" element={<MatchingGame />} />
+              <Route path="/Learning" element={<Learning />} />
               <Route path="/ContactUs" element={<ContactUs />} />
             </Route>
             <Route path="*" element={<NotFound />} />

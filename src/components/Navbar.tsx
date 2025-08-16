@@ -8,6 +8,7 @@ const games = [
   { name: "Quiz", path: "/Quiz" },
   { name: "Typing Game", path: "/TypingGame" },
   { name: "Matching Game", path: "/MatchingGame" },
+  { name: "Learning", path: "/Learning" },
   { name: "Contact Us", path: "/ContactUs" },
 ];
 

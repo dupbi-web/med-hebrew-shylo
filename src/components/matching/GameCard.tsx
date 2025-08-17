@@ -40,7 +40,7 @@ export const GameCard = ({ card, isSelected, onClick, className }: GameCardProps
         return cn(
           baseStyles,
           // "bg-destructive text-destructive-foreground shadow-lg animate-pulse cursor-pointer"
-          "shadow-lg animate-pulse cursor-pointer"
+          ""
 
         );
       case "empty":

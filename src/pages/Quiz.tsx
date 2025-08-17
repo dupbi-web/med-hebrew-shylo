@@ -151,8 +151,8 @@ const Quiz = () => {
                     className="w-full px-4 py-3 bg-background border border-input rounded-lg text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all"
                     aria-describedby="language-help"
                   >
-                    <option value="en">🇺🇸 English</option>
-                    <option value="rus">🇷🇺 Russian</option>
+                    <option value="en">English</option>
+                    <option value="rus">Russian</option>
                   </select>
                   <p id="language-help" className="text-xs text-muted-foreground mt-2">
                     Choose your preferred translation language

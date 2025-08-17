@@ -1,91 +1,119 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-
-export interface LearningProgressData {
-  category: string;
-  word_en: string;
-  correct_count: number;
-  mastered: boolean;
-}
 
 export const useLearningProgress = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [masteredWords, setMasteredWords] = useState<Set<string>>(new Set());
 
-  const loadProgress = async (): Promise<Record<string, LearningProgressData[]>> => {
-    if (!user) return {};
+  const createWordKey = (category: string, word_en: string) => {
+    return `${category}_${word_en}`;
+  };
+
+  const loadMasteredWords = useCallback(async (): Promise<Set<string>> => {
+    if (!user) return new Set();
     
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('learning_progress')
-        .select('*')
+        .from('user_mastered_words')
+        .select('word_key')
         .eq('user_id', user.id);
 
       if (error) throw error;
 
-      // Group by category
-      const grouped = data.reduce((acc, item) => {
-        if (!acc[item.category]) acc[item.category] = [];
-        acc[item.category].push(item);
-        return acc;
-      }, {} as Record<string, LearningProgressData[]>);
-
-      return grouped;
+      const wordKeys = new Set(data.map(item => item.word_key));
+      setMasteredWords(wordKeys);
+      return wordKeys;
     } catch (error: any) {
-      console.error('Error loading progress:', error);
+      console.error('Error loading mastered words:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to load your learning progress.",
+        description: "Failed to load your progress.",
       });
-      return {};
+      return new Set();
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, toast]);
 
-  const saveProgress = async (category: string, word_en: string, correct_count: number, mastered: boolean) => {
+  const addMasteredWord = useCallback(async (category: string, word_en: string) => {
     if (!user) return;
 
+    const wordKey = createWordKey(category, word_en);
+    
     try {
       const { error } = await supabase
-        .from('learning_progress')
-        .upsert({
+        .from('user_mastered_words')
+        .insert({
           user_id: user.id,
-          category,
-          word_en,
-          correct_count,
-          mastered,
-        }, {
-          onConflict: 'user_id,category,word_en'
+          word_key: wordKey,
         });
 
       if (error) throw error;
+      
+      setMasteredWords(prev => new Set([...prev, wordKey]));
     } catch (error: any) {
-      console.error('Error saving progress:', error);
+      console.error('Error adding mastered word:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to save your progress.",
       });
     }
-  };
+  }, [user, toast]);
 
-  const resetProgress = async () => {
+  const removeMasteredWord = useCallback(async (category: string, word_en: string) => {
+    if (!user) return;
+
+    const wordKey = createWordKey(category, word_en);
+    
+    try {
+      const { error } = await supabase
+        .from('user_mastered_words')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('word_key', wordKey);
+
+      if (error) throw error;
+      
+      setMasteredWords(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(wordKey);
+        return newSet;
+      });
+    } catch (error: any) {
+      console.error('Error removing mastered word:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update your progress.",
+      });
+    }
+  }, [user, toast]);
+
+  const isWordMastered = useCallback((category: string, word_en: string): boolean => {
+    const wordKey = createWordKey(category, word_en);
+    return masteredWords.has(wordKey);
+  }, [masteredWords]);
+
+  const resetProgress = useCallback(async () => {
     if (!user) return;
 
     try {
       const { error } = await supabase
-        .from('learning_progress')
+        .from('user_mastered_words')
         .delete()
         .eq('user_id', user.id);
 
       if (error) throw error;
 
+      setMasteredWords(new Set());
+      
       toast({
         title: "Progress Reset",
         description: "Your learning progress has been reset.",
@@ -98,12 +126,25 @@ export const useLearningProgress = () => {
         description: "Failed to reset progress.",
       });
     }
-  };
+  }, [user, toast]);
+
+  const getMasteredWordsCount = useCallback((category?: string): number => {
+    if (!category) return masteredWords.size;
+    
+    const categoryMastered = Array.from(masteredWords).filter(wordKey => 
+      wordKey.startsWith(`${category}_`)
+    );
+    return categoryMastered.length;
+  }, [masteredWords]);
 
   return {
-    loadProgress,
-    saveProgress,
+    loadMasteredWords,
+    addMasteredWord,
+    removeMasteredWord,
+    isWordMastered,
     resetProgress,
+    getMasteredWordsCount,
+    masteredWords,
     loading
   };
 };

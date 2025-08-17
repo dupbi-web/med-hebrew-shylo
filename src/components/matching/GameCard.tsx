@@ -39,7 +39,9 @@ export const GameCard = ({ card, isSelected, onClick, className }: GameCardProps
       case "wrong":
         return cn(
           baseStyles,
-          "bg-destructive text-destructive-foreground shadow-lg animate-pulse cursor-pointer"
+          // "bg-destructive text-destructive-foreground shadow-lg animate-pulse cursor-pointer"
+          "text-destructive-foreground shadow-lg animate-pulse cursor-pointer"
+
         );
       case "empty":
         return cn(

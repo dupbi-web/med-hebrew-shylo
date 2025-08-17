@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { LogOut, User } from "lucide-react";
 
 const games = [
   { name: "Home", path: "/" },
@@ -15,6 +18,7 @@ const games = [
 const Navbar = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   const toggleMenu = () => setIsMobileMenuOpen((prev) => !prev);
   const closeMenu = () => setIsMobileMenuOpen(false);
@@ -44,7 +48,24 @@ const Navbar = () => {
               </Link>
             ))}
           </nav>
-          <ThemeToggle />
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            {user ? (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <User className="h-4 w-4" />
+                  {user.email}
+                </div>
+                <Button variant="outline" size="sm" onClick={signOut}>
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button asChild variant="outline" size="sm">
+                <Link to="/auth">Sign In</Link>
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Mobile Menu Button */}
@@ -99,6 +120,24 @@ const Navbar = () => {
                 {game.name}
               </Link>
             ))}
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              {user ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <User className="h-4 w-4" />
+                    {user.email}
+                  </div>
+                  <Button variant="outline" size="sm" onClick={signOut} className="w-full">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </div>
+              ) : (
+                <Button asChild variant="outline" size="sm" className="w-full">
+                  <Link to="/auth" onClick={closeMenu}>Sign In</Link>
+                </Button>
+              )}
+            </div>
           </nav>
         </div>
       )}

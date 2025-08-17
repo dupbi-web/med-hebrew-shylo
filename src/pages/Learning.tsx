@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { getMedicalTerms } from "@/cache/medicalTermsCache";
-import { BookOpen, Target, Trophy, ArrowLeft } from "lucide-react";
+import { useLearningProgress } from "@/hooks/useLearningProgress";
+import { useAuth } from "@/hooks/useAuth";
+import { BookOpen, Target, Trophy, ArrowLeft, RotateCcw } from "lucide-react";
 
 interface Word {
   en: string;
@@ -34,34 +36,50 @@ const Learning = () => {
   const [feedback, setFeedback] = useState<{ type: 'correct' | 'incorrect' | null; message: string }>({ type: null, message: '' });
   const [gameMode, setGameMode] = useState<'categories' | 'playing'>('categories');
   const [showAnswer, setShowAnswer] = useState(false);
+  
+  const { user } = useAuth();
+  const { loadProgress, saveProgress, resetProgress, loading: progressLoading } = useLearningProgress();
 
   useEffect(() => {
     const loadCategories = async () => {
       const words = await getMedicalTerms();
+      const savedProgress = await loadProgress();
 
-      // Group words by category
+      // Group words by category and apply saved progress
       const categoryMap: Record<string, GameCard[]> = {};
       for (const word of words) {
         if (!categoryMap[word.category]) categoryMap[word.category] = [];
+        
+        // Check if we have saved progress for this word
+        const wordProgress = savedProgress[word.category]?.find(p => p.word_en === word.en);
+        
         categoryMap[word.category].push({
           ...word,
-          correctCount: 0,
-          mastered: false
+          correctCount: wordProgress?.correct_count || 0,
+          mastered: wordProgress?.mastered || false
         });
       }
 
-      const categoriesArray: Category[] = Object.entries(categoryMap).map(([name, cards]) => ({
-        name,
-        cards,
-        completed: false,
-        progress: 0
-      }));
+      const categoriesArray: Category[] = Object.entries(categoryMap).map(([name, cards]) => {
+        const masteredCount = cards.filter(card => card.mastered).length;
+        const progress = cards.length > 0 ? (masteredCount / cards.length) * 100 : 0;
+        const completed = masteredCount === cards.length && cards.length > 0;
+        
+        return {
+          name,
+          cards,
+          completed,
+          progress
+        };
+      });
 
       setCategories(categoriesArray);
     };
 
-    loadCategories();
-  }, []);
+    if (user) {
+      loadCategories();
+    }
+  }, [user, loadProgress]);
 
   const startCategory = (category: Category) => {
     setSelectedCategory(category);
@@ -94,7 +112,7 @@ const Learning = () => {
     setShowAnswer(false);
   };
 
-  const handleAnswer = (selectedAnswer: string) => {
+  const handleAnswer = async (selectedAnswer: string) => {
     if (!currentCard || !selectedCategory) return;
 
     const isCorrect = selectedAnswer === currentCard.he;
@@ -108,6 +126,9 @@ const Learning = () => {
       if (updatedCard.correctCount >= 2) {
         updatedCard.mastered = true;
       }
+
+      // Save progress to database
+      await saveProgress(selectedCategory.name, currentCard.en, updatedCard.correctCount, updatedCard.mastered);
 
       // Update selected category cards
       const updatedCards = selectedCategory.cards.map(card =>
@@ -131,10 +152,13 @@ const Learning = () => {
     } else {
       setFeedback({ type: 'incorrect', message: `Incorrect. The correct answer is: ${currentCard.he}` });
 
-      // Reset correct count for this card
+      // Reset correct count for this card and save to database
       const updatedCards = selectedCategory.cards.map(card =>
         card.en === currentCard.en ? { ...card, correctCount: 0 } : card
       );
+
+      // Save reset progress to database
+      await saveProgress(selectedCategory.name, currentCard.en, 0, false);
 
       const updatedCategories = categories.map(cat =>
         cat.name === selectedCategory.name
@@ -147,6 +171,30 @@ const Learning = () => {
 
       setTimeout(() => nextCard({ ...selectedCategory, cards: updatedCards }), 2000);
     }
+  };
+
+  const handleResetProgress = async () => {
+    await resetProgress();
+    // Reload categories to reflect reset progress
+    const words = await getMedicalTerms();
+    const categoryMap: Record<string, GameCard[]> = {};
+    for (const word of words) {
+      if (!categoryMap[word.category]) categoryMap[word.category] = [];
+      categoryMap[word.category].push({
+        ...word,
+        correctCount: 0,
+        mastered: false
+      });
+    }
+
+    const categoriesArray: Category[] = Object.entries(categoryMap).map(([name, cards]) => ({
+      name,
+      cards,
+      completed: false,
+      progress: 0
+    }));
+
+    setCategories(categoriesArray);
   };
 
   const completeCategory = (category: Category) => {
@@ -196,6 +244,16 @@ const Learning = () => {
                 </div>
                 <div className="text-sm text-muted-foreground">Categories Complete</div>
               </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleResetProgress}
+                disabled={progressLoading}
+                className="flex items-center gap-2"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Reset Progress
+              </Button>
             </div>
           </header>
 

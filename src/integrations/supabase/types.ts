@@ -14,39 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      learning_progress: {
-        Row: {
-          category: string
-          correct_count: number
-          created_at: string
-          id: string
-          mastered: boolean
-          updated_at: string
-          user_id: string
-          word_en: string
-        }
-        Insert: {
-          category: string
-          correct_count?: number
-          created_at?: string
-          id?: string
-          mastered?: boolean
-          updated_at?: string
-          user_id: string
-          word_en: string
-        }
-        Update: {
-          category?: string
-          correct_count?: number
-          created_at?: string
-          id?: string
-          mastered?: boolean
-          updated_at?: string
-          user_id?: string
-          word_en?: string
-        }
-        Relationships: []
-      }
       medical_terms: {
         Row: {
           category: string | null
@@ -122,6 +89,27 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_mastered_words: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          word_key: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          word_key: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          word_key?: string
         }
         Relationships: []
       }

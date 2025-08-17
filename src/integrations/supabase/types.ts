@@ -7,14 +7,124 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
-      [_ in never]: never
+      learning_progress: {
+        Row: {
+          category: string
+          correct_count: number
+          created_at: string
+          id: string
+          mastered: boolean
+          updated_at: string
+          user_id: string
+          word_en: string
+        }
+        Insert: {
+          category: string
+          correct_count?: number
+          created_at?: string
+          id?: string
+          mastered?: boolean
+          updated_at?: string
+          user_id: string
+          word_en: string
+        }
+        Update: {
+          category?: string
+          correct_count?: number
+          created_at?: string
+          id?: string
+          mastered?: boolean
+          updated_at?: string
+          user_id?: string
+          word_en?: string
+        }
+        Relationships: []
+      }
+      medical_terms: {
+        Row: {
+          category: string | null
+          created_at: string
+          en: string
+          he: string
+          id: number
+          rus: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          en: string
+          he: string
+          id?: number
+          rus?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          en?: string
+          he?: string
+          id?: number
+          rus?: string | null
+        }
+        Relationships: []
+      }
+      medical_terms_new: {
+        Row: {
+          category: string | null
+          created_at: string
+          en: string
+          he: string
+          id: number
+          rus: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          en: string
+          he: string
+          id?: number
+          rus?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          en?: string
+          he?: string
+          id?: number
+          rus?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -39,38 +39,72 @@ const getGridColumns = (width: number) => {
 };
 
 const MatchingGame = () => {
-  const [words, setWords] = useState<Word[]>([]);
+  const [allWords, setAllWords] = useState<Word[]>([]);
+  const [usedWords, setUsedWords] = useState<Set<number>>(new Set());
+  const [currentPair, setCurrentPair] = useState<Word[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
-  const [visibleCards, setVisibleCards] = useState<Card[]>([]);
   const [firstChoice, setFirstChoice] = useState<Card | null>(null);
   const [secondChoice, setSecondChoice] = useState<Card | null>(null);
   const [attempts, setAttempts] = useState(0);
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
+  const [wordsCompleted, setWordsCompleted] = useState(0);
   const [timer, setTimer] = useState(0);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   const intervalRef = useRef<number | null>(null);
 
+  // Load all words on component mount
   useEffect(() => {
-    // When windowWidth changes, refetch words and reset game
-    if (cards.length > 0) {
-      fetchWords(windowWidth);
-    }
-  }, [windowWidth]);
-
-  useEffect(() => {
-    // Listen to window resize for responsive card count
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    initializeGame();
   }, []);
 
+  // Check for game completion
   useEffect(() => {
-    // Update visible cards count and slice cards accordingly
-    const count = getVisibleCardCount(windowWidth);
-    setVisibleCards(cards.slice(0, count));
-  }, [windowWidth, cards]);
+    if (wordsCompleted >= 64) {
+      setGameOver(true);
+      stopTimer();
+    }
+  }, [wordsCompleted]);
+
+  const initializeGame = async () => {
+    const words = await getMedicalTerms();
+    const filtered = words.filter((w: any) => w.en && w.he && w.id).slice(0, 64);
+    setAllWords(filtered);
+    setUsedWords(new Set());
+    setWordsCompleted(0);
+    setScore(0);
+    setAttempts(0);
+    setGameOver(false);
+    loadNewPair(filtered, new Set());
+    startTimer();
+  };
+
+  const loadNewPair = (wordPool: Word[], usedSet: Set<number>) => {
+    const availableWords = wordPool.filter(w => !usedSet.has(w.id));
+    
+    if (availableWords.length < 2) {
+      setGameOver(true);
+      stopTimer();
+      return;
+    }
+
+    const shuffled = shuffleArray(availableWords);
+    const newPair = shuffled.slice(0, 2);
+    setCurrentPair(newPair);
+
+    const newUsedSet = new Set(usedSet);
+    newPair.forEach(word => newUsedSet.add(word.id));
+    setUsedWords(newUsedSet);
+
+    const cardData: Card[] = newPair.flatMap((w) => [
+      { id: w.id * 2, content: w.en, wordId: w.id, matched: false, type: "en" },
+      { id: w.id * 2 + 1, content: w.he, wordId: w.id, matched: false, type: "he" },
+    ]);
+
+    setCards(shuffleArray(cardData));
+    setFirstChoice(null);
+    setSecondChoice(null);
+  };
 
   const startTimer = () => {
     setTimer(0);
@@ -84,38 +118,16 @@ const MatchingGame = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
   };
 
-  const fetchWords = async (width: number) => {
-    const visibleCount = getVisibleCardCount(width);
-    const pairsNeeded = visibleCount / 2;
-
-    // Use cached data instead of Supabase query
-    const allWords = await getMedicalTerms();
-    // Only use words with both en and he and an id
-    const filtered = allWords.filter((w: any) => w.en && w.he && w.id);
-
-    if (filtered.length < pairsNeeded) {
-      console.warn("Not enough words in cache for matching game");
-      return;
-    }
-
-    const selectedWords = shuffleArray(filtered).slice(0, pairsNeeded);
-    setWords(selectedWords);
-
-    setGameOver(false);
-    setAttempts(0);
-    setScore(0);
-    setFirstChoice(null);
-    setSecondChoice(null);
-
-    const cardData: Card[] = selectedWords.flatMap((w) => [
-      { id: w.id * 2, content: w.en, wordId: w.id, matched: false, type: "en" },
-      { id: w.id * 2 + 1, content: w.he, wordId: w.id, matched: false, type: "he" },
-    ]);
-
-    const shuffled = shuffleArray(cardData);
-    setCards(shuffled);
-    setVisibleCards(shuffled.slice(0, visibleCount));
-    startTimer();
+  const handleCorrectMatch = () => {
+    setScore((s) => s + 10);
+    setWordsCompleted((w) => w + 1);
+    
+    setTimeout(() => {
+      // Load new pair after correct match
+      if (wordsCompleted + 1 < 64) {
+        loadNewPair(allWords, usedWords);
+      }
+    }, 1000);
   };
 
   const handleCardClick = (card: Card) => {
@@ -134,33 +146,37 @@ const MatchingGame = () => {
       setAttempts((a) => a + 1);
 
       if (firstChoice.wordId === card.wordId && firstChoice.type !== card.type) {
+        // Correct match
         setCards((prev) =>
           prev.map((c) =>
             c.wordId === card.wordId ? { ...c, matched: true, type: "disappear" } : c
           )
         );
-        setScore((s) => s + 10);
+        handleCorrectMatch();
 
         setTimeout(() => {
-          setCards((prev) =>
-            prev.map((c) =>
-              c.type === "disappear" ? { ...c, content: "", type: "empty" } : c
-            )
-          );
           resetChoices();
-        }, 250);
+          // Load new pair after match if more words available
+          if (wordsCompleted + 1 < 64) {
+            loadNewPair(allWords, usedWords);
+          } else {
+            setGameOver(true);
+            stopTimer();
+          }
+        }, 1000);
       } else {
+        // Wrong match
         setFirstChoice({ ...firstChoice, type: "wrong" });
         setSecondChoice({ ...card, type: "wrong" });
 
         setTimeout(() => {
           setCards((prev) =>
             prev.map((c) =>
-              c.type === "wrong" ? { ...c, type: c.matched ? "en" : c.type } : c
+              c.type === "wrong" ? { ...c, type: c.wordId === firstChoice.wordId || c.wordId === card.wordId ? (c.content === firstChoice.content ? firstChoice.type.includes("en") ? "en" : "he" : card.type.includes("en") ? "en" : "he") : c.type } : c
             )
           );
           resetChoices();
-        }, 300);
+        }, 1000);
       }
     }
   };
@@ -169,13 +185,6 @@ const MatchingGame = () => {
     setFirstChoice(null);
     setSecondChoice(null);
   };
-
-  useEffect(() => {
-    if (cards.length && cards.every((c) => c.type === "empty")) {
-      setGameOver(true);
-      stopTimer();
-    }
-  }, [cards]);
 
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -187,120 +196,111 @@ const MatchingGame = () => {
     return `${minutes}:${seconds}:${milliseconds}`;
   };
 
-  const gridColumns = getGridColumns(windowWidth);
-
   return (
     <>
       <Helmet>
-        <title>Matching Game</title>
-        <meta name="description" content="Test your knowledge of medical Hebrew with multiple choice questions." />
+        <title>64-Word Matching Challenge</title>
+        <meta name="description" content="Challenge yourself with 64 medical terms in Hebrew-English matching pairs." />
       </Helmet>
       <main className="container mx-auto max-w-6xl">
-
         <section className="container max-w-5xl text-center w-full">
-
-          {cards.length === 0 && (
+          {allWords.length === 0 ? (
             <section className="container max-w-5xl text-center w-full">
               <header className="mb-8 sm:mb-10">
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
-                  Matching Game
+                  64-Word Matching Challenge
                 </h1>
                 <p className="mt-2 sm:mt-3 text-base sm:text-lg max-w-xl mx-auto tracking-tight text-foreground">
-                  Match English words to their Hebrew translations
+                  Match English words to their Hebrew translations. Complete all 64 word pairs!
                 </p>
               </header>
               <Button
-                onClick={() => fetchWords(windowWidth)}
+                onClick={initializeGame}
                 className="px-6 py-2 sm:px-8 sm:py-3 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition"
               >
-                Start New Game
+                Start 64-Word Challenge
               </Button>
             </section>
-          )}
-
-          {gameOver && (
+          ) : gameOver ? (
             <div className="mt-6 text-xl font-bold text-green-700">
-              🎉 Game Over! You matched all pairs.
+              🎉 Congratulations! You completed all 64 words!
+              <p className="text-lg mt-2">Final Score: {score} | Total Attempts: {attempts} | Time: {formatTime(timer)}</p>
               <div className="mt-4">
                 <Button
-                  onClick={() => fetchWords(windowWidth)}
+                  onClick={initializeGame}
                   className="px-6 py-2 sm:px-8 sm:py-3 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition"
                 >
-                  Reset Game
+                  Play Again
                 </Button>
               </div>
             </div>
-          )}
-
-          {cards.length > 0 && (
-            <p className="mt-6 text-lg font-semibold tracking-tight text-foreground">
-              Score: {score} | Attempts: {attempts} | Time: {formatTime(timer)}
-            </p>
-          )}
-
-          <div
-            className="grid gap-4 mt-8 max-w-5xl mx-auto w-full px-2 sm:px-4 "
-            style={{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }}
-          >
-            {visibleCards.map((card) => {
-              const isSelected =
-                firstChoice?.id === card.id || secondChoice?.id === card.id;
-
-              const baseStyle =
-                "p-4 sm:p-6 text-base sm:text-xl flex items-center justify-center h-24 sm:h-32 rounded-lg cursor-pointer border transition-all duration-300 select-none";
-
-              let bgColor = "";
-              if (card.type === "wrong")
-                bgColor = "bg-red-300 text-white font-bold shadow-lg";
-              else if (card.type === "empty")
-                bgColor = "bg-white-200 border-dashed cursor-default";
-              else if (card.matched)
-                bgColor = "bg-gray-100 dark:bg-gray-600 text-white font-bold shadow-md";
-              else if (isSelected) bgColor = "bg-gray-300 dark:bg-gray-600 text-black font-semibold shadow ";
-              else bgColor = "bg-white text-black dark:bg-gray-800 dark:text-white shadow-sm";
-
-              return (
-                <div
-                  key={card.id}
-                  onClick={() => handleCardClick(card)}
-                  className={`${baseStyle} ${bgColor}`}
-                  style={{
-                    wordBreak: "break-word",
-                    overflowWrap: "anywhere",
-                    userSelect: "none",
-                    touchAction: "manipulation",
-                  }}
-                  aria-label={
-                    card.matched ? "Matched card" : `Card with word ${card.content}`
-                  }
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      handleCardClick(card);
-                    }
-                  }}
-                >
-                  {card.content}
+          ) : (
+            <>
+              <div className="mb-6">
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-2">
+                  64-Word Challenge
+                </h1>
+                <div className="flex justify-center gap-6 text-sm md:text-base">
+                  <span>Progress: {wordsCompleted}/64 pairs</span>
+                  <span>Score: {score}</span>
+                  <span>Attempts: {attempts}</span>
+                  <span>Time: {formatTime(timer)}</span>
                 </div>
-              );
-            })}
-          </div>
+                <div className="w-full bg-muted rounded-full h-2 mt-3">
+                  <div 
+                    className="bg-primary h-2 rounded-full transition-all duration-300" 
+                    style={{ width: `${(wordsCompleted / 64) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
+                {cards.map((card) => {
+                  const isSelected = firstChoice?.id === card.id || secondChoice?.id === card.id;
+                  
+                  let bgColor = "bg-card hover:bg-accent border-border";
+                  if (card.type === "wrong") {
+                    bgColor = "bg-destructive/20 border-destructive";
+                  } else if (card.matched) {
+                    bgColor = "bg-primary/20 border-primary";
+                  } else if (isSelected) {
+                    bgColor = "bg-primary/10 border-primary";
+                  }
+
+                  return (
+                    <div
+                      key={card.id}
+                      onClick={() => handleCardClick(card)}
+                      className={`
+                        p-4 sm:p-6 text-base sm:text-lg flex items-center justify-center 
+                        h-20 sm:h-24 rounded-lg cursor-pointer border-2 transition-all 
+                        duration-200 select-none font-medium ${bgColor}
+                      `}
+                      style={{
+                        wordBreak: "break-word",
+                        overflowWrap: "anywhere",
+                        userSelect: "none",
+                        touchAction: "manipulation",
+                      }}
+                      aria-label={`Card with word ${card.content}`}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleCardClick(card);
+                        }
+                      }}
+                    >
+                      {card.content}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </section>
       </main>
-      <style>
-        {`
-          @keyframes disappear {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.3); opacity: 1; }
-            100% { transform: scale(0); opacity: 0; }
-          }
-          .animate-disappear {
-            animation: disappear 0.25s ease-out forwards;
-          }
-        `}
-      </style>
     </>
   );
 };

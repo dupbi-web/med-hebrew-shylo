@@ -438,23 +438,42 @@ export const useMatchingGame = () => {
     );
   }, []);
 
-  const initializeGame = useCallback(async () => {
-    const pool = await loadWordPool();
-    if (pool.length === 0) return;
+const initializeGame = useCallback(async () => {
+  const pool = await loadWordPool();
+  if (pool.length === 0) return;
 
-    const visibleCount = getVisibleCardCount(windowWidth);
-    const pairsNeeded = Math.floor(visibleCount / 2);
-    const initialWords = getRandomUnusedWords(pairsNeeded);
-    const cards = createCardsFromWords(initialWords);
+  // Reset used words set for a fresh start
+  setUsedWords(new Set());
 
-    setCurrentCards(cards);
-    setUsedWords(new Set(initialWords.map(w => w.id)));
-    setStats({ score: 0, attempts: 0, wordsMatched: 0, timeElapsed: 0, accuracy: 0 });
-    setTimeRemaining(GAME_DURATION);
-    setFirstChoice(null);
-    setSecondChoice(null);
-    setGameState("playing");
-  }, [windowWidth, loadWordPool, getRandomUnusedWords, createCardsFromWords]);
+  // Calculate how many pairs needed based on current window width
+  const visibleCount = getVisibleCardCount(windowWidth);
+  const pairsNeeded = Math.floor(visibleCount / 2);
+
+  // Pick random words from the freshly loaded pool (not from state wordPool)
+  const availableWords = pool.filter(word => true); // all words are unused at start
+  const initialWords = shuffleArray(availableWords).slice(0, pairsNeeded);
+
+  if (initialWords.length === 0) return;
+
+  // Create cards from these words
+  const cards = createCardsFromWords(initialWords);
+  setCurrentCards(cards);
+  setUsedWords(new Set(initialWords.map(w => w.id)));
+
+  // Reset stats and time
+  setStats({
+    score: 0,
+    attempts: 0,
+    wordsMatched: 0,
+    timeElapsed: 0,
+    accuracy: 0,
+  });
+  setTimeRemaining(GAME_DURATION);
+  setFirstChoice(null);
+  setSecondChoice(null);
+  setGameState("playing");
+}, [windowWidth, loadWordPool, createCardsFromWords]);
+
 
   const replaceMatchedCards = useCallback((matchedWordId: number) => {
     const newWords = getRandomUnusedWords(2);
@@ -600,7 +619,7 @@ export const useMatchingGame = () => {
 
   return {
     gameState,
-    currentCards: currentCards.slice(0, getVisibleCardCount(windowWidth)),
+    currentCards,  // <-- no slicing here
     firstChoice,
     secondChoice,
     stats,
@@ -610,6 +629,6 @@ export const useMatchingGame = () => {
     initializeGame,
     handleCardClick,
     restartGame,
-    gridColumns: windowWidth >= 1024 ? 4 : windowWidth >= 640 ? 3 : 2
+    gridColumns: windowWidth >= 1024 ? 4 : windowWidth >= 640 ? 3 : 2,
   };
 };

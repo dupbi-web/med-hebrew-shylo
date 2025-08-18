@@ -528,37 +528,28 @@ const initializeGame = useCallback(async () => {
 const replaceMatchedCards = useCallback((matchedWordId: number) => {
   const newWords = getRandomUnusedWords(1);
 
-  setCurrentCards(prev => {
-    // Find indices of matched cards
-    const matchedIndices = prev
-      .map((card, idx) => (card.wordId === matchedWordId ? idx : -1))
-      .filter(idx => idx !== -1);
+setCurrentCards(prev => {
+  const matchedIndices = prev
+    .map((card, idx) => (card.wordId === matchedWordId ? idx : -1))
+    .filter(idx => idx !== -1);
 
-    if (matchedIndices.length === 0) return prev; // Safety check
+  if (matchedIndices.length === 0) return prev;
 
-    const insertIndex = Math.min(...matchedIndices);
+  // Remove matched cards
+  const filtered = prev.filter(card => card.wordId !== matchedWordId);
 
-    if (newWords.length > 0) {
-      const newCards = createCardsFromWords(newWords);
+  // Pick a random insert position in the filtered array
+  const insertIndex = Math.floor(Math.random() * (filtered.length + 1));
 
-      // Remove matched cards
-      const filtered = prev.filter(card => card.wordId !== matchedWordId);
+  const newCards = createCardsFromWords(newWords);
 
-      // Insert new cards at the matched cards' position
-      return [
-        ...filtered.slice(0, insertIndex),
-        ...newCards,
-        ...filtered.slice(insertIndex)
-      ];
-    } else {
-      // No new words: mark matched cards empty
-      return prev.map(card =>
-        card.wordId === matchedWordId
-          ? { ...card, content: "", type: "empty" as const }
-          : card
-      );
-    }
-  });
+  return [
+    ...filtered.slice(0, insertIndex),
+    ...newCards,
+    ...filtered.slice(insertIndex),
+  ];
+});
+
 
   if (newWords.length > 0) {
     setUsedWords(prev => new Set([...prev, ...newWords.map(w => w.id)]));

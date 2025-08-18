@@ -155,7 +155,7 @@ const Learning = () => {
         const progress = (masteredCount / updatedCards.length) * 100;
         const completed = masteredCount === updatedCards.length;
 
-        const updatedCategory = { ...selectedCategory, cards: updatedCards, progress, completed };
+        const  = { ...selectedCategory, cards: updatedCards, progress, completed };
         const updatedCategories = categories.map(cat =>
           cat.name === selectedCategory.name ? updatedCategory : cat
         );
@@ -237,14 +237,26 @@ const Learning = () => {
     setCategories(categoriesArray);
   };
 
-  const completeCategory = (category: Category) => {
-    setFeedback({ type: 'correct', message: `🎉 Category "${category.name}" completed! All words mastered!` });
-    setTimeout(() => {
-      setGameMode('categories');
-      setSelectedCategory(null);
-      setCurrentCard(null);
-    }, 3000);
-  };
+  // const completeCategory = (category: Category) => {
+  //   setFeedback({ type: 'correct', message: `🎉 Category "${category.name}" completed! All words mastered!` });
+  //   setTimeout(() => {
+  //     setGameMode('categories');
+  //     setSelectedCategory(null);
+  //     setCurrentCard(null);
+  //   }, 3000);
+  // };
+
+  const completeCategory = async (category: Category) => {
+  setFeedback({ type: 'correct', message: `🎉 Category "${category.name}" completed! All words mastered!` });
+
+  await syncProgressToDB(); // ✅ Save to Supabase now
+
+  setTimeout(() => {
+    setGameMode('categories');
+    setSelectedCategory(null);
+    setCurrentCard(null);
+  }, 3000);
+};
 
   const backToCategories = () => {
     setGameMode('categories');

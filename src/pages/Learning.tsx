@@ -45,7 +45,7 @@ const Learning = () => {
     addMasteredWord,
     removeMasteredWord,
     isWordMastered,
-    resetProgress,
+    // resetProgress,
     getMasteredWordsCount,
     loading: progressLoading
   } = useLearningProgress();
@@ -213,7 +213,7 @@ const Learning = () => {
   };
 
   const handleResetProgress = async () => {
-    await resetProgress();
+    // await resetProgress();
     setInMemoryCorrectCounts({});
 
     const words = await getMedicalTerms();
@@ -282,10 +282,10 @@ const Learning = () => {
                 </div>
                 <div className="text-sm text-muted-foreground">Categories Complete</div>
               </div>
-              <Button variant="outline" size="sm" onClick={handleResetProgress} disabled={progressLoading} className="flex items-center gap-2">
+{/*               <Button variant="outline" size="sm" onClick={handleResetProgress} disabled={progressLoading} className="flex items-center gap-2">
                 <RotateCcw className="h-4 w-4" />
                 Reset Progress
-              </Button>
+              </Button> */}
             </div>
           </header>
 

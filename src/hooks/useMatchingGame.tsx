@@ -525,33 +525,46 @@ const initializeGame = useCallback(async () => {
       }, 300);
     }
   }, [getRandomUnusedWords, createCardsFromWords, wordPool]); */}
-    const replaceMatchedCards = useCallback((matchedWordId: number) => {
-  // Get only 1 new word pair (2 cards) instead of 2 pairs (4 cards)
+const replaceMatchedCards = useCallback((matchedWordId: number) => {
   const newWords = getRandomUnusedWords(1);
 
-  if (newWords.length > 0) {
-    const newCards = createCardsFromWords(newWords);
+  setCurrentCards(prev => {
+    // Find indices of matched cards
+    const matchedIndices = prev
+      .map((card, idx) => (card.wordId === matchedWordId ? idx : -1))
+      .filter(idx => idx !== -1);
 
-    setCurrentCards(prev => {
-      // Remove the matched cards immediately
+    if (matchedIndices.length === 0) return prev; // Safety check
+
+    const insertIndex = Math.min(...matchedIndices);
+
+    if (newWords.length > 0) {
+      const newCards = createCardsFromWords(newWords);
+
+      // Remove matched cards
       const filtered = prev.filter(card => card.wordId !== matchedWordId);
 
-      // Add the new cards at the end
-      return [...filtered, ...newCards];
-    });
-
-    setUsedWords(prev => new Set([...prev, ...newWords.map(w => w.id)]));
-  } else {
-    // No more words, just remove matched cards by clearing their content & marking empty
-    setCurrentCards(prev =>
-      prev.map(card =>
+      // Insert new cards at the matched cards' position
+      return [
+        ...filtered.slice(0, insertIndex),
+        ...newCards,
+        ...filtered.slice(insertIndex)
+      ];
+    } else {
+      // No new words: mark matched cards empty
+      return prev.map(card =>
         card.wordId === matchedWordId
           ? { ...card, content: "", type: "empty" as const }
           : card
-      )
-    );
+      );
+    }
+  });
+
+  if (newWords.length > 0) {
+    setUsedWords(prev => new Set([...prev, ...newWords.map(w => w.id)]));
   }
 }, [getRandomUnusedWords, createCardsFromWords]);
+
 
 
   const handleCardClick = useCallback((card: Card) => {

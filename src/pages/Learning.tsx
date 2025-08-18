@@ -412,7 +412,13 @@ import { Badge } from "@/components/ui/badge";
 import { getMedicalTerms, clearMedicalTermsCache } from "@/cache/medicalTermsCache";
 import { useLearningProgress } from "@/hooks/useLearningProgress";
 import { useAuth } from "@/hooks/useAuth";
-import { BookOpen, Target, Trophy, ArrowLeft, RotateCcw } from "lucide-react";
+import {
+  BookOpen,
+  Target,
+  Trophy,
+  ArrowLeft,
+  RotateCcw,
+} from "lucide-react";
 
 interface Word {
   en: string;
@@ -436,13 +442,22 @@ interface Category {
 const Learning = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [allWords, setAllWords] = useState<Word[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null
+  );
   const [currentCard, setCurrentCard] = useState<GameCard | null>(null);
   const [options, setOptions] = useState<string[]>([]);
-  const [feedback, setFeedback] = useState<{ type: 'correct' | 'incorrect' | null; message: string }>({ type: null, message: '' });
-  const [gameMode, setGameMode] = useState<'categories' | 'playing'>('categories');
+  const [feedback, setFeedback] = useState<{
+    type: "correct" | "incorrect" | null;
+    message: string;
+  }>({ type: null, message: "" });
+  const [gameMode, setGameMode] = useState<"categories" | "playing">(
+    "categories"
+  );
   const [showAnswer, setShowAnswer] = useState(false);
-  const [inMemoryCorrectCounts, setInMemoryCorrectCounts] = useState<Record<string, number>>({});
+  const [inMemoryCorrectCounts, setInMemoryCorrectCounts] = useState<
+    Record<string, number>
+  >({});
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
   const { user } = useAuth();
@@ -455,377 +470,400 @@ const Learning = () => {
     loading: progressLoading,
   } = useLearningProgress();
 
-  // Load terms and progress once on user login or reset
   useEffect(() => {
-    if (!user) return;
-
-    const loadData = async () => {
+    const loadCategories = async () => {
       const words = await getMedicalTerms();
       setAllWords(words);
 
       await loadMasteredWords();
 
-      // Build map for mastered words based on isWordMastered hook
+      // Build mastered map once
       const masteredMap: Record<string, boolean> = {};
-      words.forEach(word => {
+      for (const word of words) {
         const key = `${word.category}_${word.en}`;
         masteredMap[key] = isWordMastered(word.category, word.en);
-      });
+      }
 
-      // Build categories with cards having mastered + correctCount states from memory
+      // Build categories with cards
       const categoryMap: Record<string, GameCard[]> = {};
-      words.forEach(word => {
+      for (const word of words) {
         if (!categoryMap[word.category]) categoryMap[word.category] = [];
 
-        const key = `${word.category}_${word.en}`;
+        const wordKey = `${word.category}_${word.en}`;
+        const mastered = masteredMap[wordKey];
+
         categoryMap[word.category].push({
           ...word,
-          correctCount: inMemoryCorrectCounts[key] || 0,
-          mastered: masteredMap[key] || false,
+          correctCount: inMemoryCorrectCounts[wordKey] || 0,
+          mastered,
         });
-      });
+      }
 
-      // Convert to array of categories with progress
-      const categoriesArray: Category[] = Object.entries(categoryMap).map(([name, cards]) => {
-        const masteredCount = cards.filter(card => card.mastered).length;
-        const progress = cards.length > 0 ? (masteredCount / cards.length) * 100 : 0;
-        const completed = masteredCount === cards.length && cards.length > 0;
-        return {
-          name,
-          cards,
-          completed,
-          progress,
-        };
-      });
+      // Create categories array with progress & completion
+      const categoriesArray: Category[] = Object.entries(categoryMap).map(
+        ([name, cards]) => {
+          const masteredCount = cards.filter((card) => card.mastered).length;
+          const progress = cards.length
+            ? (masteredCount / cards.length) * 100
+            : 0;
+          const completed = masteredCount === cards.length && cards.length > 0;
+
+          return {
+            name,
+            cards,
+            completed,
+            progress,
+          };
+        }
+      );
 
       setCategories(categoriesArray);
     };
 
-    loadData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+    if (user) {
+      loadCategories();
+    }
+    // We only want to reload if user changes or inMemoryCorrectCounts changes
+  }, [user, loadMasteredWords, isWordMastered, inMemoryCorrectCounts]);
 
-  // Start playing a category
   const startCategory = (category: Category) => {
     setSelectedCategory(category);
-    setGameMode('playing');
+    setGameMode("playing");
     nextCard(category);
   };
 
-  // Show next card in category
   const nextCard = (category: Category) => {
-    const unmastered = category.cards.filter(card => !card.mastered);
+    const unmastered = category.cards.filter((card) => !card.mastered);
     if (unmastered.length === 0) {
       completeCategory(category);
       return;
     }
 
-    const randomCard = unmastered[Math.floor(Math.random() * unmastered.length)];
+    const randomCard =
+      unmastered[Math.floor(Math.random() * unmastered.length)];
     setCurrentCard(randomCard);
 
     const correctAnswer = randomCard.he;
-    // Pick 3 wrong options shuffled
     const wrongAnswers = allWords
-      .filter(word => word.he !== correctAnswer)
-      .map(word => word.he)
+      .filter((word) => word.he !== correctAnswer)
+      .map((word) => word.he)
       .sort(() => Math.random() - 0.5)
       .slice(0, 3);
 
-    const allOptions = [correctAnswer, ...wrongAnswers].sort(() => Math.random() - 0.5);
+    const allOptions = [correctAnswer, ...wrongAnswers].sort(
+      () => Math.random() - 0.5
+    );
     setOptions(allOptions);
-
-    setFeedback({ type: null, message: '' });
+    setFeedback({ type: null, message: "" });
     setShowAnswer(false);
     setSelectedOption(null);
   };
 
-  // Handle user answer selection
   const handleAnswer = async (selectedAnswer: string) => {
     if (!currentCard || !selectedCategory) return;
 
     setSelectedOption(selectedAnswer);
+    const isCorrect = selectedAnswer === currentCard.he;
     setShowAnswer(true);
 
     const wordKey = `${currentCard.category}_${currentCard.en}`;
-    const isCorrect = selectedAnswer === currentCard.he;
 
     if (isCorrect) {
-      setFeedback({ type: 'correct', message: 'Correct! Well done!' });
+      setFeedback({ type: "correct", message: "Correct! Well done!" });
 
       const newCorrectCount = (inMemoryCorrectCounts[wordKey] || 0) + 1;
-      setInMemoryCorrectCounts(prev => ({
+      setInMemoryCorrectCounts((prev) => ({
         ...prev,
         [wordKey]: newCorrectCount,
       }));
 
-      // When correctCount reaches 2, mark as mastered and persist to DB
-      if (newCorrectCount >= 2 && !currentCard.mastered) {
+      if (newCorrectCount >= 2) {
         await addMasteredWord(currentCard.category, currentCard.en);
 
-        updateCardMastery(selectedCategory, currentCard.en, true, newCorrectCount);
+        // Update current category with mastery
+        const updatedCards = selectedCategory.cards.map((card) =>
+          card.en === currentCard.en
+            ? { ...card, mastered: true, correctCount: newCorrectCount }
+            : card
+        );
+
+        const masteredCount = updatedCards.filter((card) => card.mastered)
+          .length;
+        const progress = (masteredCount / updatedCards.length) * 100;
+        const completed = masteredCount === updatedCards.length;
+
+        const updatedCategory = {
+          ...selectedCategory,
+          cards: updatedCards,
+          progress,
+          completed,
+        };
+
+        const updatedCategories = categories.map((cat) =>
+          cat.name === selectedCategory.name ? updatedCategory : cat
+        );
+
+        setCategories(updatedCategories);
+        setSelectedCategory(updatedCategory);
+
+        setTimeout(() => nextCard(updatedCategory), 1500);
       } else {
-        // Just update correctCount locally
-        updateCardMastery(selectedCategory, currentCard.en, currentCard.mastered, newCorrectCount);
+        // Update correct count but not mastered yet
+        const updatedCards = selectedCategory.cards.map((card) =>
+          card.en === currentCard.en
+            ? { ...card, correctCount: newCorrectCount }
+            : card
+        );
+
+        const updatedCategory = {
+          ...selectedCategory,
+          cards: updatedCards,
+        };
+
+        setSelectedCategory(updatedCategory);
+
+        setTimeout(() => nextCard(updatedCategory), 1500);
       }
-
-      // After short delay, show next card
-      setTimeout(() => nextCard(selectedCategory), 1500);
-
     } else {
-      setFeedback({ type: 'incorrect', message: `Incorrect. The correct answer is: ${currentCard.he}` });
+      setFeedback({
+        type: "incorrect",
+        message: `Incorrect. The correct answer is: ${currentCard.he}`,
+      });
 
-      setInMemoryCorrectCounts(prev => ({
+      setInMemoryCorrectCounts((prev) => ({
         ...prev,
         [wordKey]: 0,
       }));
 
-      // If previously mastered, remove mastery in DB
       if (currentCard.mastered) {
         await removeMasteredWord(currentCard.category, currentCard.en);
 
-        updateCardMastery(selectedCategory, currentCard.en, false, 0, false);
+        const updatedCards = selectedCategory.cards.map((card) =>
+          card.en === currentCard.en
+            ? { ...card, mastered: false, correctCount: 0 }
+            : card
+        );
+
+        const masteredCount = updatedCards.filter((card) => card.mastered)
+          .length;
+        const progress = (masteredCount / updatedCards.length) * 100;
+
+        const updatedCategory = {
+          ...selectedCategory,
+          cards: updatedCards,
+          progress,
+          completed: false,
+        };
+
+        const updatedCategories = categories.map((cat) =>
+          cat.name === selectedCategory.name ? updatedCategory : cat
+        );
+
+        setCategories(updatedCategories);
+        setSelectedCategory(updatedCategory);
       } else {
-        // Reset correctCount locally
-        updateCardMastery(selectedCategory, currentCard.en, false, 0, false);
+        // Just reset correctCount for that card
+        const updatedCards = selectedCategory.cards.map((card) =>
+          card.en === currentCard.en ? { ...card, correctCount: 0 } : card
+        );
+
+        const updatedCategory = {
+          ...selectedCategory,
+          cards: updatedCards,
+        };
+        setSelectedCategory(updatedCategory);
       }
 
       setTimeout(() => nextCard(selectedCategory), 2000);
     }
   };
 
-  // Helper to update card mastery and category progress in local state
-  const updateCardMastery = (
-    category: Category,
-    en: string,
-    mastered: boolean,
-    correctCount: number,
-    recalcCompleted = true
-  ) => {
-    const updatedCards = category.cards.map(card =>
-      card.en === en ? { ...card, mastered, correctCount } : card
-    );
-
-    const masteredCount = updatedCards.filter(card => card.mastered).length;
-    const progress = (masteredCount / updatedCards.length) * 100;
-    const completed = recalcCompleted ? masteredCount === updatedCards.length : category.completed;
-
-    const updatedCategory = { ...category, cards: updatedCards, progress, completed };
-    setSelectedCategory(updatedCategory);
-
-    const updatedCategories = categories.map(cat =>
-      cat.name === updatedCategory.name ? updatedCategory : cat
-    );
-    setCategories(updatedCategories);
-  };
-
-  // Reset all progress and clear cache
   const handleResetProgress = async () => {
-    await resetProgress(); // clear DB progress
-    clearMedicalTermsCache(); // clear cache
-
+    await resetProgress();
     setInMemoryCorrectCounts({});
-    setSelectedOption(null);
-    setCurrentCard(null);
-    setSelectedCategory(null);
-    setGameMode('categories');
-    setFeedback({ type: null, message: '' });
+    clearMedicalTermsCache();
 
     const words = await getMedicalTerms();
-    setAllWords(words);
 
-    // Reset all categories/cards with no mastery, no correctCount
     const categoryMap: Record<string, GameCard[]> = {};
-    words.forEach(word => {
+    for (const word of words) {
       if (!categoryMap[word.category]) categoryMap[word.category] = [];
       categoryMap[word.category].push({
         ...word,
         correctCount: 0,
         mastered: false,
       });
-    });
+    }
 
-    const categoriesArray: Category[] = Object.entries(categoryMap).map(([name, cards]) => ({
-      name,
-      cards,
-      completed: false,
-      progress: 0,
-    }));
+    const categoriesArray: Category[] = Object.entries(categoryMap).map(
+      ([name, cards]) => ({
+        name,
+        cards,
+        completed: false,
+        progress: 0,
+      })
+    );
 
     setCategories(categoriesArray);
-  };
-
-  const completeCategory = (category: Category) => {
-    setFeedback({ type: 'correct', message: `🎉 Category "${category.name}" completed! All words mastered!` });
-    setTimeout(() => {
-      setGameMode('categories');
-      setSelectedCategory(null);
-      setCurrentCard(null);
-      setFeedback({ type: null, message: '' });
-    }, 3000);
-  };
-
-  const backToCategories = () => {
-    setGameMode('categories');
     setSelectedCategory(null);
     setCurrentCard(null);
-    setFeedback({ type: null, message: '' });
+    setGameMode("categories");
+    setFeedback({ type: null, message: "" });
     setSelectedOption(null);
   };
 
-  const overallProgress =
-    categories.length > 0
-      ? categories.reduce((sum, cat) => sum + cat.progress, 0) / categories.length
-      : 0;
+  const completeCategory = (category: Category) => {
+    alert(`Category "${category.name}" completed! Well done!`);
+    setGameMode("categories");
+    setSelectedCategory(null);
+    setCurrentCard(null);
+    setFeedback({ type: null, message: "" });
+    setSelectedOption(null);
+  };
 
-  // --- Render ---
+  return (
+    <>
+      <Helmet>
+        <title>Learning Module</title>
+      </Helmet>
 
-  if (gameMode === "categories") {
-    return (
-      <>
-        <Helmet>
-          <title>Learning - Medical Terms Game</title>
-        </Helmet>
-        <div className="container mx-auto max-w-6xl space-y-8">
-          <header className="text-center space-y-4">
-            <h1 className="text-4xl font-bold">Learning Center</h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Master medical terms through interactive card-based learning.
-            </p>
-            <div className="flex items-center justify-center gap-4 p-6 bg-card rounded-lg border">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary">
-                  {Math.round(overallProgress)}%
-                </div>
-                <div className="text-sm text-muted-foreground">Overall Progress</div>
-              </div>
-              <Progress value={overallProgress} className="w-48" />
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary">
-                  {categories.filter((cat) => cat.completed).length}/{categories.length}
-                </div>
-                <div className="text-sm text-muted-foreground">Categories Completed</div>
-              </div>
-            </div>
-            <Button
-              onClick={handleResetProgress}
-              variant="destructive"
-              className="mt-4"
-              disabled={progressLoading}
-              aria-label="Reset progress"
-            >
-              <RotateCcw className="mr-2 h-4 w-4" />
-              Reset Progress
-            </Button>
-          </header>
+      <div className="p-4 max-w-4xl mx-auto">
+        {gameMode === "categories" && (
+          <>
+            <h1 className="text-3xl font-bold mb-6 flex items-center gap-3">
+              <BookOpen className="w-7 h-7" />
+              Select a Category to Learn
+            </h1>
 
-          <main>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="flex flex-wrap gap-4">
               {categories.map((category) => (
                 <Card
                   key={category.name}
+                  className="w-56 cursor-pointer hover:shadow-lg transition-shadow"
                   onClick={() => startCategory(category)}
-                  className={`cursor-pointer hover:shadow-lg transition-shadow ${
-                    category.completed ? "border-green-600 border-2" : ""
-                  }`}
                 >
                   <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>{category.name}</span>
-                      {category.completed && <Trophy className="text-yellow-400" />}
-                    </CardTitle>
+                    <CardTitle>{category.name}</CardTitle>
                     <CardDescription>
-                      {category.progress.toFixed(0)}% completed
+                      {category.completed ? (
+                        <Badge variant="outline" className="text-green-600">
+                          Completed
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-blue-600">
+                          In Progress
+                        </Badge>
+                      )}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Progress value={category.progress} className="w-full" />
+                    <Progress value={category.progress} />
                   </CardContent>
                 </Card>
               ))}
             </div>
-          </main>
-        </div>
-      </>
-    );
-  }
 
-  if (gameMode === "playing" && currentCard && selectedCategory) {
-    return (
-      <>
-        <Helmet>
-          <title>Learning - Playing {selectedCategory.name}</title>
-        </Helmet>
+            <Button
+              variant="destructive"
+              className="mt-8"
+              onClick={handleResetProgress}
+              disabled={progressLoading}
+            >
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Reset Progress
+            </Button>
+          </>
+        )}
 
-        <div className="container mx-auto max-w-2xl p-6">
-          <Button
-            variant="ghost"
-            onClick={backToCategories}
-            aria-label="Back to categories"
-            className="mb-4"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Categories
-          </Button>
-
-          <Card>
+        {gameMode === "playing" && currentCard && selectedCategory && (
+          <Card className="max-w-3xl mx-auto p-6">
             <CardHeader>
-              <CardTitle>
-                Translate this word into Hebrew:
+              <CardTitle className="flex items-center gap-2">
+                <Target className="w-6 h-6" />
+                {selectedCategory.name}
               </CardTitle>
-              <CardDescription className="text-xl font-semibold">
-                <Target className="inline mr-2" />
-                {currentCard.en}
+              <CardDescription>
+                Progress: {selectedCategory.progress.toFixed(0)}%
               </CardDescription>
             </CardHeader>
-
             <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                {options.map((option) => (
-                  <Button
-                    key={option}
-                    variant={
-                      showAnswer
-                        ? option === currentCard.he
-                          ? "default"
-                          : option === selectedOption
-                          ? "destructive"
-                          : "outline"
-                        : "outline"
+              <div className="mb-4 text-lg font-semibold">
+                What is the translation for <span className="italic">{currentCard.en}</span>?
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                {options.map((option) => {
+                  const isSelected = selectedOption === option;
+                  let optionClass = "border rounded p-4 cursor-pointer text-center";
+
+                  if (showAnswer) {
+                    if (option === currentCard.he) {
+                      optionClass += " bg-green-300 border-green-600 font-bold";
+                    } else if (isSelected && option !== currentCard.he) {
+                      optionClass += " bg-red-300 border-red-600 font-bold";
                     }
-                    disabled={showAnswer}
-                    onClick={() => handleAnswer(option)}
-                    aria-pressed={selectedOption === option}
-                  >
-                    {option}
-                  </Button>
-                ))}
+                  } else if (isSelected) {
+                    optionClass += " bg-gray-200";
+                  }
+
+                  return (
+                    <div
+                      key={option}
+                      className={optionClass}
+                      onClick={() => !showAnswer && handleAnswer(option)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          !showAnswer && handleAnswer(option);
+                        }
+                      }}
+                    >
+                      {option}
+                    </div>
+                  );
+                })}
               </div>
 
               {feedback.type && (
-                <p
-                  className={`mt-4 font-semibold ${
-                    feedback.type === "correct" ? "text-green-600" : "text-red-600"
+                <div
+                  className={`mb-4 p-3 rounded ${
+                    feedback.type === "correct"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
                   }`}
-                  role="alert"
                 >
                   {feedback.message}
-                </p>
+                </div>
               )}
+
+              <div className="flex justify-between">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setGameMode("categories");
+                    setSelectedCategory(null);
+                    setCurrentCard(null);
+                    setFeedback({ type: null, message: "" });
+                    setSelectedOption(null);
+                  }}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Categories
+                </Button>
+                <Button
+                  disabled={!showAnswer}
+                  onClick={() => nextCard(selectedCategory)}
+                >
+                  Next
+                </Button>
+              </div>
             </CardContent>
           </Card>
-
-          <div className="mt-6 text-center">
-            <Badge variant="outline" className="mr-2">
-              Progress: {selectedCategory.progress.toFixed(0)}%
-            </Badge>
-            {selectedCategory.completed && <Badge>Category Completed</Badge>}
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  return null;
+        )}
+      </div>
+    </>
+  );
 };
 
 export default Learning;

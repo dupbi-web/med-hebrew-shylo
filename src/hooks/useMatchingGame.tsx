@@ -475,7 +475,7 @@ const initializeGame = useCallback(async () => {
 }, [windowWidth, loadWordPool, createCardsFromWords]);
 
 
-  const replaceMatchedCards = useCallback((matchedWordId: number) => {
+{/*   const replaceMatchedCards = useCallback((matchedWordId: number) => {
     const newWords = getRandomUnusedWords(2);
 
     if (newWords.length > 0) {
@@ -524,7 +524,35 @@ const initializeGame = useCallback(async () => {
         );
       }, 300);
     }
-  }, [getRandomUnusedWords, createCardsFromWords, wordPool]);
+  }, [getRandomUnusedWords, createCardsFromWords, wordPool]); */}
+    const replaceMatchedCards = useCallback((matchedWordId: number) => {
+  // Get only 1 new word pair (2 cards) instead of 2 pairs (4 cards)
+  const newWords = getRandomUnusedWords(1);
+
+  if (newWords.length > 0) {
+    const newCards = createCardsFromWords(newWords);
+
+    setCurrentCards(prev => {
+      // Remove the matched cards immediately
+      const filtered = prev.filter(card => card.wordId !== matchedWordId);
+
+      // Add the new cards at the end
+      return [...filtered, ...newCards];
+    });
+
+    setUsedWords(prev => new Set([...prev, ...newWords.map(w => w.id)]));
+  } else {
+    // No more words, just remove matched cards by clearing their content & marking empty
+    setCurrentCards(prev =>
+      prev.map(card =>
+        card.wordId === matchedWordId
+          ? { ...card, content: "", type: "empty" as const }
+          : card
+      )
+    );
+  }
+}, [getRandomUnusedWords, createCardsFromWords]);
+
 
   const handleCardClick = useCallback((card: Card) => {
     if (

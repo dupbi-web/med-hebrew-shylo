@@ -88,23 +88,17 @@ const MatchingGame = () => {
                     onClick={handleCardClick}
                   />
                 ))} */}
-{currentCards.length === 0 ? (
-  <p>No cards to display.</p>
-) : (
-  <div
-    className="grid gap-3 md:gap-4 mx-auto px-4"
-    style={{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }}
-  >
-    {currentCards.map((card) => (
-      <GameCard
-        key={card.id}
-        card={card}
-        isSelected={firstChoice?.id === card.id || secondChoice?.id === card.id}
-        onClick={handleCardClick}
-      />
-    ))}
-  </div>
-)}
+{currentCards.map((card) => (
+  <GameCard
+    key={`${card.wordId}-${card.content}`} // Unique AND stable
+    card={card}
+    isSelected={
+      (firstChoice?.id === card.id) ||
+      (secondChoice?.id === card.id)
+    }
+    onClick={handleCardClick}
+  />
+))}
 
               </div>
             </>

@@ -466,48 +466,94 @@ const Learning = () => {
   } = useLearningProgress();
 
   // Load categories and initialize game state
-  useEffect(() => {
-    const loadCategories = async () => {
-      const words = await getMedicalTerms();
-      setAllWords(words);
-      await loadMasteredWords();
+  // useEffect(() => {
+  //   const loadCategories = async () => {
+  //     const words = await getMedicalTerms();
+  //     setAllWords(words);
+  //     await loadMasteredWords();
 
-      // Build mastery map
-      const masteredMap: Record<string, boolean> = {};
-      for (const word of words) {
-        const key = `${word.category}_${word.en}`;
-        masteredMap[key] = isWordMastered(word.category, word.en);
-      }
+  //     // Build mastery map
+  //     const masteredMap: Record<string, boolean> = {};
+  //     for (const word of words) {
+  //       const key = `${word.category}_${word.en}`;
+  //       masteredMap[key] = isWordMastered(word.category, word.en);
+  //     }
 
-      // Group words by category with mastery and correctCount info
-      const categoryMap: Record<string, GameCard[]> = {};
-      for (const word of words) {
-        if (!categoryMap[word.category]) categoryMap[word.category] = [];
-        const wordKey = `${word.category}_${word.en}`;
-        categoryMap[word.category].push({
-          ...word,
-          correctCount: inMemoryCorrectCounts[wordKey] || 0,
-          mastered: masteredMap[wordKey] || false,
-        });
-      }
+  //     // Group words by category with mastery and correctCount info
+  //     const categoryMap: Record<string, GameCard[]> = {};
+  //     for (const word of words) {
+  //       if (!categoryMap[word.category]) categoryMap[word.category] = [];
+  //       const wordKey = `${word.category}_${word.en}`;
+  //       categoryMap[word.category].push({
+  //         ...word,
+  //         correctCount: inMemoryCorrectCounts[wordKey] || 0,
+  //         mastered: masteredMap[wordKey] || false,
+  //       });
+  //     }
 
-      // Convert map to categories array with progress info
-      const categoriesArray: Category[] = Object.entries(categoryMap).map(
-        ([name, cards]) => {
-          const masteredCount = cards.filter((card) => card.mastered).length;
-          const progress = cards.length > 0 ? (masteredCount / cards.length) * 100 : 0;
-          const completed = masteredCount === cards.length && cards.length > 0;
-          return { name, cards, completed, progress };
-        }
-      );
+  //     // Convert map to categories array with progress info
+  //     const categoriesArray: Category[] = Object.entries(categoryMap).map(
+  //       ([name, cards]) => {
+  //         const masteredCount = cards.filter((card) => card.mastered).length;
+  //         const progress = cards.length > 0 ? (masteredCount / cards.length) * 100 : 0;
+  //         const completed = masteredCount === cards.length && cards.length > 0;
+  //         return { name, cards, completed, progress };
+  //       }
+  //     );
 
-      setCategories(categoriesArray);
-    };
+  //     setCategories(categoriesArray);
+  //   };
 
-    if (user) {
-      loadCategories();
+  //   if (user) {
+  //     loadCategories();
+  //   }
+  // }, [user, loadMasteredWords, isWordMastered, inMemoryCorrectCounts]);
+
+  const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  if (!user) return;
+  if (loading) {
+  return (
+    <div className="flex justify-center items-center h-screen">
+      <span>Loading learning data...</span>
+    </div>
+  );
+}
+
+  const loadCategories = async () => {
+    setLoading(true);
+    const words = await getMedicalTerms();
+    await loadMasteredWords();
+
+    const masteredMap: Record<string, boolean> = {};
+    for (const word of words) {
+      masteredMap[`${word.category}_${word.en}`] = isWordMastered(word.category, word.en);
     }
-  }, [user, loadMasteredWords, isWordMastered, inMemoryCorrectCounts]);
+
+    const categoryMap: Record<string, GameCard[]> = {};
+    for (const word of words) {
+      if (!categoryMap[word.category]) categoryMap[word.category] = [];
+      const wordKey = `${word.category}_${word.en}`;
+      const mastered = masteredMap[wordKey];
+      categoryMap[word.category].push({ ...word, correctCount: 0, mastered });
+    }
+
+    const categoriesArray: Category[] = Object.entries(categoryMap).map(([name, cards]) => {
+      const masteredCount = cards.filter(card => card.mastered).length;
+      const progress = cards.length > 0 ? (masteredCount / cards.length) * 100 : 0;
+      const completed = masteredCount === cards.length && cards.length > 0;
+      return { name, cards, completed, progress };
+    });
+
+    setCategories(categoriesArray);
+    setInMemoryCorrectCounts({}); // reset counts on load
+    setLoading(false);
+  };
+
+  loadCategories();
+}, [user, loadMasteredWords, isWordMastered]);
+
 
   // Start playing a category
   const startCategory = (category: Category) => {

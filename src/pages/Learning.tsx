@@ -513,13 +513,6 @@ const Learning = () => {
 
 useEffect(() => {
   if (!user) return;
-  if (loading) {
-  return (
-    <div className="flex justify-center items-center h-screen">
-      <span>Loading learning data...</span>
-    </div>
-  );
-}
 
   const loadCategories = async () => {
     setLoading(true);

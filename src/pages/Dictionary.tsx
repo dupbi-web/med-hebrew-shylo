@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { getMedicalTerms } from "@/cache/medicalTermsCache"; // cache של מילים
+import { getMedicalTermsWithCategories } from "@/cache/medicalTermsCache"; // cache של מילים עם קטגוריות
 import { Star, StarOff } from "lucide-react";
 import Fuse from "fuse.js";
+import { useTranslation } from "react-i18next";
 
 type Word = {
   en: string;
@@ -16,6 +18,7 @@ type Word = {
 };
 
 const Dictionary = () => {
+  const { t } = useTranslation();
   const [words, setWords] = useState<Word[]>([]);
   const [filteredWords, setFilteredWords] = useState<Word[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -27,16 +30,34 @@ const Dictionary = () => {
   // Fetch words from cache
   const fetchWords = useCallback(async () => {
     setLoading(true);
-    const allWords = await getMedicalTerms();
+    const allWords = await getMedicalTermsWithCategories();
 
-    // Extract unique categories
+    // Filter out the 5th category ("Фразы для пациентов")
+    const filteredWordsRaw = allWords.filter(
+      (w) => w.categories?.name_ru !== "Фразы для пациентов"
+    );
+
+    // Extract unique categories from joined data (excluding the 5th)
     const uniqueCategories = Array.from(
-      new Set(allWords.map((w) => w.category).filter(Boolean))
+      new Set(
+        filteredWordsRaw
+          .map((w) => w.categories?.name_ru)
+          .filter(Boolean)
+      )
     ) as string[];
+
     setCategories(uniqueCategories);
 
+    // Map words to include category name from joined categories
+    const mappedWords = filteredWordsRaw.map((w) => ({
+      en: w.en,
+      he: w.he,
+      rus: w.rus,
+      category: w.categories?.name_ru ?? null,
+    }));
+
     // Sort words by category order
-    const sortedWords = allWords.sort((a, b) => {
+    const sortedWords = mappedWords.sort((a, b) => {
       const indexA = a.category ? uniqueCategories.indexOf(a.category) : -1;
       const indexB = b.category ? uniqueCategories.indexOf(b.category) : -1;
       return indexA - indexB;
@@ -101,13 +122,9 @@ const Dictionary = () => {
   return (
     <>
       <Helmet>
-        <title>Hebrew Dictionary | Learn Words</title>
-        <meta
-          name="description"
-          content="Practice Hebrew words with translations in English and Russian."
-        />
+        <title>{t("dictionary_title")}</title>
+        <meta name="description" content={t("dictionary_description")} />
       </Helmet>
-
       <main className="container mx-auto max-w-6xl px-4 py-10">
         {/* Header */}
         <header className="text-center mb-8">
@@ -117,7 +134,7 @@ const Dictionary = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            Hebrew Dictionary
+            {t("dictionary_title")}
           </motion.h1>
           <motion.p
             className="mt-4 text-lg text-gray-600 dark:text-gray-300 max-w-xl mx-auto"
@@ -125,14 +142,14 @@ const Dictionary = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.6 }}
           >
-            Learn basic Hebrew words with English & Russian translations.
+            {t("dictionary_description")}
           </motion.p>
         </header>
 
         {/* Controls */}
         <div className="flex flex-wrap items-center justify-center gap-4 mb-6">
           <Input
-            placeholder="Search words..."
+            placeholder={t("search_placeholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="min-w-[200px]"
@@ -142,7 +159,7 @@ const Dictionary = () => {
             onChange={(e) => setSelectedCategory(e.target.value || null)}
             className="px-3 py-2 border rounded-md bg-background focus:outline-none"
           >
-            <option value="">All Categories</option>
+            <option value="">{t("all_categories")}</option>
             {categories.map((cat) => (
               <option key={cat} value={cat}>
                 {cat}
@@ -150,15 +167,15 @@ const Dictionary = () => {
             ))}
           </select>
           <Button onClick={exportFavorites} disabled={favorites.size === 0}>
-            Export Favorites ({favorites.size})
+            {t("export_favorites")} ({favorites.size})
           </Button>
         </div>
 
         {/* Word Grid */}
         {loading ? (
-          <p className="text-center text-muted-foreground mt-10">Loading words...</p>
+          <p className="text-center text-muted-foreground mt-10">{t("loading")}</p>
         ) : filteredWords.length === 0 ? (
-          <p className="text-center text-muted-foreground mt-10">No words found.</p>
+          <p className="text-center text-muted-foreground mt-10">{t("no_words")}</p>
         ) : (
           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredWords.map((word) => (

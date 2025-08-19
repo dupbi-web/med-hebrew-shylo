@@ -4,6 +4,7 @@
 // import { GameCard } from "@/components/matching/GameCard";
 // import { GameProgress } from "@/components/matching/GameProgress";
 // import { GameSummary } from "@/components/matching/GameSummary";
+// import { useTranslation } from "react-i18next"; // <-- Add this
 
 // const MatchingGame = () => {
 //   const {
@@ -21,45 +22,50 @@
 //     gridColumns
 //   } = useMatchingGame();
 
+//   const { t } = useTranslation(); // <-- Add this
+
 //   return (
 //     <>
 //       <Helmet>
-//         <title>64-Word Medical Hebrew Matching Challenge</title>
-//         <meta name="description" content="Master 64 medical Hebrew terms in this challenging 3-minute matching game. Match English words to their Hebrew translations as fast as you can!" />
+//         <title>{t("matching_title")}</title>
+//         <meta
+//           name="description"
+//           content={t("matching_description")}
+//         />
 //       </Helmet>
-      
+
 //       <main className="container mx-auto max-w-6xl min-h-screen py-8">
 //         <div className="max-w-5xl mx-auto space-y-8">
-          
+
 //           {/* Game Menu */}
 //           {gameState === "menu" && (
 //             <div className="text-center space-y-8">
 //               <header className="space-y-4">
 //                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground">
-//                   64-Word Challenge
+//                   {t("matching_title")}
 //                 </h1>
 //                 <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-//                   Master medical Hebrew with an intensive 3-minute matching challenge featuring 64 carefully selected terms.
+//                   {t("matching_description")}
 //                 </p>
 //               </header>
-              
+
 //               <div className="bg-card rounded-lg p-6 border max-w-md mx-auto space-y-4">
-//                 <h2 className="text-xl font-semibold text-foreground">Game Rules</h2>
+//                 <h2 className="text-xl font-semibold text-foreground">{t("matching_rules_title")}</h2>
 //                 <ul className="text-sm text-muted-foreground space-y-2 text-left">
-//                   <li>🎯 Match English words to Hebrew translations</li>
-//                   <li>⏱️ Complete as many as possible in 3 minutes</li>
-//                   <li>🔄 New word pairs appear after each match</li>
-//                   <li>🏆 Score points for correct matches</li>
-//                   <li>📱 Responsive grid adapts to your screen</li>
+//                   <li>{t("matching_rule_1")}</li>
+//                   <li>{t("matching_rule_2")}</li>
+//                   <li>{t("matching_rule_3")}</li>
+//                   <li>{t("matching_rule_4")}</li>
+//                   <li>{t("matching_rule_5")}</li>
 //                 </ul>
 //               </div>
-              
+
 //               <Button
 //                 onClick={initializeGame}
 //                 size="lg"
 //                 className="px-8 py-4 text-lg font-semibold shadow-elegant hover:shadow-xl transition-all duration-300"
 //               >
-//                 Start Challenge
+//                 {t("matching_start")}
 //               </Button>
 //             </div>
 //           )}
@@ -75,31 +81,21 @@
 //                 attempts={stats.attempts}
 //                 accuracy={stats.accuracy}
 //               />
-              
 //               <div
 //                 className="grid gap-3 md:gap-4 mx-auto px-4"
 //                 style={{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }}
 //               >
-// {/*                 {currentCards.map((card) => (
+//                 {currentCards.map((card) => (
 //                   <GameCard
-//                     key={card.id}
+//                     key={`${card.wordId}-${card.content}`}
 //                     card={card}
-//                     isSelected={firstChoice?.id === card.id || secondChoice?.id === card.id}
+//                     isSelected={
+//                       (firstChoice?.id === card.id) ||
+//                       (secondChoice?.id === card.id)
+//                     }
 //                     onClick={handleCardClick}
 //                   />
-//                 ))} */}
-// {currentCards.map((card) => (
-//   <GameCard
-//     key={`${card.wordId}-${card.content}`} // Unique AND stable
-//     card={card}
-//     isSelected={
-//       (firstChoice?.id === card.id) ||
-//       (secondChoice?.id === card.id)
-//     }
-//     onClick={handleCardClick}
-//   />
-// ))}
-
+//                 ))}
 //               </div>
 //             </>
 //           )}
@@ -117,6 +113,7 @@
 //               isTimeUp={timeRemaining === 0}
 //             />
 //           )}
+
 //         </div>
 //       </main>
 //     </>
@@ -130,6 +127,7 @@ import { useMatchingGame } from "@/hooks/useMatchingGame";
 import { GameCard } from "@/components/matching/GameCard";
 import { GameProgress } from "@/components/matching/GameProgress";
 import { GameSummary } from "@/components/matching/GameSummary";
+import { useTranslation } from "react-i18next"; // <-- Add this
 
 const MatchingGame = () => {
   const {
@@ -147,13 +145,15 @@ const MatchingGame = () => {
     gridColumns
   } = useMatchingGame();
 
+  const { t } = useTranslation(); // <-- Add this
+
   return (
     <>
       <Helmet>
-        <title>Игра на сопоставление медицинских слов на иврите</title>
+        <title>{t("matching_title")}</title>
         <meta
           name="description"
-          content="Выучите 64 медицинских слова на иврите с этой увлекательной 3-минутной игрой. Сопоставляйте русские слова с их переводом на иврит!"
+          content={t("matching_description")}
         />
       </Helmet>
 
@@ -165,21 +165,21 @@ const MatchingGame = () => {
             <div className="text-center space-y-8">
               <header className="space-y-4">
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground">
-                  Игра на сопоставление 64 слов
+                  {t("matching_title")}
                 </h1>
                 <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-                  Выучите медицинские термины на иврите с помощью 3-минутного интенсивного испытания. Сопоставьте 64 тщательно подобранных слова с их переводом на русский.
+                  {t("matching_description")}
                 </p>
               </header>
 
               <div className="bg-card rounded-lg p-6 border max-w-md mx-auto space-y-4">
-                <h2 className="text-xl font-semibold text-foreground">Правила игры</h2>
+                <h2 className="text-xl font-semibold text-foreground">{t("matching_rules_title")}</h2>
                 <ul className="text-sm text-muted-foreground space-y-2 text-left">
-                  <li>🎯 Сопоставляйте русские слова с их переводом на иврит</li>
-                  <li>⏱️ Выполните как можно больше за 3 минуты</li>
-                  <li>🔄 После каждого совпадения появляются новые пары слов</li>
-                  <li>🏆 Получайте очки за правильные совпадения</li>
-                  <li>📱 Адаптивная сетка под размер экрана</li>
+                  <li>{t("matching_rule_1")}</li>
+                  <li>{t("matching_rule_2")}</li>
+                  <li>{t("matching_rule_3")}</li>
+                  <li>{t("matching_rule_4")}</li>
+                  <li>{t("matching_rule_5")}</li>
                 </ul>
               </div>
 
@@ -188,7 +188,7 @@ const MatchingGame = () => {
                 size="lg"
                 className="px-8 py-4 text-lg font-semibold shadow-elegant hover:shadow-xl transition-all duration-300"
               >
-                Начать игру
+                {t("matching_start")}
               </Button>
             </div>
           )}
@@ -204,14 +204,13 @@ const MatchingGame = () => {
                 attempts={stats.attempts}
                 accuracy={stats.accuracy}
               />
-
               <div
                 className="grid gap-3 md:gap-4 mx-auto px-4"
                 style={{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }}
               >
                 {currentCards.map((card) => (
                   <GameCard
-                    key={`${card.wordId}-${card.content}`} // Уникальный и стабильный ключ
+                    key={`${card.wordId}-${card.content}`}
                     card={card}
                     isSelected={
                       (firstChoice?.id === card.id) ||

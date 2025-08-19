@@ -113,6 +113,82 @@ export type Database = {
         }
         Relationships: []
       }
+
+      // New tables added here
+      categories: {
+        Row: {
+          id: string
+          slug: string
+          name_en: string
+          name_he: string
+          name_ru: string
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          slug: string
+          name_en: string
+          name_he: string
+          name_ru: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          slug?: string
+          name_en?: string
+          name_he?: string
+          name_ru?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+
+      words: {
+        Row: {
+          id: string
+          en: string
+          he: string
+          rus: string
+          category_id: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          en: string
+          he: string
+          rus: string
+          category_id?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          en?: string
+          he?: string
+          rus?: string
+          category_id?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_words_category"
+            columns: ["category_id"]
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "words_category_id_fkey"
+            columns: ["category_id"]
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

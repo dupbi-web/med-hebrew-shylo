@@ -62,7 +62,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { openDB } from "idb";
 
 // --- IndexedDB setup ---
-const DB_NAME = "AppDB";
+const DB_NAME = "AppDBTEST";
 const STORE_NAME = "cacheStore";
 
 const dbPromise = openDB(DB_NAME, 1, {

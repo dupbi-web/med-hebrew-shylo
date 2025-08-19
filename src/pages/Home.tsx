@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher"; // If you have a language switcher
 import { getMedicalTermsWithCategories } from "@/cache/medicalTermsCache"; // cache של מילים עם קטגוריות
 import { useEffect } from "react";
-
 const features = [
 	{
 		nameKey: "feature_dictionary",

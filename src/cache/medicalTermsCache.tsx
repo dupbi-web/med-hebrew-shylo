@@ -1,4 +1,6 @@
+// medicalTermsCache.tsx
 import { supabase } from "@/integrations/supabase/client";
+import { getCache, setCache, removeCache } from "./indexedDB"; // Adjust the path
 
 let medicalTermsCache: any[] | null = null;
 
@@ -7,24 +9,25 @@ export async function getMedicalTerms(): Promise<any[]> {
     return medicalTermsCache;
   }
 
-  // Optionally: check localStorage first
-  const cached = localStorage.getItem("medicalTermsCache");
+  // Check IndexedDB first
+  const cached = await getCache("medicalTermsCache");
   if (cached) {
-    medicalTermsCache = JSON.parse(cached);
+    medicalTermsCache = cached;
     return medicalTermsCache;
   }
 
+  // Fetch from Supabase if not cached
   const { data, error } = await supabase.from("medical_terms").select("*");
   if (error || !data) {
     throw new Error("Failed to fetch medical terms");
   }
 
   medicalTermsCache = data;
-  localStorage.setItem("medicalTermsCache", JSON.stringify(data));
+  await setCache("medicalTermsCache", data);
   return data;
 }
 
-export function clearMedicalTermsCache() {
+export async function clearMedicalTermsCache() {
   medicalTermsCache = null;
-  localStorage.removeItem("medicalTermsCache");
+  await removeCache("medicalTermsCache");
 }

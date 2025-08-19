@@ -95,72 +95,7 @@ const Quiz = () => {
       </Helmet>
       <main className="container mx-auto max-w-6xl">
         <section className="container py-8 md:py-12 px-4 max-w-4xl mx-auto">
-          <nav aria-label="Quiz toolbar" className="mb-8">
-            <div className="bg-gradient-to-r from-card to-card/80 backdrop-blur-sm border border-border/60 rounded-xl p-6 md:p-8 shadow-lg">
-              <div className="text-center mb-6">
-                <h2 className="text-lg font-semibold text-foreground mb-2">Quiz Settings</h2>
-                <p className="text-sm text-muted-foreground">Customize your learning experience</p>
-              </div>
-              
-              <div className="flex flex-col md:flex-row gap-6 justify-center items-stretch max-w-2xl mx-auto">
-                <div className="flex-1 bg-background/50 rounded-lg p-4 border border-border/40">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                      </svg>
-                    </div>
-                    <label htmlFor="category-select" className="text-sm font-medium text-foreground">
-                      Category Filter
-                    </label>
-                  </div>
-                  <select
-                    id="category-select"
-                    value={selectedCategory ?? ""}
-                    onChange={(e) => setSelectedCategory(e.target.value || null)}
-                    className="w-full px-4 py-3 bg-background border border-input rounded-lg text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all"
-                    aria-describedby="category-help"
-                  >
-                    <option value="">🔄 All Categories</option>
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        📚 {cat}
-                      </option>
-                    ))}
-                  </select>
-                  <p id="category-help" className="text-xs text-muted-foreground mt-2">
-                    Focus on specific medical topics
-                  </p>
-                </div>
-
-                <div className="flex-1 bg-background/50 rounded-lg p-4 border border-border/40">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                      </svg>
-                    </div>
-                    <label htmlFor="language-select" className="text-sm font-medium text-foreground">
-                      Answer Language
-                    </label>
-                  </div>
-                  <select
-                    id="language-select"
-                    value={targetLang}
-                    onChange={(e) => setTargetLang(e.target.value as Lang)}
-                    className="w-full px-4 py-3 bg-background border border-input rounded-lg text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all"
-                    aria-describedby="language-help"
-                  >
-                    <option value="en">English</option>
-                    <option value="rus">Russian</option>
-                  </select>
-                  <p id="language-help" className="text-xs text-muted-foreground mt-2">
-                    Choose your preferred translation language
-                  </p>
-                </div>
-              </div>
-            </div>
-          </nav>
+       
 
           {isDone ? (
             <div 
@@ -296,6 +231,72 @@ const Quiz = () => {
               </div>
             </div>
           )}
+             <nav aria-label="Quiz toolbar" className="mb-8">
+            <div className="bg-gradient-to-r from-card to-card/80 backdrop-blur-sm border border-border/60 rounded-xl p-6 md:p-8 shadow-lg">
+              <div className="text-center mb-6">
+                <h2 className="text-lg font-semibold text-foreground mb-2">Quiz Settings</h2>
+                <p className="text-sm text-muted-foreground">Customize your learning experience</p>
+              </div>
+              
+              <div className="flex flex-col md:flex-row gap-6 justify-center items-stretch max-w-2xl mx-auto">
+                <div className="flex-1 bg-background/50 rounded-lg p-4 border border-border/40">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                    </div>
+                    <label htmlFor="category-select" className="text-sm font-medium text-foreground">
+                      Category Filter
+                    </label>
+                  </div>
+                  <select
+                    id="category-select"
+                    value={selectedCategory ?? ""}
+                    onChange={(e) => setSelectedCategory(e.target.value || null)}
+                    className="w-full px-4 py-3 bg-background border border-input rounded-lg text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all"
+                    aria-describedby="category-help"
+                  >
+                    <option value="">🔄 All Categories</option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        📚 {cat}
+                      </option>
+                    ))}
+                  </select>
+                  <p id="category-help" className="text-xs text-muted-foreground mt-2">
+                    Focus on specific medical topics
+                  </p>
+                </div>
+
+                <div className="flex-1 bg-background/50 rounded-lg p-4 border border-border/40">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                      </svg>
+                    </div>
+                    <label htmlFor="language-select" className="text-sm font-medium text-foreground">
+                      Answer Language
+                    </label>
+                  </div>
+                  <select
+                    id="language-select"
+                    value={targetLang}
+                    onChange={(e) => setTargetLang(e.target.value as Lang)}
+                    className="w-full px-4 py-3 bg-background border border-input rounded-lg text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all"
+                    aria-describedby="language-help"
+                  >
+                    <option value="en">English</option>
+                    <option value="rus">Russian</option>
+                  </select>
+                  <p id="language-help" className="text-xs text-muted-foreground mt-2">
+                    Choose your preferred translation language
+                  </p>
+                </div>
+              </div>
+            </div>
+          </nav>
         </section>
       </main>
     </>

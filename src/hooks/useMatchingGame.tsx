@@ -402,7 +402,7 @@ export const useMatchingGame = () => {
   const loadWordPool = useCallback(async () => {
     try {
       const allWords = await getMedicalTerms();
-      const filtered = allWords.filter((w: any) => w.en && w.he && w.id);
+      const filtered = allWords.filter((w: any) => w.rus && w.he && w.id);
       const shuffled = shuffleArray(filtered).slice(0, TOTAL_WORDS);
       setWordPool(shuffled);
       return shuffled;
@@ -422,10 +422,10 @@ export const useMatchingGame = () => {
       words.flatMap(word => [
         {
           id: word.id * 2,
-          content: word.en,
+          content: word.rus,
           wordId: word.id,
           matched: false,
-          type: "en" as const
+          type: "rus" as const
         },
         {
           id: word.id * 2 + 1,
@@ -621,7 +621,7 @@ setCurrentCards(prev => {
                 if (word) {
                   return {
                     ...c,
-                    type: c.content === word.en ? "en" : "he"
+                    type: c.content === word.rus ? "rus" : "he"
                   };
                 }
               }

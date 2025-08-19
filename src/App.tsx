@@ -16,6 +16,7 @@ import { HelmetProvider } from "react-helmet-async";
 import Layout from "@/components/Layout";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import Dictionary from "@/pages/Dictionary";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
                 <Route path="/Quiz" element={<Quiz />} />
                 <Route path="/TypingGame" element={<TypingGame />} />
                 <Route path="/MatchingGame" element={<MatchingGame />} />
+                <Route path="/Dictionary" element={<Dictionary />} />
                 <Route path="/Learning" element={
                   <ProtectedRoute>
                     <Learning />

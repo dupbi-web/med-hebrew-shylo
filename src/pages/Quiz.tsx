@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { getMedicalTermsWithCategories } from "@/cache/medicalTermsCache"; // cache של מילים עם קטגוריות
 import { getMedicalTerms } from "@/cache/medicalTermsCache"; // <-- Use the cache!
 type Word = { en: string; he: string; rus: string; category?: string | null };
 type Lang = "en" | "rus";
@@ -33,30 +34,37 @@ const Quiz = () => {
   const current = words[currentIndex];
   const [options, setOptions] = useState<string[]>([]);
 
-  useEffect(() => {
-    const fetchWords = async () => {
-      const allWords = await getMedicalTerms();
+useEffect(() => {
+  const fetchWords = async () => {
+    const allWords = await getMedicalTermsWithCategories();
 
-      // Extract unique categories from cached data
-      const uniqueCategories = Array.from(
-        new Set(allWords.map((w: Word) => w.category).filter(Boolean))
-      ) as string[];
-      setCategories(uniqueCategories);
+    // Flatten the categories into a string
+    const normalized = allWords.map((w: any) => ({
+      ...w,
+      category: w.categories?.name_he || w.categories?.name_en || w.categories?.name_ru || null
+    }));
 
-      let filtered = allWords;
-      if (selectedCategory) {
-        filtered = filtered.filter((w: Word) => w.category === selectedCategory);
-      }
+    // Extract unique categories for the filter
+    const uniqueCategories = Array.from(
+      new Set(normalized.map((w) => w.category).filter(Boolean))
+    ) as string[];
+    setCategories(uniqueCategories);
 
-      const cleaned = (filtered ?? []).filter((w) => w.he && w[targetLang]);
-      setWords(shuffleCopy(cleaned));
-      setCurrentIndex(0);
-      setScore(0);
-      setSelected(null);
-    };
+    let filtered = normalized;
+    if (selectedCategory) {
+      filtered = normalized.filter((w: Word) => w.category === selectedCategory);
+    }
 
-    fetchWords();
-  }, [selectedCategory, targetLang]);
+    // Keep only words that have a value in Hebrew + the selected target language
+    const cleaned = filtered.filter((w: Word) => w.he && w[targetLang]);
+    setWords(shuffleCopy(cleaned));
+    setCurrentIndex(0);
+    setScore(0);
+    setSelected(null);
+  };
+
+  fetchWords();
+}, [selectedCategory, targetLang]);
 
   useEffect(() => {
     if (current) {

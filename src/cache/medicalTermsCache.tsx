@@ -75,12 +75,16 @@ const dbPromise = openDB(DB_NAME, 1, {
 
 async function setCache(key: string, value: any) {
   const db = await dbPromise;
+  console.log("Setting cache in IndexedDB for key:", key, value);
   await db.put(STORE_NAME, value, key);
+  console.log("Cache set complete");
 }
 
 async function getCache(key: string) {
   const db = await dbPromise;
-  return await db.get(STORE_NAME, key);
+  const result = await db.get(STORE_NAME, key);
+  console.log("Got cache from IndexedDB for key:", key, result);
+  return result;
 }
 
 async function removeCache(key: string) {

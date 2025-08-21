@@ -1,11 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
-import { openDB } from 'idb';
+import { openDB } from "idb";
 
 // --- IndexedDB setup ---
-const DB_NAME = 'AppDB';
-const STORE_NAME = 'cacheStore';
+const DB_NAME = "AppDB";
+const STORE_NAME = "cacheStore";
 
-const dbPromise = openDB(DB_NAME, 2, { // <-- bump version to 2
+const dbPromise = openDB(DB_NAME, 2, {
   upgrade(db) {
     if (!db.objectStoreNames.contains(STORE_NAME)) {
       db.createObjectStore(STORE_NAME);
@@ -28,25 +28,22 @@ async function removeCache(key: string) {
   await db.delete(STORE_NAME, key);
 }
 
-// --- Medical Terms Caching Logic ---
+// --- Medical Terms Caching ---
 let medicalTermsCache: any[] | null = null;
 
 export async function getMedicalTerms(): Promise<any[]> {
-  if (medicalTermsCache) {
-    return medicalTermsCache;
-  }
+  if (medicalTermsCache) return medicalTermsCache;
 
-  // Check IndexedDB first
   const cached = await getCache("medicalTermsCache");
   if (cached) {
     medicalTermsCache = cached;
-    return medicalTermsCache;
+    return cached;
   }
 
-  // Fetch from Supabase if not cached
   const { data, error } = await supabase.from("medical_terms").select("*");
 
   if (error || !data) {
+    console.error("Supabase error fetching medical_terms:", error);
     throw new Error("Failed to fetch medical terms");
   }
 
@@ -60,22 +57,49 @@ export async function clearMedicalTermsCache() {
   await removeCache("medicalTermsCache");
 }
 
-// --- Added: medical terms cache with join to categories ---
+// --- Categories Caching ---
+let categoriesCache: any[] | null = null;
+
+export async function getCategories(): Promise<any[]> {
+  if (categoriesCache) return categoriesCache;
+
+  const cached = await getCache("categoriesCache");
+  if (cached) {
+    categoriesCache = cached;
+    return cached;
+  }
+
+  const { data, error } = await supabase
+    .from("categories")
+    .select("id,slug,name_en,name_he,name_ru");
+
+  if (error || !data) {
+    console.error("Supabase error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
+  }
+
+  categoriesCache = data;
+  await setCache("categoriesCache", data);
+  return data;
+}
+
+export async function clearCategoriesCache() {
+  categoriesCache = null;
+  await removeCache("categoriesCache");
+}
+
+// --- Medical Terms with Categories ---
 let medicalTermsWithCategoriesCache: any[] | null = null;
 
 export async function getMedicalTermsWithCategories(): Promise<any[]> {
-  if (medicalTermsWithCategoriesCache) {
-    return medicalTermsWithCategoriesCache;
-  }
+  if (medicalTermsWithCategoriesCache) return medicalTermsWithCategoriesCache;
 
-  // Check IndexedDB first
   const cached = await getCache("medicalTermsWithCategoriesCache");
   if (cached) {
     medicalTermsWithCategoriesCache = cached;
-    return medicalTermsWithCategoriesCache;
+    return cached;
   }
 
-  // Fetch from Supabase (join with categories)
   const { data, error } = await supabase
     .from("words")
     .select(`
@@ -93,8 +117,7 @@ export async function getMedicalTermsWithCategories(): Promise<any[]> {
     `);
 
   if (error || !data) {
-    console.error("Supabase error:", error);
-    console.error("Supabase data:", data);
+    console.error("Supabase error fetching words with categories:", error);
     throw new Error("Failed to fetch medical terms with categories");
   }
 

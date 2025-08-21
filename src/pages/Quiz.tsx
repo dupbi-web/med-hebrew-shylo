@@ -45,31 +45,29 @@ const Quiz = () => {
   const [options, setOptions] = useState<string[]>([]);
 
   useEffect(() => {
-    const fetchWords = async () => {
-      const allWords = await getMedicalTermsWithCategories();
-      const allCategories = await getCategories();
+const fetchWords = async () => {
+  const allWords = await getMedicalTermsWithCategories();
+  const allCategories = await getCategories();
 
-      // Set categories state
-      setCategories(allCategories);
+  setCategories(allCategories);
 
-      // Normalize words with category name
-      const normalized = allWords.map((w: any) => ({
-        ...w,
-        category:
-          w.categories?.name_he || w.categories?.name_en || w.categories?.name_ru || null
-      }));
+  // Normalize words with category slug (instead of name)
+  const normalized = allWords.map((w: any) => ({
+    ...w,
+    category: w.categories?.slug || null  // use slug here
+  }));
 
-      let filtered = normalized;
-      if (selectedCategory) {
-        filtered = normalized.filter((w: Word) => w.category === selectedCategory);
-      }
+  let filtered = normalized;
+  if (selectedCategory) {
+    filtered = normalized.filter((w: Word) => w.category === selectedCategory);
+  }
 
-      const cleaned = filtered.filter((w: Word) => w.he && w[targetLang]);
-      setWords(shuffleCopy(cleaned));
-      setCurrentIndex(0);
-      setScore(0);
-      setSelected(null);
-    };
+  const cleaned = filtered.filter((w: Word) => w.he && w[targetLang]);
+  setWords(shuffleCopy(cleaned));
+  setCurrentIndex(0);
+  setScore(0);
+  setSelected(null);
+};
 
     fetchWords();
   }, [selectedCategory, targetLang]);
@@ -275,7 +273,7 @@ const Quiz = () => {
                     <label htmlFor="category-select" className="text-sm font-medium text-foreground">
                      {t("quizsettings_language")}
                     </label>
-                  </div>
+{/*                   </div>
                   <select
                     id="category-select"
                     value={selectedCategory ?? ""}
@@ -289,12 +287,30 @@ const Quiz = () => {
                           📚 {getCategoryLabel(cat)}
                         </option>
                       ))} */}
-                        {categories.map((cat) => (
+{/*                         {categories.map((cat) => (
                           <option key={cat.id} value={cat.name_en}>
                             📚 {cat.name_en} {/* or cat.name_he / cat.name_ru depending on UI */}
                           </option>
-                        ))}
-                  </select>
+                        ))} */}
+
+                  
+                  </select> */}
+
+                <select
+                      id="category-select"
+                      value={selectedCategory ?? ""}
+                      onChange={(e) => setSelectedCategory(e.target.value || null)}
+                      className="w-full px-4 py-3 bg-background border border-input rounded-lg text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all"
+                      aria-describedby="category-help"
+                    
+                    >
+                      <option value="">🔄 {t("all_categories")}</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.slug}>
+                          📚 {getCategoryLabel(cat)}
+                        </option>
+                      ))}
+                </select>
                   <p id="category-help" className="text-xs text-muted-foreground mt-2">
                     {t("quiz_topics")}
                   </p>

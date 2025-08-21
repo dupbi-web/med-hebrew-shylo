@@ -290,8 +290,8 @@ const Quiz = () => {
                         </option>
                       ))} */}
                         {categories.map((cat) => (
-                          <option key={cat.id} value={cat.id}}>
-                            📚 {cat}
+                          <option key={cat.id} value={cat.name_en}>
+                            📚 {cat.name_en} {/* or cat.name_he / cat.name_ru depending on UI */}
                           </option>
                         ))}
                   </select>

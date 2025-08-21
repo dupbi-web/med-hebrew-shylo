@@ -273,29 +273,7 @@ const fetchWords = async () => {
                     <label htmlFor="category-select" className="text-sm font-medium text-foreground">
                      {t("quizsettings_language")}
                     </label>
-{/*                   </div>
-                  <select
-                    id="category-select"
-                    value={selectedCategory ?? ""}
-                    onChange={(e) => setSelectedCategory(e.target.value || null)}
-                    className="w-full px-4 py-3 bg-background border border-input rounded-lg text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all"
-                    aria-describedby="category-help"
-                  >
-                    <option value="">🔄 {t("all_categories")}</option>
-                      {/* {categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          📚 {getCategoryLabel(cat)}
-                        </option>
-                      ))} */}
-{/*                         {categories.map((cat) => (
-                          <option key={cat.id} value={cat.name_en}>
-                            📚 {cat.name_en} {/* or cat.name_he / cat.name_ru depending on UI */}
-                          </option>
-                        ))} */}
-
-                  
-                  </select> */}
-
+                </div>
                 <select
                       id="category-select"
                       value={selectedCategory ?? ""}

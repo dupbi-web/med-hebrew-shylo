@@ -290,10 +290,10 @@ const Quiz = () => {
                         </option>
                       ))} */}
                         {categories.map((cat) => (
-    <option key={cat.id} value={cat.name_en}>
-      📚 {cat.name_en} {/* or cat.name_he / cat.name_ru depending on UI */}
-    </option>
-  ))}
+                          <option key={cat.id} value={cat.id}}>
+                            📚 {getCategoryLabel(cat)}
+                          </option>
+                        ))}
                   </select>
                   <p id="category-help" className="text-xs text-muted-foreground mt-2">
                     {t("quiz_topics")}

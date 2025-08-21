@@ -291,7 +291,7 @@ const Quiz = () => {
                       ))} */}
                         {categories.map((cat) => (
                           <option key={cat.id} value={cat.id}}>
-                            📚 {getCategoryLabel(cat)}
+                            📚 {cat}
                           </option>
                         ))}
                   </select>

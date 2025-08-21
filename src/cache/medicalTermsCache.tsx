@@ -72,7 +72,7 @@ export async function getCategories(): Promise<any[]> {
   const { data, error } = await supabase
     .from("categories")
     .select("id, slug, name_en, name_he, name_ru");
-  
+  console.log("Supabase categories data:", data); // Add this
   if (error || !data) {
     console.error("Supabase error fetching categories:", error);
     throw new Error("Failed to fetch categories");

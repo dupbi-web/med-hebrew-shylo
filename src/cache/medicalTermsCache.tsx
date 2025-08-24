@@ -71,7 +71,7 @@ export async function getCategories(): Promise<any[]> {
 
   const { data, error } = await supabase
     .from("categories")
-    .select("id,slug,name_en,name_he,name_ru");
+    .select("id, slug, name_en, name_he, name_ru");
 
   if (error || !data) {
     console.error("Supabase error fetching categories:", error);

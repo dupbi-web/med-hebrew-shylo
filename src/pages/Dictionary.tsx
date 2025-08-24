@@ -21,6 +21,8 @@ type Word = {
   en: string;
   he: string;
   rus: string;
+  // category_id might be a number or array of numbers depending on your data shape
+  category_id?: number | number[]; 
   category?: Category | null;
 };
 
@@ -34,7 +36,6 @@ const Dictionary = () => {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
-  // Fetch words and categories
   const fetchWords = useCallback(async () => {
     setLoading(true);
 
@@ -49,19 +50,27 @@ const Dictionary = () => {
     );
     setCategories(filteredCategories);
 
-    // Map words with their category object
-    const mappedWords = allWords.map((w) => ({
-      en: w.en,
-      he: w.he,
-      rus: w.rus,
-      category:
-        filteredCategories.find((c) => c.category_id === w.category_id) ?? null,
-    }));
+    // Map words with their category object by matching category_id(s)
+    const mappedWords = allWords.map((w: Word) => {
+      // Handle if w.category_id is array or single number
+      const wordCategoryIds = Array.isArray(w.category_id) ? w.category_id : [w.category_id];
+      const matchedCategory =
+        wordCategoryIds.length === 0 || wordCategoryIds[0] == null
+          ? null
+          : filteredCategories.find((c) => wordCategoryIds.includes(c.id)) ?? null;
 
-    // Sort words by category_id
-    const sortedWords = mappedWords.sort(
-      (a, b) => (a.category?.category_id ?? -1) - (b.category?.category_id ?? -1)
-    );
+      return {
+        ...w,
+        category: matchedCategory,
+      };
+    });
+
+    // Sort words by category id (or put uncategorized at the end)
+    const sortedWords = mappedWords.sort((a, b) => {
+      const aId = a.category?.id ?? Number.MAX_SAFE_INTEGER;
+      const bId = b.category?.id ?? Number.MAX_SAFE_INTEGER;
+      return aId - bId;
+    });
 
     setWords(sortedWords);
     setLoading(false);
@@ -71,20 +80,21 @@ const Dictionary = () => {
     fetchWords();
   }, [fetchWords]);
 
-  // Filter words by category and search
+  // Filter words by category and search query
   useEffect(() => {
-    if (!words.length) return;
+    if (!words.length) {
+      setFilteredWords([]);
+      return;
+    }
 
     let filtered = [...words];
 
-    // Filter by category
     if (selectedCategory) {
       filtered = filtered.filter(
-        (w) => String(w.category?.category_id) === selectedCategory
+        (w) => w.category?.id.toString() === selectedCategory
       );
     }
 
-    // Search with Fuse.js
     if (searchQuery.trim()) {
       const fuse = new Fuse(filtered, {
         keys: ["he", "en", "rus"],
@@ -120,7 +130,7 @@ const Dictionary = () => {
     URL.revokeObjectURL(url);
   };
 
-  const getCategoryLabel = (cat: Category) => {
+  const getCategoryLabel = (cat: Category | null) => {
     if (!cat) return "";
     switch (i18n.language) {
       case "he":
@@ -234,3 +244,4 @@ const Dictionary = () => {
 };
 
 export default Dictionary;
+

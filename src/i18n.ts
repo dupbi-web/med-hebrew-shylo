@@ -49,7 +49,6 @@ i18n.use(initReactI18next).init({
         quiz_correct_answer: "Correct Answer",
         quiz_incorrect_answer: "Incorrect Answer",
         quiz_topics: "Focus on specific medical topics",
-        quiz_answer_language: "Answer Language",
         quiz_preferred_language: "Choose your preferred translation language",
       },
     },
@@ -99,7 +98,6 @@ i18n.use(initReactI18next).init({
         quiz_correct_answer: "תשובה נכונה",
         quiz_incorrect_answer: "תשובה שגויה",
         quiz_topics: "התמקדות בנושאים רפואיים ספציפיים",
-        quiz_answer_language: "שפת תשובה",
         quiz_preferred_language: "בחרו את שפת התרגום המועדפת עליכם",
       },
     },
@@ -149,7 +147,6 @@ i18n.use(initReactI18next).init({
         quiz_correct_answer: "Правильный ответ",
         quiz_incorrect_answer: "Неправильный ответ",
         quiz_topics: "Сосредоточьтесь на определённых медицинских темах",
-        quiz_answer_language: "Язык ответа",
         quiz_preferred_language: "Выберите предпочитаемый язык перевода",
 
       },

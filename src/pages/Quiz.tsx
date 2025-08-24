@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
 import { getMedicalTermsWithCategories, getCategories } from "@/cache/medicalTermsCache";
-import { getMedicalTerms } from "@/cache/medicalTermsCache"; // <-- Use the cache!
 import { useTranslation } from "react-i18next";
 
 type Word = { en: string; he: string; rus: string; category?: string | null };
@@ -32,36 +29,33 @@ function getRandomDistractors(words: Word[], correct: Word, lang: Lang, count: n
 
 const Quiz = () => {
   const { t, i18n } = useTranslation();
-  
+    // Helper to normalize i18n.language to your Lang type
+  const normalizeLang = (lang: string): Lang => {
+    if (lang.startsWith("ru") || lang === "rus") return "rus";
+    return "en"; // default to English for everything else
+  };
   const [words, setWords] = useState<Word[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState(0);
-  const [targetLang, setTargetLang] = useState<Lang>("rus");
+  // const [targetLang, setTargetLang] = useState<Lang>("rus");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const current = words[currentIndex];
   const [options, setOptions] = useState<string[]>([]);
+ // Use i18n.language instead of targetLang state
+  const targetLang = normalizeLang(i18n.language);
 
   useEffect(() => {
     const fetchWords = async () => {
       const allWords = await getMedicalTermsWithCategories();
       const allCategories = await getCategories();
-
-      // Set categories state
       setCategories(allCategories);
 
-      // Normalize words with category name
-      const normalized = allWords.map((w: any) => ({
-        ...w,
-        category:
-          w.categories?.name_he || w.categories?.name_en || w.categories?.name_ru || null
-      }));
-
-      let filtered = normalized;
+      let filtered = allWords;
       if (selectedCategory) {
-        filtered = normalized.filter((w: Word) => w.category === selectedCategory);
+        filtered = allWords.filter((w: Word) => w.category_id === Number(selectedCategory));
       }
 
       const cleaned = filtered.filter((w: Word) => w.he && w[targetLang]);
@@ -70,7 +64,6 @@ const Quiz = () => {
       setScore(0);
       setSelected(null);
     };
-
     fetchWords();
   }, [selectedCategory, targetLang]);
 
@@ -121,8 +114,6 @@ const Quiz = () => {
       </Helmet>
       <main className="container mx-auto max-w-6xl">
         <section className="container py-8 md:py-12 px-4 max-w-4xl mx-auto">
-       
-
           {isDone ? (
             <div 
               className="bg-card border border-border rounded-lg p-6 md:p-8 max-w-md mx-auto text-center shadow-lg"
@@ -154,9 +145,28 @@ const Quiz = () => {
           ) : current ? (
             <div className="max-w-2xl mx-auto">
               <div className="text-center mb-8">
-                <h2 className="text-xl md:text-2xl font-semibold text-muted-foreground mb-4">
+               <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <label htmlFor="category-select" className="sr-only">{t("select_category")}</label>
+                <select
+                  id="category-select"
+                  value={selectedCategory ?? ""}
+                  onChange={(e) => setSelectedCategory(e.target.value || null)}
+                  className="px-4 py-3 bg-background border border-input rounded-lg text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all max-w-xs"
+                  aria-describedby="category-help"
+                >
+                  <option value="">🔄 {t("all_categories")}</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      📚 {getCategoryLabel(cat)}
+                    </option>
+                  ))}
+                </select>
+
+                <h2 className="text-xl md:text-2xl font-semibold text-muted-foreground">
                   {t("quiz_header")}
                 </h2>
+              </div>
+
                 <div 
                   className="bg-card/50 border border-border rounded-lg p-6 md:p-8 mb-6"
                   role="region"
@@ -171,8 +181,8 @@ const Quiz = () => {
                     {current.he}
                   </h3>
                 </div>
+        
               </div>
-
               <div 
                 className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 max-w-2xl mx-auto"
                 role="radiogroup"
@@ -257,77 +267,7 @@ const Quiz = () => {
               </div>
             </div>
           )}
-             <nav aria-label="Quiz toolbar" className="mb-8">
-            <div className="bg-gradient-to-r from-card to-card/80 backdrop-blur-sm border border-border/60 rounded-xl p-6 md:p-8 shadow-lg">
-              <div className="text-center mb-6">
-                <h2 className="text-lg font-semibold text-foreground mb-2">{t("quizsettings")}</h2>
-                <p className="text-sm text-muted-foreground"> {t("quizsettings_description")}</p>
-              </div>
-              
-              <div className="flex flex-col md:flex-row gap-6 justify-center items-stretch max-w-2xl mx-auto">
-                <div className="flex-1 bg-background/50 rounded-lg p-4 border border-border/40">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                      </svg>
-                    </div>
-                    <label htmlFor="category-select" className="text-sm font-medium text-foreground">
-                     {t("quizsettings_language")}
-                    </label>
-                  </div>
-                  <select
-                    id="category-select"
-                    value={selectedCategory ?? ""}
-                    onChange={(e) => setSelectedCategory(e.target.value || null)}
-                    className="w-full px-4 py-3 bg-background border border-input rounded-lg text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all"
-                    aria-describedby="category-help"
-                  >
-                    <option value="">🔄 {t("all_categories")}</option>
-                      {/* {categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          📚 {getCategoryLabel(cat)}
-                        </option>
-                      ))} */}
-                        {categories.map((cat) => (
-    <option key={cat.id} value={cat.name_en}>
-      📚 {cat.name_en} {/* or cat.name_he / cat.name_ru depending on UI */}
-    </option>
-  ))}
-                  </select>
-                  <p id="category-help" className="text-xs text-muted-foreground mt-2">
-                    {t("quiz_topics")}
-                  </p>
-                </div>
 
-                <div className="flex-1 bg-background/50 rounded-lg p-4 border border-border/40">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                      </svg>
-                    </div>
-                    <label htmlFor="language-select" className="text-sm font-medium text-foreground">
-                      {t("quiz_answer_language")}
-                    </label>
-                  </div>
-                  <select
-                    id="language-select"
-                    value={targetLang}
-                    onChange={(e) => setTargetLang(e.target.value as Lang)}
-                    className="w-full px-4 py-3 bg-background border border-input rounded-lg text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all"
-                    aria-describedby="language-help"
-                  >
-                    <option value="en">English</option>
-                    <option value="rus">Russian</option>
-                  </select>
-                  <p id="language-help" className="text-xs text-muted-foreground mt-2">
-                    {t("quiz_preferred_language")}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </nav>
         </section>
       </main>
     </>

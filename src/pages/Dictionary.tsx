@@ -89,6 +89,9 @@ const Dictionary = () => {
 
     let filtered = [...words];
 
+  // ❌ Exclude category ID 5
+   filtered = filtered.filter((w) => w.category?.id !== 5);
+
     if (selectedCategory) {
       filtered = filtered.filter(
         (w) => w.category?.id.toString() === selectedCategory

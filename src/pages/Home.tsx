@@ -64,18 +64,18 @@ const Home = () => {
 					>
 						{t("home_description")}
 					</motion.p>
-					{/* <div className="mt-6 flex justify-center gap-4">
+					<div className="mt-6 flex justify-center gap-4">
 						<Link to="/Dictionary">
 							<button className="px-6 py-3 dark:bg-gray-500 rounded-lg hover:bg-primary/50 transition">
 								{t("view_dictionary")}
 							</button>
 						</Link>
-						<Link to="/Learning">
+						<Link to="/MedicalSentencesPage">
 							<button className="px-6 py-3 bg-secondary dark:text-white rounded-lg dark:hover:bg-secondary/80 transition">
-								{t("start_learning")}
+								{t("nav_sentences_for_doctors")}
 							</button>
 						</Link>
-					</div> */}
+					</div>
 				</header>
 
 				{/* 2️⃣ Краткое объяснение сайта */}

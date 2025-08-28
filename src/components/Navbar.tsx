@@ -11,6 +11,7 @@ const games = [
 	{ nameKey: "nav_dictionary", path: "/Dictionary" },
 	{ nameKey: "nav_matching_game", path: "/MatchingGame" },
 	{ nameKey: "nav_quiz", path: "/Quiz" },
+	// { nameKey: "nav_contactUs", path: "/ContactUs" },
 	{ nameKey: "nav_home", path: "/" },
 ];
 

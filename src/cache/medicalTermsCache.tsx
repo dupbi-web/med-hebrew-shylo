@@ -4,6 +4,7 @@ import { openDB } from "idb";
 // --- IndexedDB setup ---
 const DB_NAME = "AppDB";
 const STORE_NAME = "cacheStore";
+const LANGUAGE_PREFERENCE_KEY = "ru";
 
 const dbPromise = openDB(DB_NAME, 2, {
   upgrade(db) {
@@ -12,6 +13,16 @@ const dbPromise = openDB(DB_NAME, 2, {
     }
   },
 });
+
+
+export async function setLanguagePreference(lang: string) {
+  await setCache(LANGUAGE_PREFERENCE_KEY, lang);
+}
+
+export async function getLanguagePreference(): Promise<string | null> {
+  return await getCache(LANGUAGE_PREFERENCE_KEY);
+}
+
 
 async function setCache(key: string, value: any) {
   const db = await dbPromise;

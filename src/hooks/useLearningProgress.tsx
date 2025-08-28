@@ -8,6 +8,7 @@ export const useLearningProgress = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [masteredWords, setMasteredWords] = useState<Set<string>>(new Set());
+  const LANGUAGE_PREFERENCE_KEY = "ru";
 
   const createWordKey = (category: string, word_en: string) => {
     return `${category}_${word_en}`;

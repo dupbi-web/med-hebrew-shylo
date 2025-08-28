@@ -29,7 +29,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/auth" element={<Auth />} />
+              {/* <Route path="/auth" element={<Auth />} /> */}
               <Route element={<Layout />}>
                 <Route path="/" element={<Home />} />
                 <Route path="/FlashCards" element={<FlashCards />} />
@@ -37,12 +37,12 @@ const App = () => (
                 <Route path="/TypingGame" element={<TypingGame />} />
                 <Route path="/MatchingGame" element={<MatchingGame />} />
                 <Route path="/Dictionary" element={<Dictionary />} />
-                <Route path="/Learning" element={
+                {/* <Route path="/Learning" element={
                   <ProtectedRoute>
                     <Learning />
                   </ProtectedRoute>
-                } />
-                <Route path="/ContactUs" element={<ContactUs />} />
+                } /> */}
+                {/* <Route path="/ContactUs" element={<ContactUs />} /> */}
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

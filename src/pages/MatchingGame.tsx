@@ -150,7 +150,6 @@ const MatchingGame = () => {
   } = useMatchingGame(sourceLang, targetLang);
 
 
-  const { t } = useTranslation(); // <-- Add this
 
   return (
     <>

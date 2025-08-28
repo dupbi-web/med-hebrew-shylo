@@ -130,6 +130,10 @@ import { GameSummary } from "@/components/matching/GameSummary";
 import { useTranslation } from "react-i18next"; // <-- Add this
 
 const MatchingGame = () => {
+  const { i18n, t } = useTranslation();
+  const currentLang = i18n.language.split("-")[0]; // Normalize locale
+  const sourceLang = currentLang === "ru" ? "rus" : "en";
+  const targetLang = "he";
   const {
     gameState,
     currentCards,
@@ -142,8 +146,9 @@ const MatchingGame = () => {
     initializeGame,
     handleCardClick,
     restartGame,
-    gridColumns
-  } = useMatchingGame();
+    gridColumns,
+  } = useMatchingGame(sourceLang, targetLang);
+
 
   const { t } = useTranslation(); // <-- Add this
 
@@ -175,11 +180,8 @@ const MatchingGame = () => {
               <div className="bg-card rounded-lg p-6 border max-w-md mx-auto space-y-4">
                 <h2 className="text-xl font-semibold text-foreground">{t("matching_rules_title")}</h2>
                 <ul className="text-sm text-muted-foreground space-y-2 text-left">
-                  <li>{t("matching_rule_1")}</li>
                   <li>{t("matching_rule_2")}</li>
                   <li>{t("matching_rule_3")}</li>
-                  <li>{t("matching_rule_4")}</li>
-                  <li>{t("matching_rule_5")}</li>
                 </ul>
               </div>
 

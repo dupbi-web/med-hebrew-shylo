@@ -320,7 +320,7 @@
 // };
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { getMedicalTerms } from "@/cache/medicalTermsCache";
+import { getMedicalTerms, getMedicalTermsWithCategories } from "@/cache/medicalTermsCache";
 import { Word, Card, GameState, GameStats } from "@/types/matching";
 
 const TOTAL_WORDS = 64;
@@ -341,7 +341,7 @@ const getVisibleCardCount = (width: number) => {
   return 8;
 };
 
-export const useMatchingGame = () => {
+export const useMatchingGame = (sourceLang: "en" | "rus", targetLang: "he" = "he") => {
   const [gameState, setGameState] = useState<GameState>("menu");
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
@@ -401,7 +401,8 @@ export const useMatchingGame = () => {
 
   const loadWordPool = useCallback(async () => {
     try {
-      const allWords = await getMedicalTerms();
+      // const allWords = await getMedicalTerms();
+      const allWords = await getMedicalTermsWithCategories();
       const filtered = allWords.filter((w: any) => w.rus && w.he && w.id);
       const shuffled = shuffleArray(filtered).slice(0, TOTAL_WORDS);
       setWordPool(shuffled);
@@ -422,21 +423,21 @@ export const useMatchingGame = () => {
       words.flatMap(word => [
         {
           id: word.id * 2,
-          content: word.rus,
+          content: word[sourceLang],
           wordId: word.id,
           matched: false,
-          type: "rus" as const
+          type: sourceLang as "en" | "rus"
         },
         {
           id: word.id * 2 + 1,
-          content: word.he,
+          content: word[targetLang],
           wordId: word.id,
           matched: false,
-          type: "he" as const
+          type: targetLang as "he"
         }
       ])
     );
-  }, []);
+  }, [sourceLang, targetLang]);
 
 const initializeGame = useCallback(async () => {
   const pool = await loadWordPool();
@@ -621,7 +622,7 @@ setCurrentCards(prev => {
                 if (word) {
                   return {
                     ...c,
-                    type: c.content === word.rus ? "rus" : "he"
+                    type: c.content === word[sourceLang] ? sourceLang : targetLang
                   };
                 }
               }

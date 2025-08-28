@@ -57,6 +57,7 @@ export async function clearMedicalTermsCache() {
   await removeCache("medicalTermsCache");
 }
 
+
 // --- Categories Caching ---
 let categoriesCache: any[] | null = null;
 
@@ -91,40 +92,94 @@ export async function clearCategoriesCache() {
 // --- Medical Terms with Categories ---
 let medicalTermsWithCategoriesCache: any[] | null = null;
 
-export async function getMedicalTermsWithCategories(): Promise<any[]> {
-  if (medicalTermsWithCategoriesCache) return medicalTermsWithCategoriesCache;
+// export async function getMedicalTermsWithCategories(): Promise<any[]> {
+//   if (medicalTermsWithCategoriesCache) return medicalTermsWithCategoriesCache;
 
-  const cached = await getCache("medicalTermsWithCategoriesCache");
-  if (cached) {
-    medicalTermsWithCategoriesCache = cached;
-    return cached;
-  }
+//   const cached = await getCache("medicalTermsWithCategoriesCache");
+//   if (cached) {
+//     medicalTermsWithCategoriesCache = cached;
+//     return cached;
+//   }
 
-  const { data, error } = await supabase
-    .from("words")
-    .select(`
-      id,
-      en,
-      he,
-      rus,
-      category_id,
-      categories!words_category_id_fkey (
-        slug,
-        name_en,
-        name_he,
-        name_ru
-      )
-    `);
+//   const { data, error } = await supabase
+//     .from("words")
+//     .select(`
+//       id,
+//       en,
+//       he,
+//       rus,
+//       category_id,
+//       categories!words_category_id_fkey (
+//         slug,
+//         name_en,
+//         name_he,
+//         name_ru
+//       )
+//     `);
 
-  if (error || !data) {
-    console.error("Supabase error fetching words with categories:", error);
-    throw new Error("Failed to fetch medical terms with categories");
-  }
+//   if (error || !data) {
+//     console.error("Supabase error fetching words with categories:", error);
+//     throw new Error("Failed to fetch medical terms with categories");
+//   }
 
-  medicalTermsWithCategoriesCache = data;
-  await setCache("medicalTermsWithCategoriesCache", data);
-  return data;
+//   medicalTermsWithCategoriesCache = data;
+//   await setCache("medicalTermsWithCategoriesCache", data);
+//   return data;
+// }
+async function getRemoteVersion(key: string): Promise<string | null> {
+	const { data, error } = await supabase
+		.from("metadata")
+		.select("value")
+		.eq("key", key)
+		.single();
+
+	if (error || !data?.value) {
+		console.error("Error fetching metadata:", error);
+		return null;
+	}
+
+	return data.value;
 }
+export async function getMedicalTermsWithCategories(): Promise<any[]> {
+	const cachedData = await getCache("medicalTermsWithCategoriesCache");
+	const cachedVersion = await getCache("medicalTermsWithCategoriesVersion");
+
+	const serverVersion = await getRemoteVersion("words_v");
+
+	if (cachedData && cachedVersion === serverVersion) {
+		return cachedData;
+	}
+
+	// If no cache or version mismatch, fetch fresh
+	const { data, error } = await supabase
+		.from("words")
+		.select(`
+			id,
+			en,
+			he,
+			rus,
+			category_id,
+			categories!words_category_id_fkey (
+				slug,
+				name_en,
+				name_he,
+				name_ru
+			)
+		`);
+
+	if (error || !data) {
+		console.error("Supabase error fetching words:", error);
+		throw new Error("Failed to fetch medical terms with categories");
+	}
+
+	// Save fresh data and version
+	await setCache("medicalTermsWithCategoriesCache", data);
+	await setCache("medicalTermsWithCategoriesVersion", serverVersion);
+
+	return data;
+}
+
+
 
 export async function clearMedicalTermsWithCategoriesCache() {
   medicalTermsWithCategoriesCache = null;

@@ -28,7 +28,9 @@ const Navbar = () => {
 			<div className="mx-auto flex items-center justify-between py-4 px-6">
 				{/* Logo */}
 				<h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-					MED-IVRIT
+					<Link to="/">
+						MED-IVRIT
+					</Link>			
 				</h1>
 				{/* Desktop Nav and Theme Toggle */}
 				<div className="hidden md:flex items-center gap-4">

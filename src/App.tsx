@@ -39,11 +39,11 @@ const App = () => (
                 <Route path="/MatchingGame" element={<MatchingGame />} />
                 <Route path="/Dictionary" element={<Dictionary />} />
                 <Route path="/MedicalSentencesPage" element={<MedicalSentencesPage />} />
-                {/* <Route path="/Learning" element={
-                  <ProtectedRoute>
+                <Route path="/Learning" element={
+                  // <ProtectedRoute>
                     <Learning />
-                  </ProtectedRoute>
-                } /> */}
+                  // </ProtectedRoute>
+                } />
                 {/* <Route path="/ContactUs" element={<ContactUs />} /> */}
               </Route>
               <Route path="*" element={<NotFound />} />

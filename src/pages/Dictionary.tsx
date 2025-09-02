@@ -119,7 +119,6 @@ const Dictionary = () => {
         keys: ["he", "en", "rus"],
         threshold: 0.3,
         ignoreLocation: true,
-        limit: Infinity,
       });
       filtered = fuse.search(searchQuery.trim()).map((r) => r.item);
     }

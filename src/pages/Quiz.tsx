@@ -55,7 +55,10 @@ const Quiz = () => {
 
       let filtered = allWords;
       if (selectedCategory) {
-        filtered = allWords.filter((w: Word) => w.category_id === Number(selectedCategory));
+        filtered = allWords.filter((w: any) => {
+          const categoryIds = Array.isArray(w.category_id) ? w.category_id : [w.category_id];
+          return categoryIds.includes(Number(selectedCategory));
+        });
       }
 
       const cleaned = filtered.filter((w: Word) => w.he && w[targetLang]);

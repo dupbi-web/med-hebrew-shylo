@@ -21,7 +21,7 @@ const getVisibleCardCount = (width: number) => {
   return 8;
 };
 
-export const useMatchingGame = (sourceLang: "en" | "ru", targetLang: "he" = "he") => {
+export const useMatchingGame = (sourceLang: "en" | "rus", targetLang: "he" = "he") => {
   const [gameState, setGameState] = useState<GameState>("menu");
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
@@ -83,7 +83,7 @@ export const useMatchingGame = (sourceLang: "en" | "ru", targetLang: "he" = "he"
     try {
       // const allWords = await getMedicalTerms();
       const allWords = await getMedicalTermsWithCategories();
-      const filtered = allWords.filter((w: any) => w.rus && w.he && w.id);
+      const filtered = allWords.filter((w: any) => w.rus && w.he && w.en && w.id);
       const shuffled = shuffleArray(filtered).slice(0, TOTAL_WORDS);
       setWordPool(shuffled);
       return shuffled;
@@ -300,12 +300,12 @@ setCurrentCards(prev => {
           setCurrentCards(prev =>
             prev.map(c => {
               if (c.type === "wrong") {
-                const word = wordPool.find(w => w.id === c.wordId);
+                  const word = wordPool.find(w => w.id === c.wordId);
                 if (word) {
                   return {
                     ...c,
                     type: c.content === word[sourceLang] ? sourceLang : targetLang
-                  };
+                  } as Card;
                 }
               }
               return c;

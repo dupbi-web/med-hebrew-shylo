@@ -132,8 +132,8 @@ import { useTranslation } from "react-i18next"; // <-- Add this
 const MatchingGame = () => {
   const { i18n, t } = useTranslation();
   const currentLang = i18n.language.split("-")[0]; // Normalize locale
-  const sourceLang = currentLang === "ru" ? "rus" : "en";
-  const targetLang = "he";
+  const sourceLang = currentLang === "ru" ? "rus" as const : "en" as const;
+  const targetLang = "he" as const;
   const {
     gameState,
     currentCards,

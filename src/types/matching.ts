@@ -2,9 +2,10 @@ export type Word = {
   id: number;
   en: string;
   he: string;
+  rus: string;
 };
 
-export type CardType = "en" | "he" | "wrong" | "disappear" | "empty" | "replacing";
+export type CardType = "en" | "he" | "ru" | "rus" | "wrong" | "disappear" | "empty" | "replacing";
 
 export type Card = {
   id: number;

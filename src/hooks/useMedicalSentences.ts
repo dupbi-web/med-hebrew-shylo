@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { getEnergyCategories, getMedicalSentencesByCategory } from '@/cache/medicalTermsCache';
 
 export interface EnergyCategory {
   id: number;
@@ -31,7 +31,13 @@ export const useMedicalSentences = () => {
       setLoading(true);
       setError(null);
       
-      const data = await getEnergyCategories();
+      const { data, error } = await (supabase as any)
+        .from('energy_category')
+        .select('*')
+        .order('id', { ascending: true });
+
+      if (error) throw error;
+
       setCategories(data || []);
       
       // Auto-select first category
@@ -55,7 +61,14 @@ export const useMedicalSentences = () => {
     try {
       setLoadingSentences(true);
       
-      const data = await getMedicalSentencesByCategory(categoryId);
+      const { data, error } = await (supabase as any)
+        .from('sentences_for_doctors')
+        .select('*')
+        .eq('energy_category_id', categoryId)
+        .order('id', { ascending: true });
+
+      if (error) throw error;
+
       setSentences(data || []);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch sentences';

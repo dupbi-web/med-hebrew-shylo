@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import Flashcard from "@/components/Flashcard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { clearMedicalTermsCache } from "@/cache/medicalTermsCache";
+import { Link } from "react-router-dom";
 import { getMedicalTerms } from "@/cache/medicalTermsCache"; // <-- Use the cache!
 
 type Word = { 
@@ -151,7 +151,6 @@ const FlashCards = () => {
       }
 
       setImportText("");
-      await clearMedicalTermsCache(); // Clear cache after successful import
       await fetchWords(selectedCategory);
       toast({ title: "Imported", description: `Added ${cleaned.length} words.` });
     } catch {
@@ -200,7 +199,6 @@ const FlashCards = () => {
     setHebrewTerm("");
     setRussianTerm("");
     setCategory("");
-    await clearMedicalTermsCache(); // Clear cache after successful add
     await fetchWords(selectedCategory);
     toast({ title: "Word added", description: "Added successfully." });
   };

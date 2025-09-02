@@ -1,12 +1,7 @@
 import { useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  getUserMasteredWords, 
-  addUserMasteredWord, 
-  removeUserMasteredWord, 
-  clearUserMasteredWordsCache 
-} from "@/cache/medicalTermsCache";
 
 export const useLearningProgress = () => {
   const { user } = useAuth();
@@ -24,9 +19,16 @@ export const useLearningProgress = () => {
     
     setLoading(true);
     try {
-      const masteredWordsSet = await getUserMasteredWords(user.id);
-      setMasteredWords(masteredWordsSet);
-      return masteredWordsSet;
+      const { data, error } = await supabase
+        .from('user_mastered_words')
+        .select('word_key')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      const wordKeys = new Set(data.map(item => item.word_key));
+      setMasteredWords(wordKeys);
+      return wordKeys;
     } catch (error: any) {
       console.error('Error loading mastered words:', error);
       toast({
@@ -46,7 +48,15 @@ export const useLearningProgress = () => {
     const wordKey = createWordKey(category, word_en);
     
     try {
-      await addUserMasteredWord(user.id, wordKey);
+      const { error } = await supabase
+        .from('user_mastered_words')
+        .insert({
+          user_id: user.id,
+          word_key: wordKey,
+        });
+
+      if (error) throw error;
+      
       setMasteredWords(prev => new Set([...prev, wordKey]));
     } catch (error: any) {
       console.error('Error adding mastered word:', error);
@@ -64,7 +74,14 @@ export const useLearningProgress = () => {
     const wordKey = createWordKey(category, word_en);
     
     try {
-      await removeUserMasteredWord(user.id, wordKey);
+      const { error } = await supabase
+        .from('user_mastered_words')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('word_key', wordKey);
+
+      if (error) throw error;
+      
       setMasteredWords(prev => {
         const newSet = new Set(prev);
         newSet.delete(wordKey);
@@ -89,7 +106,13 @@ export const useLearningProgress = () => {
     if (!user) return;
 
     try {
-      await clearUserMasteredWordsCache(user.id);
+      const { error } = await supabase
+        .from('user_mastered_words')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
       setMasteredWords(new Set());
       
       toast({

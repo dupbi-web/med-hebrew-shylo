@@ -103,40 +103,7 @@ export async function clearCategoriesCache() {
 // --- Medical Terms with Categories ---
 let medicalTermsWithCategoriesCache: any[] | null = null;
 
-// export async function getMedicalTermsWithCategories(): Promise<any[]> {
-//   if (medicalTermsWithCategoriesCache) return medicalTermsWithCategoriesCache;
 
-//   const cached = await getCache("medicalTermsWithCategoriesCache");
-//   if (cached) {
-//     medicalTermsWithCategoriesCache = cached;
-//     return cached;
-//   }
-
-//   const { data, error } = await supabase
-//     .from("words")
-//     .select(`
-//       id,
-//       en,
-//       he,
-//       rus,
-//       category_id,
-//       categories!words_category_id_fkey (
-//         slug,
-//         name_en,
-//         name_he,
-//         name_ru
-//       )
-//     `);
-
-//   if (error || !data) {
-//     console.error("Supabase error fetching words with categories:", error);
-//     throw new Error("Failed to fetch medical terms with categories");
-//   }
-
-//   medicalTermsWithCategoriesCache = data;
-//   await setCache("medicalTermsWithCategoriesCache", data);
-//   return data;
-// }
 async function getRemoteVersion(key: string): Promise<string | null> {
 	const { data, error } = await supabase
 		.from("metadata")

@@ -1,13 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import Flashcard from "@/components/Flashcard";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
-import { clearMedicalTermsCache } from "@/cache/medicalTermsCache";
 import { getMedicalTerms } from "@/cache/medicalTermsCache"; // <-- Use the cache!
 
 type Word = { 
@@ -33,13 +27,6 @@ const FlashCards = () => {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [reviewed, setReviewed] = useState(0);
-  const [importText, setImportText] = useState("");
-  const [isAuthed, setIsAuthed] = useState(false);
-  const [adminPassword, setAdminPassword] = useState("");
-  const [englishTerm, setEnglishTerm] = useState("");
-  const [hebrewTerm, setHebrewTerm] = useState("");
-  const [russianTerm, setRussianTerm] = useState("");
-  const [category, setCategory] = useState("");
   const [targetLang, setTargetLang] = useState<"rus" | "en">("rus");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -117,92 +104,6 @@ const FlashCards = () => {
     setWords((prev) => shuffleCopy(prev));
     setIndex(0);
     setFlipped(false);
-  };
-
-  // Bulk import
-  const handleImport = async () => {
-    try {
-      const parsed = JSON.parse(importText) as Array<Partial<Word>>;
-      if (!Array.isArray(parsed)) {
-        toast({ title: "Invalid JSON", description: "Expected an array of word objects." });
-        return;
-      }
-
-      const cleaned = parsed
-        .map((w) => ({
-          en: w.en?.toString().trim() || "",
-          he: w.he?.toString().trim() || "",
-          rus: w.rus?.toString().trim() || "",
-          category: w.category?.toString().trim() || null
-        }))
-        .filter((w) => w.en && w.he);
-
-      if (!cleaned.length) {
-        toast({ title: "Nothing to import", description: "English and Hebrew are required." });
-        return;
-      }
-
-      if (!window.confirm(`Import ${cleaned.length} terms?`)) return;
-
-      const { error } = await supabase.from("medical_terms").insert(cleaned);
-      if (error) {
-        toast({ title: "Import failed", description: error.message });
-        return;
-      }
-
-      setImportText("");
-      await clearMedicalTermsCache(); // Clear cache after successful import
-      await fetchWords(selectedCategory);
-      toast({ title: "Imported", description: `Added ${cleaned.length} words.` });
-    } catch {
-      toast({ title: "Parse error", description: "Invalid JSON format." });
-    }
-  };
-
-  // Admin auth (now uses env var fallback)
-  const handleAuth = () => {
-    const expectedPass = import.meta.env.VITE_ADMIN_PASSWORD || "";
-    if (adminPassword === expectedPass) {
-      setIsAuthed(true);
-      setAdminPassword("");
-      toast({ title: "Admin unlocked" });
-    } else {
-      toast({ title: "Wrong password", description: "Please try again." });
-    }
-  };
-
-  // Add single word
-  const handleAddWord = async () => {
-    const en = englishTerm.trim();
-    const he = hebrewTerm.trim();
-    const ru = russianTerm.trim();
-    const cat = category.trim();
-
-    if (!en || !he) {
-      toast({ title: "Missing fields", description: "English and Hebrew are required." });
-      return;
-    }
-    const hebrewRegex = /[\u0590-\u05FF]/;
-    if (!hebrewRegex.test(he)) {
-      toast({ title: "Invalid Hebrew", description: "Please use Hebrew characters." });
-      return;
-    }
-
-    const { error } = await supabase.from("medical_terms").insert([
-      { en, he, rus: ru || null, category: cat || null }
-    ]);
-    if (error) {
-      toast({ title: "Add failed", description: error.message });
-      return;
-    }
-
-    setEnglishTerm("");
-    setHebrewTerm("");
-    setRussianTerm("");
-    setCategory("");
-    await clearMedicalTermsCache(); // Clear cache after successful add
-    await fetchWords(selectedCategory);
-    toast({ title: "Word added", description: "Added successfully." });
   };
 
   // Pointer-follow effect

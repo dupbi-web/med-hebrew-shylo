@@ -50,20 +50,6 @@ const Dictionary = () => {
     );
     setCategories(filteredCategories);
 
-    // Map words with their category object by matching category_id(s)
-    // const mappedWords = allWords.map((w: Word) => {
-    //   // Handle if w.category_id is array or single number
-    //   const wordCategoryIds = Array.isArray(w.category_id) ? w.category_id : [w.category_id];
-    //   const matchedCategory =
-    //     wordCategoryIds.length === 0 || wordCategoryIds[0] == null
-    //       ? null
-    //       : filteredCategories.find((c) => wordCategoryIds.includes(c.id)) ?? null;
-
-    //   return {
-    //     ...w,
-    //     category: matchedCategory,
-    //   };
-    // });
     const mappedWords = allWords
     // 🛑 First, filter out any words with category_id 5
     .filter((w: Word) => {

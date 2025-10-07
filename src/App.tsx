@@ -17,7 +17,6 @@ import Layout from "@/components/Layout";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Dictionary from "@/pages/Dictionary";
-import MedicalSentencesPage from "@/pages/MedicalSentencesPage"
 
 const queryClient = new QueryClient();
 
@@ -38,7 +37,6 @@ const App = () => (
                 <Route path="/TypingGame" element={<TypingGame />} />
                 <Route path="/MatchingGame" element={<MatchingGame />} />
                 <Route path="/Dictionary" element={<Dictionary />} />
-                <Route path="/MedicalSentencesPage" element={<MedicalSentencesPage />} />
                 <Route path="/Learning" element={
                   // <ProtectedRoute>
                     <Learning />

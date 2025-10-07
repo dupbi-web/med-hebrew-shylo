@@ -4,9 +4,9 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { motion } from "framer-motion";
 import { Book, HelpCircle, Type, Puzzle, IdCard, BookOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import LanguageSwitcher from "@/components/LanguageSwitcher"; // If you have a language switcher
 import { getMedicalTermsWithCategories } from "@/cache/medicalTermsCache"; // cache של מילים עם קטגוריות
 import { useEffect } from "react";
+
 const features = [
 	{
 		nameKey: "feature_dictionary",
@@ -70,9 +70,9 @@ const Home = () => {
 								{t("view_dictionary")}
 							</button>
 						</Link>
-						<Link to="/MedicalSentencesPage">
+						<Link to="/MatchingGame">
 							<button className="px-6 py-3 bg-secondary dark:text-white rounded-lg dark:hover:bg-secondary/80 transition">
-								{t("nav_sentences_for_doctors")}
+								{t("nav_matching_game")}
 							</button>
 						</Link>
 					</div>
@@ -82,7 +82,6 @@ const Home = () => {
 				<section className="mb-12 text-center">
 					<h2 className="text-2xl font-semibold mb-4">{t("home_what_can_do")}</h2>
 					<p className="text-gray-600 dark:text-gray-300 mb-2">{t("home_learn_words")}</p>
-					<p className="text-gray-600 dark:text-gray-300 mb-2">{t("home_forum")}</p>
 					<p className="text-gray-600 dark:text-gray-300">{t("home_practice_games")}</p>
 				</section>
 

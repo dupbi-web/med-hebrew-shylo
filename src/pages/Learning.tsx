@@ -55,6 +55,9 @@ const Learning = () => {
   const [feedback, setFeedback] = useState<string>("");
   const [gameMode, setGameMode] = useState<GameMode>("categories");
   const [showAnswer, setShowAnswer] = useState(false);
+  const [showNext, setShowNext] = useState(false);
+  const [lastAnswers, setLastAnswers] = useState<{index: number, answer: string}[]>([]);
+  const [showExample, setShowExample] = useState<{visible: boolean, sentence: string}>({visible: false, sentence: ""});
 
   /** Load words and categories */
   useEffect(() => {
@@ -76,6 +79,10 @@ const Learning = () => {
     setCurrentIndex(0);
     setSelectedCategory(category);
     setGameMode("playing");
+    setShowNext(false);
+    setSelectedAnswer(null);
+    setShowExample({visible: false, sentence: ""});
+    setLastAnswers([]);
     prepareOptions(shuffled[0]);
   };
 
@@ -92,22 +99,55 @@ const Learning = () => {
     setShowAnswer(false);
   };
 
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+
   const handleAnswer = (selected: string) => {
     const currentCard = deck[currentIndex];
     if (!currentCard) return;
 
+    setSelectedAnswer(selected);
     const isCorrect = selected === currentCard.he;
     setShowAnswer(true);
     setFeedback(isCorrect ? "✅ Correct!" : `❌ Incorrect. Correct answer: ${currentCard.he}`);
+    setShowNext(true);
+    setLastAnswers(prev => [...prev, {index: currentIndex, answer: selected}]);
 
-    setTimeout(() => {
-      if (currentIndex + 1 < deck.length) {
-        setCurrentIndex(i => i + 1);
-        prepareOptions(deck[currentIndex + 1]);
+    // Show example popup if correct
+    if (isCorrect) {
+      setShowExample({visible: true, sentence: `Example: "${currentCard.he}" is used in a sentence.`});
+      // Do NOT auto-hide popup; will hide on next
+    }
+  };
+
+  const handleNext = () => {
+    setShowAnswer(false);
+    setShowNext(false);
+    setSelectedAnswer(null);
+    setShowExample({visible: false, sentence: ""});
+    if (currentIndex + 1 < deck.length) {
+      setCurrentIndex(i => i + 1);
+      prepareOptions(deck[currentIndex + 1]);
+    } else {
+      setGameMode("finished");
+    }
+  };
+
+  const handleBack = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(i => i - 1);
+      prepareOptions(deck[currentIndex - 1]);
+      setShowAnswer(false);
+      setShowNext(false);
+      // Optionally restore last answer feedback
+      const last = lastAnswers.find(a => a.index === currentIndex - 1);
+      if (last) {
+        setShowAnswer(true);
+        setFeedback(last.answer === deck[currentIndex - 1].he ? "✅ Correct!" : `❌ Incorrect. Correct answer: ${deck[currentIndex - 1].he}`);
+        setShowNext(true);
       } else {
-        setGameMode("finished");
+        setFeedback("");
       }
-    }, 1500);
+    }
   };
 
   const backToCategories = () => {
@@ -209,18 +249,31 @@ const Learning = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 gap-3">
-                {options.map(opt => (
-                  <Button
-                    key={opt}
-                    variant={showAnswer ? (opt === currentCard.he ? "default" : "outline") : "outline"}
-                    size="lg"
-                    onClick={() => handleAnswer(opt)}
-                    disabled={showAnswer}
-                    className={`p-6 text-lg ${showAnswer && opt === currentCard.he ? "bg-primary text-primary-foreground" : ""}`}
-                  >
-                    {opt}
-                  </Button>
-                ))}
+                {options.map(opt => {
+                  let btnVariant = "outline";
+                  let btnClass = "p-6 text-lg";
+                  if (showAnswer) {
+                    if (opt === currentCard.he) {
+                      btnVariant = "default";
+                      btnClass += " bg-primary text-primary-foreground";
+                    } else if (selectedAnswer === opt) {
+                      btnVariant = "destructive";
+                      btnClass += " bg-red-500 text-white";
+                    }
+                  }
+                  return (
+                    <Button
+                      key={opt}
+                      variant={btnVariant as any}
+                      size="lg"
+                      onClick={() => handleAnswer(opt)}
+                      disabled={showAnswer}
+                      className={btnClass}
+                    >
+                      {opt}
+                    </Button>
+                  );
+                })}
               </div>
 
               {feedback && (
@@ -228,8 +281,25 @@ const Learning = () => {
                   {feedback}
                 </div>
               )}
+
+              <div className="flex justify-between mt-6">
+                <Button variant="outline" onClick={handleBack} disabled={currentIndex === 0}>
+                  {t("back", "Back")}
+                </Button>
+                {showNext && (
+                  <Button variant="default" onClick={handleNext}>
+                    {currentIndex + 1 < deck.length ? t("next", "Next") : t("finish", "Finish")}
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
+        )}
+
+        {showExample.visible && (
+          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in">
+            {showExample.sentence}
+          </div>
         )}
       </div>
     </>

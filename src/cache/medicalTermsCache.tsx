@@ -119,42 +119,50 @@ async function getRemoteVersion(key: string): Promise<string | null> {
 	return data.value;
 }
 export async function getMedicalTermsWithCategories(): Promise<any[]> {
-	const cachedData = await getCache("medicalTermsWithCategoriesCache");
-	const cachedVersion = await getCache("medicalTermsWithCategoriesVersion");
+  const cachedData = await getCache("medicalTermsWithCategoriesCache");
+  const cachedVersion = await getCache("medicalTermsWithCategoriesVersion");
+  const serverVersion = await getRemoteVersion("words_v");
 
-	const serverVersion = await getRemoteVersion("words_v");
+  // If version changed, clear cache
+  if (cachedVersion && cachedVersion !== serverVersion) {
+    await removeCache("medicalTermsWithCategoriesCache");
+    await removeCache("medicalTermsWithCategoriesVersion");
+  }
 
-	if (cachedData && cachedVersion === serverVersion) {
-		return cachedData;
-	}
+  // Try to get fresh cache after possible clear
+  const freshCachedData = await getCache("medicalTermsWithCategoriesCache");
+  const freshCachedVersion = await getCache("medicalTermsWithCategoriesVersion");
+  if (freshCachedData && freshCachedVersion === serverVersion) {
+    return freshCachedData;
+  }
 
-	// If no cache or version mismatch, fetch fresh
-	const { data, error } = await supabase
-		.from("words")
-		.select(`
-			id,
-			en,
-			he,
-			rus,
-			category_id,
-			categories!words_category_id_fkey (
-				slug,
-				name_en,
-				name_he,
-				name_ru
-			)
-		`);
+  // If no cache or version mismatch, fetch fresh
+  const { data, error } = await supabase
+    .from("words")
+    .select(`
+      id,
+      en,
+      he,
+      rus,
+      category_id,
+      categories!words_category_id_fkey (
+        slug,
+        name_en,
+        name_he,
+        name_ru
+      )
+    `);
 
-	if (error || !data) {
-		console.error("Supabase error fetching words:", error);
-		throw new Error("Failed to fetch medical terms with categories");
-	}
+  if (error || !data) {
+    console.error("Supabase error fetching words:", error);
+    throw new Error("Failed to fetch medical terms with categories");
+  }
 
-	// Save fresh data and version
-	await setCache("medicalTermsWithCategoriesCache", data);
-	await setCache("medicalTermsWithCategoriesVersion", serverVersion);
+  // Save fresh data and version
+  await setCache("medicalTermsWithCategoriesCache", data);
+  await setCache("medicalTermsWithCategoriesVersion", serverVersion);
 
-	return data;
+  return data;
 }
 
 

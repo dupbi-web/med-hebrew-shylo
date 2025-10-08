@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getMedicalTermsWithCategories, getCategories } from "@/cache/medicalTermsCache";
+import { getMedicalTermsWithCategories, getCategories, getWordSentences } from "@/cache/medicalTermsCache";
 import { BookOpen, ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-type Word = { 
+type Word = {
+  id: number;
   en: string;
   he: string;
   rus: string;
@@ -100,12 +101,14 @@ const Learning = () => {
   };
 
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [answersMap, setAnswersMap] = useState<Record<number, string>>({});
 
-  const handleAnswer = (selected: string) => {
+  const handleAnswer = async (selected: string) => {
     const currentCard = deck[currentIndex];
     if (!currentCard) return;
 
     setSelectedAnswer(selected);
+    setAnswersMap(prev => ({ ...prev, [currentIndex]: selected }));
     const isCorrect = selected === currentCard.he;
     setShowAnswer(true);
     setFeedback(isCorrect ? "✅ Correct!" : `❌ Incorrect. Correct answer: ${currentCard.he}`);
@@ -114,19 +117,37 @@ const Learning = () => {
 
     // Show example popup if correct
     if (isCorrect) {
-      setShowExample({visible: true, sentence: `Example: "${currentCard.he}" is used in a sentence.`});
+      let exampleSentence = "";
+      try {
+        const sentences = await getWordSentences(currentCard.id);
+        if (sentences && sentences.length > 0) {
+          exampleSentence = sentences[0].sentence_he;
+        }
+      } catch (err) {
+        console.error("Error fetching example sentences:", err);
+      }
+      setShowExample({visible: true, sentence: exampleSentence ? `דוגמה: ${exampleSentence}` : `Example: "${currentCard.he}" is used in a sentence.`});
       // Do NOT auto-hide popup; will hide on next
     }
   };
 
   const handleNext = () => {
+    const nextIndex = currentIndex + 1;
     setShowAnswer(false);
     setShowNext(false);
     setSelectedAnswer(null);
     setShowExample({visible: false, sentence: ""});
-    if (currentIndex + 1 < deck.length) {
-      setCurrentIndex(i => i + 1);
-      prepareOptions(deck[currentIndex + 1]);
+    if (nextIndex < deck.length) {
+      setCurrentIndex(nextIndex);
+      prepareOptions(deck[nextIndex]);
+      // Restore answer if exists
+      if (answersMap[nextIndex] !== undefined) {
+        setSelectedAnswer(answersMap[nextIndex]);
+        setShowAnswer(true);
+        setShowNext(true);
+        const isCorrect = answersMap[nextIndex] === deck[nextIndex].he;
+        setFeedback(isCorrect ? "✅ Correct!" : `❌ Incorrect. Correct answer: ${deck[nextIndex].he}`);
+      }
     } else {
       setGameMode("finished");
     }
@@ -134,16 +155,19 @@ const Learning = () => {
 
   const handleBack = () => {
     if (currentIndex > 0) {
-      setCurrentIndex(i => i - 1);
-      prepareOptions(deck[currentIndex - 1]);
+      const prevIndex = currentIndex - 1;
+      setCurrentIndex(prevIndex);
+      prepareOptions(deck[prevIndex]);
       setShowAnswer(false);
       setShowNext(false);
-      // Optionally restore last answer feedback
-      const last = lastAnswers.find(a => a.index === currentIndex - 1);
-      if (last) {
+      setSelectedAnswer(null);
+      // Restore answer if exists
+      if (answersMap[prevIndex] !== undefined) {
+        setSelectedAnswer(answersMap[prevIndex]);
         setShowAnswer(true);
-        setFeedback(last.answer === deck[currentIndex - 1].he ? "✅ Correct!" : `❌ Incorrect. Correct answer: ${deck[currentIndex - 1].he}`);
         setShowNext(true);
+        const isCorrect = answersMap[prevIndex] === deck[prevIndex].he;
+        setFeedback(isCorrect ? "✅ Correct!" : `❌ Incorrect. Correct answer: ${deck[prevIndex].he}`);
       } else {
         setFeedback("");
       }

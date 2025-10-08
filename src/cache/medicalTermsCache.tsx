@@ -312,3 +312,18 @@ export async function clearUserMasteredWordsCache(userId: string) {
   userMasteredWordsCache = null;
   await removeCache(`userMasteredWords_${userId}`);
 }
+
+// Fetch all sentences for a given word_id from word_sentences table
+export async function getWordSentences(wordId: number) {
+  const { data, error } = await supabase
+    .from("word_sentences")
+    .select("*")
+    .eq("word_id", wordId)
+    .order("id", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching word sentences:", error);
+    return [];
+  }
+  return data;
+}

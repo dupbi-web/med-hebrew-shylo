@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getMedicalTermsWithCategories, getCategories, getWordSentences } from "@/cache/medicalTermsCache";
-import { BookOpen, ArrowLeft } from "lucide-react";
+import { getMedicalTermsWithCategories, getCategories } from "@/cache/medicalTermsCache";
+import { fetchHebrewSentence } from "@/utils/fetchHebrewSentence";
+import { BookOpen, ArrowLeft, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type Word = {
@@ -59,6 +60,7 @@ const Learning = () => {
   const [showNext, setShowNext] = useState(false);
   const [lastAnswers, setLastAnswers] = useState<{index: number, answer: string}[]>([]);
   const [showExample, setShowExample] = useState<{visible: boolean, sentence: string}>({visible: false, sentence: ""});
+  const [loadingExample, setLoadingExample] = useState(false); // <-- loading state
 
   /** Load words and categories */
   useEffect(() => {
@@ -84,6 +86,9 @@ const Learning = () => {
     setSelectedAnswer(null);
     setShowExample({visible: false, sentence: ""});
     setLastAnswers([]);
+    setAnswersMap({}); // Reset answers map
+    setLoadingExample(false); // Reset loading state
+    setFeedback(""); // Reset feedback
     prepareOptions(shuffled[0]);
   };
 
@@ -117,17 +122,28 @@ const Learning = () => {
 
     // Show example popup if correct
     if (isCorrect) {
+      // Show loading immediately
+      setLoadingExample(true);
+      setShowExample({
+        visible: true,
+        sentence: "-  AI טוען  דוגמה..." // "Loading example..."
+      });
+
       let exampleSentence = "";
       try {
-        const sentences = await getWordSentences(currentCard.id);
-        if (sentences && sentences.length > 0) {
-          exampleSentence = sentences[0].sentence_he;
-        }
+        exampleSentence = await fetchHebrewSentence(currentCard.he);
       } catch (err) {
-        console.error("Error fetching example sentences:", err);
+        console.error("Error fetching/generating example sentences:", err);
       }
-      setShowExample({visible: true, sentence: exampleSentence ? `דוגמה: ${exampleSentence}` : `Example: "${currentCard.he}" is used in a sentence.`});
-      // Do NOT auto-hide popup; will hide on next
+
+      // Update with actual example or fallback
+      setShowExample({
+        visible: true,
+        sentence: exampleSentence 
+          ? `${exampleSentence}` 
+          : `Example: "${currentCard.he}]" is used in a sentence.`
+      });
+      setLoadingExample(false); // done loading
     }
   };
 
@@ -137,6 +153,8 @@ const Learning = () => {
     setShowNext(false);
     setSelectedAnswer(null);
     setShowExample({visible: false, sentence: ""});
+    setLoadingExample(false); // Reset loading state
+
     if (nextIndex < deck.length) {
       setCurrentIndex(nextIndex);
       prepareOptions(deck[nextIndex]);
@@ -161,6 +179,9 @@ const Learning = () => {
       setShowAnswer(false);
       setShowNext(false);
       setSelectedAnswer(null);
+      setShowExample({visible: false, sentence: ""});
+      setLoadingExample(false); // Reset loading state
+
       // Restore answer if exists
       if (answersMap[prevIndex] !== undefined) {
         setSelectedAnswer(answersMap[prevIndex]);
@@ -180,6 +201,13 @@ const Learning = () => {
     setDeck([]);
     setCurrentIndex(0);
     setFeedback("");
+    setAnswersMap({}); // Clear answers when going back
+    setLoadingExample(false); // Reset loading state
+    setShowExample({visible: false, sentence: ""});
+    setSelectedAnswer(null);
+    setShowAnswer(false);
+    setShowNext(false);
+    setLastAnswers([]);
   };
 
   /** Render */
@@ -228,7 +256,7 @@ const Learning = () => {
         <div className="container mx-auto max-w-2xl text-center space-y-6 py-12">
           <h1 className="text-3xl font-bold">🎉 {t("finished", "All done!")}</h1>
           <p className="text-lg text-muted-foreground">
-            {t("you_completed", "You have completed all words in this category.")} 
+            {t("you_completed", "You have completed all words in this category.")}
           </p>
           <Button onClick={backToCategories} className="mt-4">
             {t("back_to_categories", "Back to Categories")}
@@ -321,7 +349,8 @@ const Learning = () => {
         )}
 
         {showExample.visible && (
-          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in">
+          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in flex items-center gap-2">
+            {loadingExample && <Loader2 className="h-4 w-4 animate-spin" />}
             {showExample.sentence}
           </div>
         )}

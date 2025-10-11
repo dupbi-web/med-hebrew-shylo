@@ -42,7 +42,7 @@ const App = () => (
                     <Learning />
                   // </ProtectedRoute>
                 } />
-                {/* <Route path="/ContactUs" element={<ContactUs />} /> */}
+                <Route path="/ContactUs" element={<ContactUs />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

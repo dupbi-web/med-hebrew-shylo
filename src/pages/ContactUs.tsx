@@ -1,15 +1,56 @@
+import React, { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Star, Coffee, Mail, Github, Heart } from "lucide-react";
+import { Star, Coffee, Mail, Github, Heart, Send } from "lucide-react";
 
 const ContactUs = () => {
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState<{ ok?: boolean; error?: string } | null>(null);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSending(true);
+    setResult(null);
+
+    try {
+      const resp = await fetch("/api/telegram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: message.trim() })
+      });
+
+      const data = await resp.json();
+
+      if (resp.ok) {
+        setResult({ ok: true });
+        setMessage("");
+      } else {
+        const errText =
+          typeof data?.description === "string"
+            ? data.description
+            : typeof data?.error === "string"
+            ? data.error
+            : "Failed to send message";
+        setResult({ ok: false, error: errText });
+      }
+    } catch (err: any) {
+      setResult({ ok: false, error: err?.message || "Network error" });
+    } finally {
+      setSending(false);
+    }
+  }
+
   return (
     <>
       <Helmet>
         <title>Contact Us - Medical Hebrew Hub</title>
-        <meta name="description" content="Get in touch with the Medical Hebrew Hub team and support our project." />
+        <meta
+          name="description"
+          content="Get in touch with the Medical Hebrew Hub team and support our project."
+        />
       </Helmet>
 
       <main className="container mx-auto max-w-4xl px-4 py-10">
@@ -79,15 +120,73 @@ const ContactUs = () => {
                   Love what we're building? Give us a star on GitHub and help others discover our project!
                 </p>
                 <Button asChild variant="outline" className="w-full">
-                  <a 
-                    href="https://github.com/yourusername/medical-hebrew-hub" 
-                    target="_blank" 
+                  <a
+                    href="https://github.com/yourusername/medical-hebrew-hub"
+                    target="_blank"
                     rel="noopener noreferrer"
                   >
                     <Github className="mr-2 h-4 w-4" />
                     Star on GitHub
                   </a>
                 </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Telegram Message */}
+          <motion.div
+            className="md:col-span-2"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35, duration: 0.5 }}
+          >
+            <Card className="h-full">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Send className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle>Send a Telegram Message</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-3">
+                  <label className="block text-sm font-medium text-muted-foreground">
+                    Message
+                  </label>
+                  <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Type your message for the team..."
+                    className="w-full min-h-[120px] rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                    maxLength={4000}
+                  />
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Sent securely via our Edge Function.
+                    </p>
+                    <Button
+                      type="submit"
+                      className="min-w-[140px]"
+                      disabled={sending || !message.trim()}
+                    >
+                      <Send className="mr-2 h-4 w-4" />
+                      {sending ? "Sending..." : "Send Message"}
+                    </Button>
+                  </div>
+                </form>
+
+                {result?.ok && (
+                  <p className="mt-3 text-sm text-green-600">
+                    Message sent successfully!
+                  </p>
+                )}
+                {result?.ok === false && (
+                  <p className="mt-3 text-sm text-red-600">
+                    {result.error || "Failed to send message."}
+                  </p>
+                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -108,15 +207,15 @@ const ContactUs = () => {
                 <CardTitle className="text-2xl">Support Our Work</CardTitle>
               </div>
               <p className="text-muted-foreground">
-                If you find our Medical Hebrew learning tools helpful, consider buying us a coffee! 
+                If you find our Medical Hebrew learning tools helpful, consider buying us a coffee!
                 Your support helps us maintain and improve the platform.
               </p>
             </CardHeader>
             <CardContent>
               <Button asChild size="lg" className="bg-orange-500 hover:bg-orange-600">
-                <a 
-                  href="https://buymeacoffee.com/medicalhebrew" 
-                  target="_blank" 
+                <a
+                  href="https://buymeacoffee.com/medicalhebrew"
+                  target="_blank"
                   rel="noopener noreferrer"
                 >
                   <Coffee className="mr-2 h-5 w-5" />
@@ -138,7 +237,7 @@ const ContactUs = () => {
           transition={{ delay: 0.6, duration: 0.5 }}
         >
           <p className="text-muted-foreground">
-            Medical Hebrew Hub is an open-source project dedicated to helping medical professionals 
+            Medical Hebrew Hub is an open-source project dedicated to helping medical professionals
             learn Hebrew terminology through interactive games and exercises.
           </p>
         </motion.div>

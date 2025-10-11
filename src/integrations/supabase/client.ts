@@ -2,16 +2,18 @@
 import { createClient } from '@supabase/supabase-js';
 // Note: using untyped Supabase client to avoid type dependency
 
-const SUPABASE_URL = "https://feyntpyfpuuelkatomvr.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZleW50cHlmcHV1ZWxrYXRvbXZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5ODkzMzYsImV4cCI6MjA3MDU2NTMzNn0.TvLwXvZNjoDfoMWPyFIYPidH45NiXLm-o45oi11on0w";
-
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+// const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZleW50cHlmcHV1ZWxrYXRvbXZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5ODkzMzYsImV4cCI6MjA3MDU2NTMzNn0.TvLwXvZNjoDfoMWPyFIYPidH45NiXLm-o45oi11on0w";
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
+export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY
+  , {
+    auth: {
+      storage: localStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+    }
   }
-});
+);

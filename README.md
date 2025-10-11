@@ -1,73 +1,59 @@
-# Welcome to your Lovable project
 
-## Project info
+# Medical Hebrew Learning Website
 
-**URL**: https://lovable.dev/projects/9d43344c-ea0f-48f4-bac8-47d6df1ef368
+## Project Overview
+This project is a web application for learning medical Hebrew terms and sentences. It features interactive flashcards, matching games, quizzes, and AI-powered sentence generation to help users master medical vocabulary in Hebrew.
 
-## How can I edit this code?
+## Features
+- Category-based learning of medical terms
+- Flashcards and matching games
+- Quiz mode for self-assessment
+- AI-generated example sentences for vocabulary
+- User authentication and progress tracking
+- Responsive design for desktop and mobile
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/9d43344c-ea0f-48f4-bac8-47d6df1ef368) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
+## Technologies Used
 - React
-- shadcn-ui
+- TypeScript
+- Vite
 - Tailwind CSS
+- shadcn-ui
+- Supabase (database, authentication, edge functions)
+- IndexedDB (local caching)
 
-## How can I deploy this project?
+## Getting Started
+### Prerequisites
+- Node.js & npm installed ([download here](https://nodejs.org/))
 
-Simply open [Lovable](https://lovable.dev/projects/9d43344c-ea0f-48f4-bac8-47d6df1ef368) and click on Share -> Publish.
+### Installation
+1. Clone the repository:
+	```sh
+	git clone <YOUR_GIT_URL>
+	cd med-hebrew-shylo
+	```
+2. Install dependencies:
+	```sh
+	npm install
+	```
+3. Start the development server:
+	```sh
+	npm run dev
+	```
+4. Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-## Can I connect a custom domain to my Lovable project?
+## Deployment
+You can deploy this project using Netlify, Vercel, or any static hosting provider. For Netlify:
+1. Push your code to GitHub or another Git provider.
+2. Connect your repository to Netlify.
+3. Set the build command to `npm run build` and the publish directory to `dist`.
+4. Configure environment variables for Supabase if needed.
 
-Yes, you can!
+## Configuration
+- Supabase credentials are managed in `src/integrations/supabase/client.ts` and `supabase/config.toml`.
+- Tailwind and shadcn-ui are configured in `tailwind.config.ts` and `components.json`.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Contributing
+Pull requests and issues are welcome! Please open an issue for bugs or feature requests.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## License
+This project is licensed under the MIT License.

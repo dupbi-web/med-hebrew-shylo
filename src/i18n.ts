@@ -1,8 +1,25 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+import { getLanguagePreference } from "@/cache/medicalTermsCache";
 
-i18n.use(initReactI18next).init({
-  resources: {
+async function getInitialLanguage() {
+  // Try to get from IndexedDB, fallback to localStorage, then default
+  let lang = null;
+  try {
+    lang = await getLanguagePreference();
+  } catch (e) {
+    // ignore
+  }
+  if (!lang && typeof window !== "undefined") {
+    lang = localStorage.getItem("language") || undefined;
+  }
+  return lang || "ru";
+}
+
+const i18nInit = async () => {
+  const initialLang = await getInitialLanguage();
+  i18n.use(initReactI18next).init({
+    resources: {
     en: {
       translation: {
         home_title: "Learn Hebrew Easily",
@@ -146,13 +163,15 @@ i18n.use(initReactI18next).init({
 
       },
     },
-  },
-  lng: "ru", // ברירת מחדל: רוסית
-  fallbackLng: "en",
-  interpolation: {
-    escapeValue: false,
-  },
-});
+    },
+    lng: initialLang, // Use preferred or default
+    fallbackLng: "en",
+    interpolation: {
+      escapeValue: false,
+    },
+  });
+};
 
+i18nInit();
 
 export default i18n;

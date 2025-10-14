@@ -55,15 +55,23 @@ const Navbar = () => {
 						<ThemeToggle />
 						<LanguageSwitcher />
 						{user ? (
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={signOut}
-								className="flex items-center gap-2"
-							>
-								<LogOut className="h-4 w-4" />
-								Logout
-							</Button>
+							<>
+								<Link to="/profile">
+									<Button variant="outline" size="sm" className="flex items-center gap-2">
+										<User className="h-4 w-4" />
+										Profile
+									</Button>
+								</Link>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={signOut}
+									className="flex items-center gap-2"
+								>
+									<LogOut className="h-4 w-4" />
+									Logout
+								</Button>
+							</>
 						) : (
 							<Link to="/auth">
 								<Button variant="outline" size="sm" className="flex items-center gap-2">
@@ -130,18 +138,26 @@ const Navbar = () => {
 						))}
 						<div className="pt-4 border-t">
 							{user ? (
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={() => {
-										signOut();
-										closeMenu();
-									}}
-									className="w-full flex items-center justify-center gap-2"
-								>
-									<LogOut className="h-4 w-4" />
-									Logout
-								</Button>
+								<>
+									<Link to="/profile" onClick={closeMenu} className="block mb-2">
+										<Button variant="outline" size="sm" className="w-full flex items-center justify-center gap-2">
+											<User className="h-4 w-4" />
+											Profile
+										</Button>
+									</Link>
+									<Button
+										variant="outline"
+										size="sm"
+										onClick={() => {
+											signOut();
+											closeMenu();
+										}}
+										className="w-full flex items-center justify-center gap-2"
+									>
+										<LogOut className="h-4 w-4" />
+										Logout
+									</Button>
+								</>
 							) : (
 								<Link to="/auth" onClick={closeMenu}>
 									<Button variant="outline" size="sm" className="w-full flex items-center justify-center gap-2">

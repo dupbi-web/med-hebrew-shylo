@@ -12,6 +12,9 @@ import NotFound from "./pages/NotFound";
 import Home from "./pages/Home";
 import ContactUs from "./pages/ContactUs";
 import Auth from "./pages/Auth";
+import Profile from "./pages/Profile";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 import { HelmetProvider } from "react-helmet-async";
 import Layout from "@/components/Layout";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -30,6 +33,8 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
               <Route element={<Layout />}>
                 <Route path="/" element={<Home />} />
                 <Route path="/FlashCards" element={<FlashCards />} />
@@ -40,6 +45,11 @@ const App = () => (
                 <Route path="/Learning" element={
                   <ProtectedRoute>
                     <Learning />
+                  </ProtectedRoute>
+                } />
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <Profile />
                   </ProtectedRoute>
                 } />
                 <Route path="/ContactUs" element={<ContactUs />} />

@@ -29,7 +29,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              {/* <Route path="/auth" element={<Auth />} /> */}
+              <Route path="/auth" element={<Auth />} />
               <Route element={<Layout />}>
                 <Route path="/" element={<Home />} />
                 <Route path="/FlashCards" element={<FlashCards />} />
@@ -38,9 +38,9 @@ const App = () => (
                 <Route path="/MatchingGame" element={<MatchingGame />} />
                 <Route path="/Dictionary" element={<Dictionary />} />
                 <Route path="/Learning" element={
-                  // <ProtectedRoute>
+                  <ProtectedRoute>
                     <Learning />
-                  // </ProtectedRoute>
+                  </ProtectedRoute>
                 } />
                 <Route path="/ContactUs" element={<ContactUs />} />
               </Route>

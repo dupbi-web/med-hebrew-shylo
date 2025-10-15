@@ -1,192 +1,350 @@
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Trash2, Shield, User as UserIcon, Mail } from "lucide-react";
+
+import {
+  User,
+  Download,
+  Shield,
+  Calendar,
+  Mail,
+  FileText,
+  UserCheck,
+  AlertTriangle,
+  ExternalLink,
+  Timer,
+} from "lucide-react";
+
+interface UserConsent {
+  id: string;
+  user_id: string;
+  terms_accepted: boolean;
+  privacy_accepted: boolean;
+  data_processing_accepted: boolean;
+  marketing_accepted: boolean;
+  created_at: string;
+  updated_at: string;
+  user_agent?: string | null;
+}
+
+type DeletionStatus = "pending" | "processing" | "completed";
+
+interface DataDeletionRequest {
+  id: string;
+  user_id: string;
+  request_date: string;
+  status: DeletionStatus;
+  completed_date: string | null;
+  created_at: string;
+}
+
+type HowFoundUs = "friend" | "telegram" | "social" | "search" | "other";
 
 const Profile = () => {
-  const { user, signOut } = useAuth();
+  const [user, setUser] = useState<any>(null);
+  const [consent, setConsent] = useState<UserConsent | null>(null);
+  const [deletionRequest, setDeletionRequest] = useState<DataDeletionRequest | null>(null);
+
+  // Professional details
+  const [fullName, setFullName] = useState("");
+  const [specialization, setSpecialization] = useState("");
+  const [hospital, setHospital] = useState("");
+  const [medicalField, setMedicalField] = useState("");
+  const [howFoundUs, setHowFoundUs] = useState<HowFoundUs>("other");
+  const [profileDescription, setProfileDescription] = useState("");
+
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false); // consent toggle
+  const [saving, setSaving] = useState(false); // profile save
+  const [notifying, setNotifying] = useState(false); // telegram notify while deletion request
+  const [error, setError] = useState("");
+
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [consent, setConsent] = useState({
-    terms_accepted: false,
-    privacy_accepted: false,
-    data_processing_accepted: false,
-    marketing_accepted: false,
-  });
-  const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
+    const loadUserData = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) {
+          navigate("/auth");
+          return;
+        }
 
-    fetchUserData();
-  }, [user, navigate]);
+        setUser(session.user);
 
-  const fetchUserData = async () => {
-    if (!user) return;
+        // Load consent (maybeSingle to avoid throw if no row)
+        const { data: consentData } = await supabase
+          .from("user_consent")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        if (consentData) setConsent(consentData as UserConsent);
 
-    try {
-      // Fetch consent
-      const { data: consentData, error: consentError } = await supabase
-        .from("user_consent")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
+        // Load existing deletion request (pending/processing)
+        const { data: delReqData } = await supabase
+          .from("data_deletion_requests")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .in("status", ["pending", "processing"])
+          .order("request_date", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (delReqData) setDeletionRequest(delReqData as DataDeletionRequest);
 
-      if (consentError && consentError.code !== "PGRST116") {
-        console.error("Error fetching consent:", consentError);
-      } else if (consentData) {
-        setConsent(consentData);
+        // Load profile
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .maybeSingle();
+        if (profile) {
+          setFullName(profile.full_name || "");
+          setSpecialization(profile.specialization || "");
+          setHospital(profile.hospital || "");
+          setMedicalField(profile.medical_field || "");
+          setHowFoundUs((profile.how_found_us || "other") as HowFoundUs);
+          setProfileDescription(profile.description || "");
+        }
+      } catch (err: any) {
+        setError(err?.message || "Failed to load profile data");
+      } finally {
+        setLoading(false);
       }
+    };
 
-      // Fetch profile
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
+    loadUserData();
+  }, [navigate]);
 
-      if (profileError && profileError.code !== "PGRST116") {
-        console.error("Error fetching profile:", profileError);
-      } else if (profileData) {
-        setProfile(profileData);
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
+  const updateConsent = async (field: keyof Pick<UserConsent, "marketing_accepted">, value: boolean) => {
+    if (!user || !consent) return;
 
-  const handleConsentUpdate = async (field: string, value: boolean) => {
-    if (!user) return;
-
+    setUpdating(true);
     try {
       const { error } = await supabase
         .from("user_consent")
-        .update({ [field]: value, updated_at: new Date().toISOString() })
+        .update({
+          [field]: value,
+          updated_at: new Date().toISOString(),
+        })
         .eq("user_id", user.id);
 
       if (error) throw error;
 
-      setConsent({ ...consent, [field]: value });
-      
+      setConsent((prev) =>
+        prev ? { ...prev, [field]: value, updated_at: new Date().toISOString() } : prev
+      );
+
       toast({
-        title: "Consent Updated",
+        title: "Preferences updated",
         description: "Your consent preferences have been saved.",
       });
-    } catch (error: any) {
+    } catch (err: any) {
+      setError(err?.message || "Failed to update preferences");
       toast({
         title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDataExport = async () => {
-    if (!user) return;
-    setLoading(true);
-
-    try {
-      // Fetch all user data
-      const [profileData, consentData, masteredWords] = await Promise.all([
-        supabase.from("profiles").select("*").eq("user_id", user.id),
-        supabase.from("user_consent").select("*").eq("user_id", user.id),
-        supabase.from("user_mastered_words").select("*").eq("user_id", user.id),
-      ]);
-
-      const userData = {
-        user: {
-          id: user.id,
-          email: user.email,
-          created_at: user.created_at,
-        },
-        profile: profileData.data,
-        consent: consentData.data,
-        mastered_words: masteredWords.data,
-        export_date: new Date().toISOString(),
-      };
-
-      // Create and download JSON file
-      const dataStr = JSON.stringify(userData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: "application/json" });
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `user-data-export-${new Date().toISOString().split("T")[0]}.json`;
-      link.click();
-      URL.revokeObjectURL(url);
-
-      toast({
-        title: "Data Exported",
-        description: "Your data has been downloaded successfully.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to export data: " + error.message,
+        description: "Failed to update preferences. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setUpdating(false);
     }
   };
 
+  const exportUserData = async () => {
+    if (!user) return;
+    try {
+      const userData = {
+        account: {
+          id: user.id,
+          email: user.email,
+          created_at: user.created_at,
+          last_sign_in: user.last_sign_in_at,
+        },
+        consent: consent || null,
+        profile: {
+          full_name: fullName,
+          specialization,
+          hospital,
+          medical_field: medicalField,
+          how_found_us: howFoundUs,
+          description: profileDescription,
+        },
+      };
+
+      const dataStr = JSON.stringify(userData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(dataBlob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `user_data_${user.id}_${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Data exported",
+        description: "Your data has been downloaded as a JSON file.",
+      });
+    } catch {
+      toast({
+        title: "Export failed",
+        description: "Failed to export your data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const saveProfile = async () => {
+    setSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error("Not authenticated");
+      const { error } = await supabase.from("profiles").upsert(
+        {
+          id: session.user.id,
+          full_name: fullName,
+          specialization,
+          hospital,
+          medical_field: medicalField,
+          how_found_us: howFoundUs,
+          description: profileDescription,
+        },
+        { onConflict: "id" }
+      );
+      if (error) throw error;
+      toast({ title: "Profile saved", description: "Your details have been updated." });
+    } catch (err: any) {
+      toast({
+        title: "Save failed",
+        description: err?.message || "Could not save your profile.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Notify admin on Telegram (no debug surfaced to user)
+  const sendTelegram = async (text: string) => {
+    try {
+      setNotifying(true);
+      await fetch("/api/telegram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: text.trim() }),
+      });
+    } catch {
+      // suppress debug to users
+    } finally {
+      setNotifying(false);
+    }
+  };
+
+  // Request-only deletion flow (admin completes deletion) + Telegram notify
   const handleAccountDeletion = async () => {
     if (!user) return;
-    setLoading(true);
+
+    const confirmed = window.confirm(
+      "Request account deletion? An administrator will review your request. This cannot be undone once completed."
+    );
+    if (!confirmed) return;
 
     try {
-      // Create deletion request
-      const { error: requestError } = await supabase
+      // Check for existing pending/processing request
+      const { data: existingReq, error: existingErr } = await supabase
+        .from("data_deletion_requests")
+        .select("id, status, request_date, created_at, completed_date, user_id")
+        .eq("user_id", user.id)
+        .in("status", ["pending", "processing"])
+        .order("request_date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existingErr) throw existingErr;
+
+      if (existingReq) {
+        setDeletionRequest(existingReq as DataDeletionRequest);
+        toast({
+          title: "Request already pending",
+          description: "Your deletion request is in progress.",
+        });
+
+        const duplicateText = [
+          "⚠️ User re-submitted deletion request",
+          `User: ${user.email || "unknown email"} (${user.id})`,
+          `Existing Request: ${existingReq.id}`,
+          `Status: ${existingReq.status}`,
+          `Requested: ${existingReq.request_date}`,
+        ].join("\n");
+        await sendTelegram(duplicateText);
+
+        await supabase.auth.signOut();
+        navigate("/auth");
+        return;
+      }
+
+      // Insert new pending request
+      const { data, error } = await supabase
         .from("data_deletion_requests")
         .insert({
           user_id: user.id,
           status: "pending",
-        });
+        })
+        .select()
+        .single();
 
-      if (requestError) throw requestError;
+      if (error) throw error;
 
+      setDeletionRequest(data as DataDeletionRequest);
       toast({
-        title: "Deletion Request Submitted",
-        description: "Your account deletion request has been submitted. You will be signed out shortly.",
+        title: "Deletion requested",
+        description: "An administrator will process your request soon.",
       });
 
-      // Sign out after 2 seconds
-      setTimeout(() => {
-        signOut();
-      }, 2000);
-    } catch (error: any) {
+      const notifyText = [
+        "🗑️ New data deletion request",
+        `User: ${user.email || "unknown email"} (${user.id})`,
+        `Request ID: ${data.id}`,
+        `Requested: ${data.request_date}`,
+        `Created: ${data.created_at}`,
+        `Status: ${data.status}`,
+      ].join("\n");
+      await sendTelegram(notifyText);
+
+      await supabase.auth.signOut();
+      navigate("/auth");
+    } catch (err: any) {
       toast({
-        title: "Error",
-        description: "Failed to submit deletion request: " + error.message,
+        title: "Request failed",
+        description: err?.message || "Could not submit deletion request. Please try again later.",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto max-w-4xl py-8">
+        <div className="text-center">Loading profile...</div>
+      </div>
+    );
+  }
 
   if (!user) {
     return null;
@@ -195,185 +353,220 @@ const Profile = () => {
   return (
     <>
       <Helmet>
-        <title>Profile & Privacy Settings - Medical Terms Game</title>
-        <meta name="description" content="Manage your account, privacy settings, and GDPR data rights." />
+        <title>Profile Settings</title>
       </Helmet>
 
-      <div className="container mx-auto max-w-4xl py-12 px-4">
-        <h1 className="text-3xl font-bold mb-8">Profile & Privacy Settings</h1>
+      <div className="container mx-auto max-w-4xl py-8 space-y-6">
+        {error && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         {/* Account Information */}
-        <Card className="mb-6">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <UserIcon className="h-5 w-5" />
+              <User className="h-5 w-5" />
               Account Information
             </CardTitle>
             <CardDescription>Your basic account details</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Mail className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">Email</p>
-                <p className="text-sm text-muted-foreground">{user.email}</p>
-              </div>
-            </div>
             <div>
-              <p className="text-sm font-medium">User ID</p>
-              <p className="text-xs text-muted-foreground font-mono">{user.id}</p>
+              <Label className="flex items-center gap-2 text-sm font-medium">
+                <Mail className="h-4 w-4" />
+                Email
+              </Label>
+              <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
             </div>
+
             <div>
-              <p className="text-sm font-medium">Account Created</p>
-              <p className="text-sm text-muted-foreground">
+              <Label className="flex items-center gap-2 text-sm font-medium">
+                <UserCheck className="h-4 w-4" />
+                User ID
+              </Label>
+              <p className="text-sm text-muted-foreground mt-1 font-mono">{user.id}</p>
+            </div>
+
+            <div>
+              <Label className="flex items-center gap-2 text-sm font-medium">
+                <Calendar className="h-4 w-4" />
+                Account Created
+              </Label>
+              <p className="text-sm text-muted-foreground mt-1">
                 {new Date(user.created_at || "").toLocaleDateString()}
               </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* GDPR Consent Management */}
-        <Card className="mb-6">
+        {/* Professional details */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Professional details</CardTitle>
+            <CardDescription>Tell us about your medical background</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Label>Full name</Label>
+            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
+
+            <Label>Specialization</Label>
+            <Input value={specialization} onChange={(e) => setSpecialization(e.target.value)} />
+
+            <Label>Hospital</Label>
+            <Input value={hospital} onChange={(e) => setHospital(e.target.value)} />
+
+            <Label>Medical field</Label>
+            <Input value={medicalField} onChange={(e) => setMedicalField(e.target.value)} />
+
+            <Label>Short description</Label>
+            <Input value={profileDescription} onChange={(e) => setProfileDescription(e.target.value)} />
+
+            <Button onClick={saveProfile} disabled={saving}>
+              {saving ? "Saving..." : "Save"}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Privacy & Consent */}
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
               Privacy & Consent
             </CardTitle>
-            <CardDescription>Manage your data processing consent (GDPR)</CardDescription>
+            <CardDescription>Manage your privacy preferences and view consent history</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-start gap-3">
-              <Checkbox
-                id="terms"
-                checked={consent.terms_accepted}
-                onCheckedChange={(checked) => handleConsentUpdate("terms_accepted", checked as boolean)}
-              />
-              <Label htmlFor="terms" className="cursor-pointer">
-                <p className="font-medium">Terms & Conditions</p>
-                <p className="text-sm text-muted-foreground">Accept our terms of service</p>
-              </Label>
-            </div>
+          <CardContent className="space-y-6">
+            {consent ? (
+              <>
+                {/* Required (read-only) */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm font-medium">Terms & Conditions</Label>
+                      <p className="text-xs text-muted-foreground">Required for service usage</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">
+                        Accepted {new Date(consent.created_at).toLocaleDateString()}
+                      </Badge>
+                      <Button variant="ghost" size="sm" asChild>
+                        <a href="/terms" target="_blank" rel="noopener noreferrer">
+                          <FileText className="h-3 w-3 mr-1" />
+                          View
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
 
-            <div className="flex items-start gap-3">
-              <Checkbox
-                id="privacy"
-                checked={consent.privacy_accepted}
-                onCheckedChange={(checked) => handleConsentUpdate("privacy_accepted", checked as boolean)}
-              />
-              <Label htmlFor="privacy" className="cursor-pointer">
-                <p className="font-medium">Privacy Policy</p>
-                <p className="text-sm text-muted-foreground">Accept our privacy practices</p>
-              </Label>
-            </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm font-medium">Privacy Policy</Label>
+                      <p className="text-xs text-muted-foreground">Required for service usage</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">
+                        Accepted {new Date(consent.created_at).toLocaleDateString()}
+                      </Badge>
+                      <Button variant="ghost" size="sm" asChild>
+                        <a href="/privacy" target="_blank" rel="noopener noreferrer">
+                          <FileText className="h-3 w-3 mr-1" />
+                          View
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
 
-            <div className="flex items-start gap-3">
-              <Checkbox
-                id="data-processing"
-                checked={consent.data_processing_accepted}
-                onCheckedChange={(checked) =>
-                  handleConsentUpdate("data_processing_accepted", checked as boolean)
-                }
-              />
-              <Label htmlFor="data-processing" className="cursor-pointer">
-                <p className="font-medium">Data Processing</p>
-                <p className="text-sm text-muted-foreground">
-                  Consent to processing your data for service functionality
-                </p>
-              </Label>
-            </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm font-medium">Data Processing</Label>
+                      <p className="text-xs text-muted-foreground">Required for service functionality</p>
+                    </div>
+                    <Badge variant="secondary">
+                      Accepted {new Date(consent.created_at).toLocaleDateString()}
+                    </Badge>
+                  </div>
+                </div>
 
-            <div className="flex items-start gap-3">
-              <Checkbox
-                id="marketing"
-                checked={consent.marketing_accepted}
-                onCheckedChange={(checked) => handleConsentUpdate("marketing_accepted", checked as boolean)}
-              />
-              <Label htmlFor="marketing" className="cursor-pointer">
-                <p className="font-medium">Marketing Communications</p>
-                <p className="text-sm text-muted-foreground">Receive updates and newsletters (optional)</p>
-              </Label>
-            </div>
-
-            <Alert>
-              <AlertDescription>
-                You can withdraw consent at any time. Note that withdrawing essential consents may limit
-                your ability to use certain features.
-              </AlertDescription>
-            </Alert>
+                <Separator />
+              </>
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-sm text-muted-foreground">No consent records found.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Data Management */}
-        <Card className="mb-6">
+        <Card>
           <CardHeader>
-            <CardTitle>Data Management</CardTitle>
-            <CardDescription>Exercise your GDPR rights</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              Data Management
+            </CardTitle>
+            <CardDescription>Export your data or request account deletion</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Export Your Data</p>
-                <p className="text-sm text-muted-foreground">
-                  Download all your personal data in JSON format
-                </p>
-              </div>
-              <Button onClick={handleDataExport} disabled={loading} variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export
+            <div>
+              <h4 className="text-sm font-medium mb-2">What data we collect:</h4>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li><span className="font-medium">Account Data:</span> Email address, user ID, account creation date</li>
+                <li><span className="font-medium">Learning Progress:</span> Words you've marked as mastered</li>
+                <li><span className="font-medium">Consent Records:</span> Your privacy preferences and consent timestamps</li>
+                <li><span className="font-medium">Technical Data:</span> User agent for consent tracking (optional)</li>
+              </ul>
+              <p className="text-xs text-muted-foreground mt-2">
+                All data is encrypted at rest and in transit, and only the minimum data necessary is collected.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button onClick={exportUserData} variant="outline" className="flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                Export Your Data
+              </Button>
+
+              <Button
+                onClick={handleAccountDeletion}
+                variant="destructive"
+                className="flex items-center gap-2"
+                disabled={
+                  notifying ||
+                  (!!deletionRequest && (deletionRequest.status === "pending" || deletionRequest.status === "processing"))
+                }
+                title={
+                  notifying
+                    ? "Notifying admin..."
+                    : deletionRequest && (deletionRequest.status === "pending" || deletionRequest.status === "processing")
+                    ? "Deletion request already in progress"
+                    : "Request account deletion"
+                }
+              >
+                {notifying ? (
+                  <>Notifying...</>
+                ) : deletionRequest && (deletionRequest.status === "pending" || deletionRequest.status === "processing") ? (
+                  <>
+                    <Timer className="h-4 w-4" />
+                    Request Pending
+                  </>
+                ) : (
+                  <>Request Deletion</>
+                )}
               </Button>
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t">
-              <div>
-                <p className="font-medium text-destructive">Delete Account</p>
-                <p className="text-sm text-muted-foreground">
-                  Permanently delete your account and all associated data
-                </p>
-              </div>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" disabled={loading}>
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete your account and remove
-                      all your data from our servers. A deletion request will be submitted and processed
-                      according to GDPR requirements (typically within 30 days).
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleAccountDeletion}>
-                      Delete My Account
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Data Collection Notice */}
-        <Card>
-          <CardHeader>
-            <CardTitle>What Data We Collect</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm">
-              <p><strong>Account Data:</strong> Email address, user ID, account creation date</p>
-              <p><strong>Learning Progress:</strong> Words you've marked as mastered</p>
-              <p><strong>Consent Records:</strong> Your privacy preferences and consent timestamps</p>
-              <p><strong>Technical Data:</strong> User agent for consent tracking (optional)</p>
-              <p className="pt-2 text-muted-foreground">
-                All data is encrypted at rest and in transit. We only collect the minimum data necessary
-                to provide our service.
-              </p>
-            </div>
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Account deletion is performed by an administrator after reviewing your request, and is irreversible once completed.
+              </AlertDescription>
+            </Alert>
           </CardContent>
         </Card>
       </div>

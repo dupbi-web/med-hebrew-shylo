@@ -2,151 +2,195 @@ import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Privacy = () => {
-  const lastUpdated = new Date().toLocaleDateString();
-
   return (
     <>
       <Helmet>
-        <title>Privacy Policy</title>
+        <title>Privacy Policy - Medical Terms Game</title>
+        <meta name="description" content="Our privacy policy and GDPR compliance information." />
       </Helmet>
 
-      <div className="container mx-auto max-w-3xl py-8 space-y-6">
-        <Card>
+      <div className="container mx-auto max-w-4xl py-12 px-4">
+        <h1 className="text-4xl font-bold mb-8">Privacy Policy</h1>
+        
+        <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Privacy Policy</CardTitle>
+            <CardTitle>1. Introduction</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p>
-              This Privacy Policy explains how personal data is collected, used, and protected, including compliance with the General Data Protection Regulation (GDPR) where applicable. 
+              This Privacy Policy explains how we collect, use, and protect your personal data in
+              compliance with the General Data Protection Regulation (GDPR) and other applicable
+              privacy laws.
             </p>
-
-            <h3 className="text-lg font-medium">Who we are</h3>
             <p>
-              This service helps healthcare professionals learn medical terminology and related content; data is processed to operate the app, provide support, and improve features. 
+              We are committed to protecting your privacy and ensuring you have a positive experience
+              on our website.
             </p>
+          </CardContent>
+        </Card>
 
-            <h3 className="text-lg font-medium">Data we collect</h3>
-            <ul className="list-disc ml-6 space-y-1">
-              <li>
-                Account data: email, user ID, authentication timestamps. 
-              </li>
-              <li>
-                Profile data: full_name, specialization, hospital, medical_field, how_found_us, description. 
-              </li>
-              <li>
-                Consent records: terms/privacy/data processing acceptance and marketing preference. 
-              </li>
-              <li>
-                Technical data: user agent for consent tracking, basic device/browser metadata, and minimal logs. 
-              </li>
-              <li>
-                Contact messages: name, reply email, and message content submitted via the contact form. 
-              </li>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>2. Data We Collect</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h3 className="font-semibold mb-2">2.1 Account Information</h3>
+              <ul className="list-disc pl-6 space-y-1">
+                <li>Email address (for authentication)</li>
+                <li>User ID (automatically generated)</li>
+                <li>Account creation date</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">2.2 Learning Progress Data</h3>
+              <ul className="list-disc pl-6 space-y-1">
+                <li>Words marked as mastered</li>
+                <li>Learning statistics and progress</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">2.3 Consent Records</h3>
+              <ul className="list-disc pl-6 space-y-1">
+                <li>Your consent preferences</li>
+                <li>Consent timestamps</li>
+                <li>User agent (optional, for consent verification)</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>3. How We Use Your Data</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p>We use your personal data only for the following purposes:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li><strong>Service Provision:</strong> To provide and maintain our medical terminology learning platform</li>
+              <li><strong>Authentication:</strong> To verify your identity and secure your account</li>
+              <li><strong>Progress Tracking:</strong> To save and display your learning progress</li>
+              <li><strong>Communication:</strong> To send you important service updates (only with your consent for marketing)</li>
+              <li><strong>Legal Compliance:</strong> To comply with legal obligations and protect our rights</li>
             </ul>
+          </CardContent>
+        </Card>
 
-            <h3 className="text-lg font-medium">How we use data</h3>
-            <ul className="list-disc ml-6 space-y-1">
-              <li>
-                Provide and secure core features, authentication, and personalization. 
-              </li>
-              <li>
-                Respond to support requests, bug reports, translation fixes, and collaboration inquiries. 
-              </li>
-              <li>
-                Improve content quality and user experience, including optional communications with consent. 
-              </li>
-              <li>
-                Meet legal, security, and fraud prevention obligations. 
-              </li>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>4. Legal Basis for Processing (GDPR)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p>We process your personal data based on:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li><strong>Consent:</strong> You have given explicit consent for specific processing activities</li>
+              <li><strong>Contract:</strong> Processing is necessary to provide our service</li>
+              <li><strong>Legal Obligation:</strong> We must process data to comply with the law</li>
             </ul>
+          </CardContent>
+        </Card>
 
-            <h3 className="text-lg font-medium">Legal bases (GDPR)</h3>
-            <ul className="list-disc ml-6 space-y-1">
-              <li>
-                Contract: necessary to provide the service and manage your account. 
-              </li>
-              <li>
-                Legitimate interests: service improvement, security, and support, balanced against your rights. 
-              </li>
-              <li>
-                Consent: marketing communications and non-essential preferences; you can withdraw at any time. 
-              </li>
-              <li>
-                Legal obligation: compliance with applicable laws and requests from authorities. 
-              </li>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>5. Data Security</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p>
+              We implement appropriate technical and organizational measures to protect your data:
+            </p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>Encryption of data at rest and in transit (TLS/SSL)</li>
+              <li>Secure authentication via Supabase</li>
+              <li>Regular security updates and monitoring</li>
+              <li>Access controls and authentication</li>
+              <li>Row-level security (RLS) on database tables</li>
             </ul>
+          </CardContent>
+        </Card>
 
-            <h3 className="text-lg font-medium">Sharing and processors</h3>
-            <ul className="list-disc ml-6 space-y-1">
-              <li>
-                Supabase: managed database, authentication, storage of profiles and consent, and related services. 
-              </li>
-              <li>
-                Netlify: hosting, build, and edge/CDN delivery for the frontend. 
-              </li>
-              <li>
-                Telegram bot endpoint: delivers contact or deletion-request notifications to administrators. 
-              </li>
-              <li>
-                Additional subprocessors may be used for email or support; they are bound by appropriate data protection terms. 
-              </li>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>6. Your GDPR Rights</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p>Under GDPR, you have the following rights:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li><strong>Right to Access:</strong> Request a copy of your personal data</li>
+              <li><strong>Right to Rectification:</strong> Correct inaccurate data</li>
+              <li><strong>Right to Erasure:</strong> Request deletion of your data ("right to be forgotten")</li>
+              <li><strong>Right to Data Portability:</strong> Export your data in a machine-readable format</li>
+              <li><strong>Right to Withdraw Consent:</strong> Withdraw consent at any time</li>
+              <li><strong>Right to Object:</strong> Object to certain types of processing</li>
             </ul>
-
-            <h3 className="text-lg font-medium">International transfers</h3>
-            <p>
-              Where data is transferred outside the EEA, appropriate safeguards such as standard contractual clauses or equivalent protections are applied. 
+            <p className="mt-4">
+              You can exercise these rights from your <a href="/profile" className="text-primary hover:underline">Profile Settings</a> page.
             </p>
+          </CardContent>
+        </Card>
 
-            <h3 className="text-lg font-medium">Security</h3>
-            <ul className="list-disc ml-6 space-y-1">
-              <li>
-                Encryption in transit and at rest for managed services where available. 
-              </li>
-              <li>
-                Role-based access controls and Row Level Security (RLS) policies to restrict data access to the account owner where applicable. 
-              </li>
-              <li>
-                Least-privilege operational access and periodic reviews. 
-              </li>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>7. Data Retention</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p>
+              We retain your personal data only as long as necessary for the purposes outlined in this
+              policy or as required by law. When you request account deletion, we will delete your data
+              within 30 days, except where we have a legal obligation to retain it.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>8. Third-Party Services</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p>We use the following third-party services:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li><strong>Supabase:</strong> Database and authentication (GDPR compliant)</li>
             </ul>
+            <p>These services have their own privacy policies and are GDPR compliant.</p>
+          </CardContent>
+        </Card>
 
-            <h3 className="text-lg font-medium">Retention</h3>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>9. International Data Transfers</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <p>
-              Data is retained while the account is active and as necessary for legitimate purposes; upon a verified deletion request, personal data is removed or anonymized within a reasonable period, subject to legal retention obligations and backup cycles. 
+              Your data may be transferred to and processed in countries outside the European Economic
+              Area (EEA). We ensure appropriate safeguards are in place for such transfers in accordance
+              with GDPR requirements.
             </p>
+          </CardContent>
+        </Card>
 
-            <h3 className="text-lg font-medium">Your rights</h3>
-            <ul className="list-disc ml-6 space-y-1">
-              <li>
-                Access, correction, and export of your data. 
-              </li>
-              <li>
-                Deletion request: submit from your Profile page to initiate administrator review. 
-              </li>
-              <li>
-                Objection/restriction where applicable and withdrawal of consent for marketing. 
-              </li>
-            </ul>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>10. Updates to This Policy</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <p>
-              Rights can be exercised through Profile settings and the contact page; identification may be required for security. 
+              We may update this Privacy Policy from time to time. We will notify you of any significant
+              changes via email or through a notice on our website.
             </p>
+            <p className="text-sm text-muted-foreground">
+              Last updated: {new Date().toLocaleDateString()}
+            </p>
+          </CardContent>
+        </Card>
 
-            <h3 className="text-lg font-medium">Children</h3>
+        <Card>
+          <CardHeader>
+            <CardTitle>11. Contact Us</CardTitle>
+          </CardHeader>
+          <CardContent>
             <p>
-              The service is not intended for individuals under 16 years of age; do not register if under this age threshold. 
+              If you have questions about this Privacy Policy or wish to exercise your GDPR rights,
+              please contact us through the <a href="/ContactUs" className="text-primary hover:underline">Contact Us</a> page.
             </p>
-
-            <h3 className="text-lg font-medium">Changes</h3>
-            <p>
-              This policy may be updated; material changes will be communicated via in-app notice or email where appropriate. 
-            </p>
-
-            <h3 className="text-lg font-medium">Contact</h3>
-            <p>
-              For questions or rights requests, use the Contact page or the in-app options provided in your Profile. 
-            </p>
-
-            <p className="text-sm text-muted-foreground">Last updated: {lastUpdated}</p>
           </CardContent>
         </Card>
       </div>

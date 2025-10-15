@@ -2,108 +2,197 @@ import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Terms = () => {
-  const lastUpdated = new Date().toLocaleDateString();
-
   return (
     <>
       <Helmet>
-        <title>Terms & Conditions</title>
+        <title>Terms and Conditions - Medical Terms Game</title>
+        <meta name="description" content="Terms and conditions for using our medical terminology learning platform." />
       </Helmet>
 
-      <div className="container mx-auto max-w-3xl py-8 space-y-6">
-        <Card>
+      <div className="container mx-auto max-w-4xl py-12 px-4">
+        <h1 className="text-4xl font-bold mb-8">Terms and Conditions</h1>
+        
+        <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Terms & Conditions</CardTitle>
+            <CardTitle>1. Acceptance of Terms</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p>
-              By using this service, you agree to these Terms; if you do not agree, do not access or use the service. 
+              By accessing and using this website, you accept and agree to be bound by the terms and
+              provision of this agreement. If you do not agree to these terms, please do not use this
+              service.
             </p>
+          </CardContent>
+        </Card>
 
-            <h3 className="text-lg font-medium">Eligibility</h3>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>2. Use License</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <p>
-              You must be at least 16 years old and capable of forming a binding agreement to use the service. 
+              Permission is granted to temporarily use this website for personal, non-commercial learning
+              purposes only. This is the grant of a license, not a transfer of title, and under this
+              license you may not:
             </p>
-
-            <h3 className="text-lg font-medium">Account and security</h3>
-            <ul className="list-disc ml-6 space-y-1">
-              <li>
-                Keep your credentials confidential and promptly notify support of any suspected compromise. 
-              </li>
-              <li>
-                Information provided in profiles must be accurate and kept up to date. 
-              </li>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>Modify or copy the materials</li>
+              <li>Use the materials for commercial purposes</li>
+              <li>Attempt to decompile or reverse engineer any software</li>
+              <li>Remove any copyright or proprietary notations</li>
+              <li>Transfer the materials to another person</li>
             </ul>
+          </CardContent>
+        </Card>
 
-            <h3 className="text-lg font-medium">License and acceptable use</h3>
-            <ul className="list-disc ml-6 space-y-1">
-              <li>
-                A personal, non-transferable, revocable license is granted to access the service for learning and professional development. 
-              </li>
-              <li>
-                Do not misuse the service, attempt to bypass security, scrape without permission, or interfere with normal operation. 
-              </li>
-              <li>
-                Do not upload unlawful, harmful, or infringing content, or violate others’ privacy or intellectual property rights. 
-              </li>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>3. Educational Purpose</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p>
+              This platform is designed for educational purposes to help healthcare professionals and
+              students learn medical terminology. The content should not be used as a substitute for
+              professional medical advice, diagnosis, or treatment.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>4. User Accounts</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p>When you create an account with us, you must:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>Provide accurate and complete information</li>
+              <li>Maintain the security of your account credentials</li>
+              <li>Notify us immediately of any unauthorized access</li>
+              <li>Be responsible for all activities under your account</li>
             </ul>
+          </CardContent>
+        </Card>
 
-            <h3 className="text-lg font-medium">User content</h3>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>5. Prohibited Activities</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p>You agree not to:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>Use the service for any unlawful purpose</li>
+              <li>Attempt to gain unauthorized access to any systems</li>
+              <li>Interfere with or disrupt the service</li>
+              <li>Upload malicious code or viruses</li>
+              <li>Harass, abuse, or harm other users</li>
+              <li>Collect user information without consent</li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>6. Intellectual Property</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <p>
-              You retain rights to your content; by submitting content, you grant a limited license to host, display, and use it to operate and improve the service. 
+              All content on this website, including text, graphics, logos, and software, is the
+              property of the website owner or its content suppliers and is protected by international
+              copyright laws.
             </p>
+          </CardContent>
+        </Card>
 
-            <h3 className="text-lg font-medium">Medical disclaimer</h3>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>7. Disclaimer</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <p>
-              Educational content is provided for learning only and is not a substitute for professional medical advice, diagnosis, or treatment; verify critical information with authoritative sources. 
+              The materials on this website are provided on an 'as is' basis. We make no warranties,
+              expressed or implied, and hereby disclaim all other warranties including, without
+              limitation, implied warranties of merchantability, fitness for a particular purpose, or
+              non-infringement.
             </p>
+          </CardContent>
+        </Card>
 
-            <h3 className="text-lg font-medium">Third-party services</h3>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>8. Limitations of Liability</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <p>
-              The service integrates third-party providers for authentication, hosting, and messaging; use of such services is subject to their terms and policies. 
+              In no event shall we or our suppliers be liable for any damages (including, without
+              limitation, damages for loss of data or profit) arising out of the use or inability to use
+              the materials on this website.
             </p>
+          </CardContent>
+        </Card>
 
-            <h3 className="text-lg font-medium">Changes and availability</h3>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>9. Accuracy of Materials</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <p>
-              Features may change, be suspended, or discontinued at any time; reasonable efforts are made to maintain availability but outages may occur. 
+              While we strive to provide accurate medical terminology, we do not warrant that the
+              materials are completely accurate, reliable, or error-free. Always verify critical
+              information with authoritative medical sources.
             </p>
+          </CardContent>
+        </Card>
 
-            <h3 className="text-lg font-medium">Termination</h3>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>10. Modifications to Service</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <p>
-              Accounts may be suspended or terminated for violations of these Terms or to protect users, the service, or third parties; you may request deletion from your Profile. 
+              We reserve the right to modify or discontinue the service at any time without notice. We
+              shall not be liable to you or any third party for any modification, suspension, or
+              discontinuance of the service.
             </p>
+          </CardContent>
+        </Card>
 
-            <h3 className="text-lg font-medium">Disclaimers</h3>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>11. Termination</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <p>
-              The service is provided as is without warranties of any kind; no guarantee is made that it will be error-free, secure, or uninterrupted. 
+              We may terminate or suspend your account and access to the service immediately, without
+              prior notice, for conduct that we believe violates these Terms or is harmful to other users,
+              us, or third parties, or for any other reason.
             </p>
+          </CardContent>
+        </Card>
 
-            <h3 className="text-lg font-medium">Limitation of liability</h3>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>12. Governing Law</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <p>
-              To the maximum extent permitted by law, liability for indirect, incidental, special, consequential, or punitive damages is disclaimed. 
+              These terms shall be governed by and construed in accordance with applicable laws, and you
+              irrevocably submit to the exclusive jurisdiction of the courts in that location.
             </p>
+          </CardContent>
+        </Card>
 
-            <h3 className="text-lg font-medium">Indemnity</h3>
+        <Card>
+          <CardHeader>
+            <CardTitle>13. Changes to Terms</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <p>
-              You agree to indemnify and hold harmless the service from claims arising from your use or violation of these Terms, to the extent permitted by law. 
+              We reserve the right to revise these terms at any time. By continuing to use the service
+              after revisions become effective, you agree to be bound by the revised terms.
             </p>
-
-            <h3 className="text-lg font-medium">Governing law</h3>
-            <p>
-              These Terms are governed by applicable law, with venue in the operator’s principal jurisdiction unless otherwise required by consumer protection law. 
+            <p className="text-sm text-muted-foreground">
+              Last updated: {new Date().toLocaleDateString()}
             </p>
-
-            <h3 className="text-lg font-medium">Changes to Terms</h3>
-            <p>
-              Terms may be updated; material changes will be communicated by in-app notice or email where appropriate, and continued use constitutes acceptance. 
-            </p>
-
-            <h3 className="text-lg font-medium">Contact</h3>
-            <p>
-              Questions about these Terms can be sent via the Contact page; administrative requests such as account deletion must be submitted from your Profile. 
-            </p>
-
-            <p className="text-sm text-muted-foreground">Last updated: {lastUpdated}</p>
           </CardContent>
         </Card>
       </div>

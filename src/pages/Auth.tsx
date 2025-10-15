@@ -9,41 +9,32 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
-
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
 import { LogIn, UserPlus, Mail, Lock, Shield } from "lucide-react";
 import { z } from "zod";
-
-type HowFoundUs = "friend" | "telegram" | "social" | "search" | "other";
 
 const signUpSchema = z.object({
   email: z.string().trim().email({ message: "Invalid email address" }).max(255),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }).max(100),
-  termsAccepted: z.boolean().refine((v) => v === true, { message: "You must accept the terms and conditions" }),
-  privacyAccepted: z.boolean().refine((v) => v === true, { message: "You must accept the privacy policy" }),
-  dataProcessingAccepted: z.boolean().refine((v) => v === true, { message: "You must consent to data processing" }),
+  termsAccepted: z.boolean().refine(val => val === true, {
+    message: "You must accept the terms and conditions"
+  }),
+  privacyAccepted: z.boolean().refine(val => val === true, {
+    message: "You must accept the privacy policy"
+  }),
+  dataProcessingAccepted: z.boolean().refine(val => val === true, {
+    message: "You must consent to data processing"
+  })
 });
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // Consent checkboxes
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [dataProcessingAccepted, setDataProcessingAccepted] = useState(false);
   const [marketingAccepted, setMarketingAccepted] = useState(false);
-
-  // Profile fields
-  const [fullName, setFullName] = useState("");
-  const [specialization, setSpecialization] = useState("");
-  const [hospital, setHospital] = useState("");
-  const [medicalField, setMedicalField] = useState("");
-  const [howFoundUs, setHowFoundUs] = useState<HowFoundUs>("other");
-  const [profileDescription, setProfileDescription] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -111,8 +102,26 @@ const Auth = () => {
     setError("");
 
     try {
-      const validation = signUpSchema.safeParse({
+      // Validate input
+      const validationResult = signUpSchema.safeParse({
         email,
+        password,
+        termsAccepted,
+        privacyAccepted,
+        dataProcessingAccepted
+      });
+
+      if (!validationResult.success) {
+        const errorMessage = validationResult.error.errors[0]?.message || "Validation failed";
+        setError(errorMessage);
+        setLoading(false);
+        return;
+      }
+
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
         password,
         termsAccepted,
         privacyAccepted,
@@ -136,6 +145,25 @@ const Auth = () => {
       });
       if (error) throw error;
 
+      // Store consent information
+      if (data.user) {
+        const { error: consentError } = await supabase
+          .from("user_consent")
+          .insert({
+            user_id: data.user.id,
+            terms_accepted: termsAccepted,
+            privacy_accepted: privacyAccepted,
+            data_processing_accepted: dataProcessingAccepted,
+            marketing_accepted: marketingAccepted,
+            ip_address: null, // Could be captured if needed
+            user_agent: navigator.userAgent
+          });
+
+        if (consentError) {
+          console.error("Error storing consent:", consentError);
+        }
+      }
+
       toast({
         title: "Success!",
         description: "Please check your email to confirm your account.",
@@ -144,8 +172,12 @@ const Auth = () => {
       // Clear only email/password; keep other UI state if needed
       setEmail("");
       setPassword("");
-    } catch (err: any) {
-      setError(err?.message || "Sign up failed");
+      setTermsAccepted(false);
+      setPrivacyAccepted(false);
+      setDataProcessingAccepted(false);
+      setMarketingAccepted(false);
+    } catch (error: any) {
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -349,7 +381,7 @@ const Auth = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@example.com"
                       required
-                      autoComplete="email"
+                      maxLength={255}
                     />
                   </div>
 
@@ -362,100 +394,73 @@ const Auth = () => {
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="At least 6 characters"
+                      placeholder="Create a password (min 6 characters)"
                       required
-                      autoComplete="new-password"
+                      minLength={6}
+                      maxLength={100}
                     />
                   </div>
 
-                  {/* Required consents */}
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="terms" checked={termsAccepted} onCheckedChange={(v) => setTermsAccepted(!!v)} />
-                      <Label htmlFor="terms">I accept the Terms & Conditions</Label>
+                  <div className="space-y-3 border-t pt-4">
+                    <div className="flex items-start gap-2">
+                      <Shield className="h-5 w-5 text-primary mt-0.5" />
+                      <div className="text-sm font-semibold">GDPR Consent</div>
+                    </div>
+                    
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        id="terms"
+                        checked={termsAccepted}
+                        onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                      />
+                      <Label htmlFor="terms" className="text-sm font-normal cursor-pointer">
+                        I accept the <a href="/terms" target="_blank" className="text-primary hover:underline">Terms and Conditions</a> *
+                      </Label>
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="privacy" checked={privacyAccepted} onCheckedChange={(v) => setPrivacyAccepted(!!v)} />
-                      <Label htmlFor="privacy">I accept the Privacy Policy</Label>
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        id="privacy"
+                        checked={privacyAccepted}
+                        onCheckedChange={(checked) => setPrivacyAccepted(checked as boolean)}
+                      />
+                      <Label htmlFor="privacy" className="text-sm font-normal cursor-pointer">
+                        I accept the <a href="/privacy" target="_blank" className="text-primary hover:underline">Privacy Policy</a> *
+                      </Label>
                     </div>
 
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-start gap-2">
                       <Checkbox
                         id="data-processing"
                         checked={dataProcessingAccepted}
-                        onCheckedChange={(v) => setDataProcessingAccepted(!!v)}
+                        onCheckedChange={(checked) => setDataProcessingAccepted(checked as boolean)}
                       />
-                      <Label htmlFor="data-processing">I consent to data processing</Label>
+                      <Label htmlFor="data-processing" className="text-sm font-normal cursor-pointer">
+                        I consent to the processing of my personal data for the purposes of using this service *
+                      </Label>
                     </div>
 
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-start gap-2">
                       <Checkbox
                         id="marketing"
                         checked={marketingAccepted}
-                        onCheckedChange={(v) => setMarketingAccepted(!!v)}
+                        onCheckedChange={(checked) => setMarketingAccepted(checked as boolean)}
                       />
-                      <Label htmlFor="marketing">I agree to receive marketing emails (optional)</Label>
+                      <Label htmlFor="marketing" className="text-sm font-normal cursor-pointer">
+                        I consent to receive marketing communications (optional)
+                      </Label>
                     </div>
+
+                    <p className="text-xs text-muted-foreground">
+                      * Required fields. You can withdraw consent at any time from your profile settings.
+                    </p>
                   </div>
 
-                  {/* Professional details (optional but encouraged) */}
-                  <div className="space-y-3 pt-2">
-                    <Label htmlFor="full-name">Full name</Label>
-                    <Input
-                      id="full-name"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="Dr. Jane Doe"
-                      autoComplete="name"
-                    />
-
-                    <Label htmlFor="specialization">Specialization</Label>
-                    <Input
-                      id="specialization"
-                      value={specialization}
-                      onChange={(e) => setSpecialization(e.target.value)}
-                      placeholder="Internal Medicine"
-                    />
-
-                    <Label htmlFor="hospital">Hospital</Label>
-                    <Input
-                      id="hospital"
-                      value={hospital}
-                      onChange={(e) => setHospital(e.target.value)}
-                      placeholder="Bnei Zion Medical Center"
-                    />
-
-                    <Label htmlFor="medical-field">Medical field</Label>
-                    <Input
-                      id="medical-field"
-                      value={medicalField}
-                      onChange={(e) => setMedicalField(e.target.value)}
-                      placeholder="NICU / Pediatrics / Surgery"
-                    />
-
-                    <Label htmlFor="how-found">How did you find us?</Label>
-                    <select
-                      id="how-found"
-                      className="dark:bg-slate-800 border rounded px-3 py-2 w-full"
-                      value={howFoundUs}
-                      onChange={(e) => setHowFoundUs(e.target.value as HowFoundUs)}
-                    >
-                      <option value="friend">Friend</option>
-                      <option value="telegram">Telegram</option>
-                      <option value="social">Social</option>
-                      <option value="search">Search</option>
-                      <option value="other">Other</option>
-                    </select>
-
-                    <Label htmlFor="profile-description">Short description</Label>
-                    <Input
-                      id="profile-description"
-                      value={profileDescription}
-                      onChange={(e) => setProfileDescription(e.target.value)}
-                      placeholder="Your role and interests"
-                    />
-                  </div>
+                  {error && (
+                    <Alert variant="destructive">
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
 
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Creating account..." : "Create Account"}

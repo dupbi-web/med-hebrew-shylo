@@ -41,7 +41,7 @@ const Navbar = () => {
 				{/* Desktop Nav and Theme Toggle */}
 				<div className="hidden md:flex items-center gap-4">
 					<nav className="flex space-x-6">
-						{games.map((game) => (
+						{navItems.map((game) => (
 							<Link
 								key={game.path}
 								to={game.path}
@@ -126,7 +126,7 @@ const Navbar = () => {
 			{isMobileMenuOpen && (
 				<div className="md:hidden bg-white dark:bg-gray-900 backdrop-blur border-t px-6 pb-4">
 					<nav className="flex flex-col space-y-4">
-						{games.map((game) => (
+						{navItems.map((game) => (
 							<Link
 								key={game.path}
 								to={game.path}

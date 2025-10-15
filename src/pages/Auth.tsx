@@ -79,12 +79,14 @@ const Auth = () => {
       localStorage.setItem(
         "pending_profile",
         JSON.stringify({
-          fullName,
-          specialization,
-          hospital,
-          medicalField,
-          howFoundUs,
-          profileDescription,
+          // No profile fields are collected on this signup form; store defaults so the post-confirmation flow
+          // has well-known keys and types.
+          fullName: "",
+          specialization: "",
+          hospital: "",
+          medicalField: "",
+          howFoundUs: "other",
+          profileDescription: "",
         })
       );
     } catch {}
@@ -118,32 +120,18 @@ const Auth = () => {
         return;
       }
 
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        termsAccepted,
-        privacyAccepted,
-        dataProcessingAccepted,
-      });
-      if (!validation.success) {
-        const msg = validation.error.errors[0]?.message || "Validation failed";
-        setError(msg);
-        return;
-      }
-
       // Persist user-entered details to bridge email confirmation
       persistPendingConsent();
       persistPendingProfile();
 
       const redirectUrl = `${window.location.origin}/`;
-      const { error } = await supabase.auth.signUp({
+      // Call supabase signUp once; using `data` and `error` names avoids redeclaration issues
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: { emailRedirectTo: redirectUrl },
       });
-      if (error) throw error;
+      if (signUpError) throw signUpError;
 
       // Store consent information
       if (data.user) {
@@ -233,8 +221,15 @@ const Auth = () => {
     const u = sessionData?.session?.user;
     if (!u) throw new Error("No active session");
 
-    // Load pending profile if present
-    let payload = { fullName, specialization, hospital, medicalField, howFoundUs, profileDescription };
+    // Load pending profile if present (use safe defaults)
+    let payload = {
+      fullName: "",
+      specialization: "",
+      hospital: "",
+      medicalField: "",
+      howFoundUs: "other",
+      profileDescription: "",
+    };
     try {
       const saved = localStorage.getItem("pending_profile");
       if (saved) {
@@ -244,7 +239,7 @@ const Auth = () => {
           specialization: p.specialization || "",
           hospital: p.hospital || "",
           medicalField: p.medicalField || "",
-          howFoundUs: (p.howFoundUs as HowFoundUs) || "other",
+          howFoundUs: p.howFoundUs || "other",
           profileDescription: p.profileDescription || "",
         };
       }

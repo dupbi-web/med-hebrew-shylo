@@ -50,7 +50,7 @@ const Navbar = () => {
             onClick={closeMenu}
             aria-label="Home"
           >
-            Medical Hebrew Hub
+            MED-IVRIT
           </Link>
         </div>
 

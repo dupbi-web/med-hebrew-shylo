@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuthContext } from "@/context/AuthContext";
 import { Helmet } from "react-helmet-async";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,8 +17,8 @@ const MAX_MESSAGE_CHARS = 1500; // client-side limit to prevent overly long subm
 const GENERIC_ERROR = "Sorry, something went wrong. Please try again later.";
 
 const ContactUs = () => {
-  // Supabase user
-  const [user, setUser] = useState<any>(null);
+  // Get user from context
+  const { user, profile } = useAuthContext();
 
   // Contact fields
   const [name, setName] = useState("");
@@ -29,19 +30,16 @@ const ContactUs = () => {
   const [result, setResult] = useState<{ ok?: boolean; error?: string } | null>(null);
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        // Prefill from Supabase user metadata when available
-        const meta = session.user.user_metadata || {};
-        const likelyName = meta.full_name || meta.name || "";
-        setName(likelyName || "");
-        setEmail(session.user.email || "");
-      }
-    };
-    init();
-  }, []);
+    if (profile) {
+      setName(profile.full_name || "");
+      setEmail(user?.email || "");
+    } else if (user) {
+      const meta = user.user_metadata || {};
+      const likelyName = meta.full_name || meta.name || "";
+      setName(likelyName || "");
+      setEmail(user.email || "");
+    }
+  }, [user, profile]);
 
   // Optional: prefill a template if navigated with a query param like ?type=bug
   useEffect(() => {
@@ -114,16 +112,21 @@ const ContactUs = () => {
         return;
       }
 
+      const now = new Date();
+      const dateStr = now.toLocaleDateString();
+      const timeStr = now.toLocaleTimeString();
       const textLines = [
         "📨 New contact message",
+        `Date: ${dateStr} Time: ${timeStr}`,
         user
           ? `User: ${user.email || "unknown"} (${user.id})`
           : "User: anonymous",
+        profile ? `Profile: ${profile.full_name || "-"}, ${profile.specialization || "-"}, ${profile.hospital || "-"}` : null,
         `Name: ${name?.trim() || "-"}`,
         `Email: ${email?.trim() || "-"}`,
         "-----",
         trimmed,
-      ];
+      ].filter(Boolean);
       const textToSend = textLines.join("\n");
 
       const resp = await fetch("/api/telegram", {
@@ -235,7 +238,7 @@ const ContactUs = () => {
                 <Label htmlFor="message">Just send a message</Label>
                 <Textarea
                   id="message"
-                  placeholder="Write your message here..."
+                  placeholder={profile?.full_name ? `Write your message here, ${profile.full_name}...` : user?.user_metadata?.full_name ? `Write your message here, ${user.user_metadata.full_name}...` : "Write your message here..."}
                   value={message}
                   onChange={(e) => setMessage(clampMessage(e.target.value))}
                   rows={8}

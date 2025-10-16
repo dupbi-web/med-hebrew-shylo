@@ -4,23 +4,23 @@ import { openDB } from "idb";
 // Fetch only words from the 'body organs' category for unauthenticated users
 export async function getBodyOrgansWords(): Promise<any[]> {
   // Try cache first
-  const cached = await getCache("bodyOrgansWordsCache");
-  if (cached) return cached;
+  // const cached = await getCache("bodyOrgansWordsCache");
+  // if (cached) return cached;
 
   // Use known category_id for 'body organs' (id=1)
-  const bodyOrgansCategoryId = 1;
+    const bodyOrgansCatId = 1;
 
   // Fetch words from that category
-  const { data: words, error: wordsError } = await supabase
+    const { data: bodyOrgansWords, error: bodyOrgansError } = await supabase
     .from("words")
     .select("id, en, he, rus, category_id")
-    .eq("category_id", bodyOrgansCategoryId);
-  if (wordsError || !words) {
-    console.error("Error fetching body organs words:", wordsError);
+      .eq("category_id", bodyOrgansCatId);
+    if (bodyOrgansError || !bodyOrgansWords) {
+      console.error("Error fetching body organs words:", bodyOrgansError);
     return [];
   }
-  await setCache("bodyOrgansWordsCache", words);
-  return words;
+    // await setCache("bodyOrgansWordsCache", bodyOrgansWords);
+    return bodyOrgansWords;
 }
 
 // After login, fetch all words and update local cache
@@ -132,23 +132,6 @@ async function getRemoteVersion(key: string): Promise<string | null> {
 }
 
 export async function getMedicalTermsWithCategories(): Promise<any[]> {
-  const cachedData = await getCache("medicalTermsWithCategoriesCache");
-  const cachedVersion = await getCache("medicalTermsWithCategoriesVersion");
-  const serverVersion = await getRemoteVersion("words_v");
-
-  // If version changed, clear cache
-  if (cachedVersion && cachedVersion !== serverVersion) {
-    await removeCache("medicalTermsWithCategoriesCache");
-    await removeCache("medicalTermsWithCategoriesVersion");
-  }
-
-  // Try to get fresh cache after possible clear
-  const freshCachedData = await getCache("medicalTermsWithCategoriesCache");
-  const freshCachedVersion = await getCache("medicalTermsWithCategoriesVersion");
-  if (freshCachedData && freshCachedVersion === serverVersion) {
-    return freshCachedData;
-  }
-
   // If no cache or version mismatch, fetch fresh
   const { data, error } = await supabase
     .from("words")
@@ -170,10 +153,6 @@ export async function getMedicalTermsWithCategories(): Promise<any[]> {
     console.error("Supabase error fetching words:", error);
     throw new Error("Failed to fetch medical terms with categories");
   }
-
-  // Save fresh data and version
-  await setCache("medicalTermsWithCategoriesCache", data);
-  await setCache("medicalTermsWithCategoriesVersion", serverVersion);
 
   return data;
 }
@@ -209,142 +188,5 @@ export async function getEnergyCategories(): Promise<any[]> {
 
   energyCategoriesCache = data;
   await setCache("energyCategoriesCache", data);
-  return data;
-}
-
-export async function clearEnergyCategoriesCache() {
-  energyCategoriesCache = null;
-  await removeCache("energyCategoriesCache");
-}
-
-// --- Medical Sentences Caching ---
-let medicalSentencesCache: { [categoryId: string]: any[] } = {};
-
-export async function getMedicalSentencesByCategory(categoryId: number): Promise<any[]> {
-  const cacheKey = `sentences_${categoryId}`;
-  
-  if (medicalSentencesCache[cacheKey]) return medicalSentencesCache[cacheKey];
-
-  const cached = await getCache(cacheKey);
-  if (cached) {
-    medicalSentencesCache[cacheKey] = cached;
-    return cached;
-  }
-
-  const { data, error } = await supabase
-    .from("sentences_for_doctors")
-    .select("*")
-    .eq("energy_category_id", categoryId)
-    .order("id", { ascending: true });
-
-  if (error || !data) {
-    console.error("Supabase error fetching sentences_for_doctors:", error);
-    throw new Error("Failed to fetch medical sentences");
-  }
-
-  medicalSentencesCache[cacheKey] = data;
-  await setCache(cacheKey, data);
-  return data;
-}
-
-export async function clearMedicalSentencesCache() {
-  medicalSentencesCache = {};
-  const db = await dbPromise;
-  const tx = db.transaction(STORE_NAME, "readwrite");
-  const store = tx.objectStore(STORE_NAME);
-  
-  // Clear all sentence cache keys
-  const allKeys = await store.getAllKeys();
-  for (const key of allKeys) {
-    if (typeof key === 'string' && key.startsWith('sentences_')) {
-      await store.delete(key);
-    }
-  }
-  await tx.done;
-}
-
-// --- User Mastered Words Caching ---
-let userMasteredWordsCache: Set<string> | null = null;
-
-export async function getUserMasteredWords(userId: string): Promise<Set<string>> {
-  if (userMasteredWordsCache) return userMasteredWordsCache;
-
-  const cached = await getCache(`userMasteredWords_${userId}`);
-  if (cached) {
-    userMasteredWordsCache = new Set(cached);
-    return userMasteredWordsCache;
-  }
-
-  const { data, error } = await supabase
-    .from("user_mastered_words")
-    .select("word_key")
-    .eq("user_id", userId);
-
-  if (error) {
-    console.error("Supabase error fetching user_mastered_words:", error);
-    throw new Error("Failed to fetch mastered words");
-  }
-
-  const wordKeys = (data || []).map((item: any) => item.word_key);
-  userMasteredWordsCache = new Set(wordKeys);
-  await setCache(`userMasteredWords_${userId}`, wordKeys);
-  return userMasteredWordsCache;
-}
-
-export async function addUserMasteredWord(userId: string, wordKey: string): Promise<void> {
-  // Update cache
-  if (userMasteredWordsCache) {
-    userMasteredWordsCache.add(wordKey);
-    await setCache(`userMasteredWords_${userId}`, Array.from(userMasteredWordsCache));
-  }
-
-  // Update database
-  const { error } = await supabase
-    .from("user_mastered_words")
-    .insert([{ user_id: userId, word_key: wordKey }]);
-
-  if (error) {
-    console.error("Error adding mastered word:", error);
-    throw new Error("Failed to add mastered word");
-  }
-}
-
-export async function removeUserMasteredWord(userId: string, wordKey: string): Promise<void> {
-  // Update cache
-  if (userMasteredWordsCache) {
-    userMasteredWordsCache.delete(wordKey);
-    await setCache(`userMasteredWords_${userId}`, Array.from(userMasteredWordsCache));
-  }
-
-  // Update database
-  const { error } = await supabase
-    .from("user_mastered_words")
-    .delete()
-    .eq("user_id", userId)
-    .eq("word_key", wordKey);
-
-  if (error) {
-    console.error("Error removing mastered word:", error);
-    throw new Error("Failed to remove mastered word");
-  }
-}
-
-export async function clearUserMasteredWordsCache(userId: string) {
-  userMasteredWordsCache = null;
-  await removeCache(`userMasteredWords_${userId}`);
-}
-
-// Fetch all sentences for a given word_id from word_sentences table
-export async function getWordSentences(wordId: number) {
-  const { data, error } = await supabase
-    .from("word_sentences")
-    .select("*")
-    .eq("word_id", wordId)
-    .order("id", { ascending: true });
-
-  if (error) {
-    console.error("Error fetching word sentences:", error);
-    return [];
-  }
   return data;
 }

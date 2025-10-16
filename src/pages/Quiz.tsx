@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/context/AuthContext";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { getMedicalTermsWithCategories, getCategories, getBodyOrgansWords } from "@/cache/medicalTermsCache";
+import { getCategories } from "@/cache/medicalTermsCache";
+import { useWordsContext } from "@/context/WordsContext";
 import { useTranslation } from "react-i18next";
 
 type Word = { en: string; he: string; rus: string; category?: string | null };
@@ -29,14 +30,14 @@ function getRandomDistractors(words: Word[], correct: Word, lang: Lang, count: n
 }
 
 const Quiz = () => {
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const { t, i18n } = useTranslation();
     // Helper to normalize i18n.language to your Lang type
   const normalizeLang = (lang: string): Lang => {
     if (lang.startsWith("ru") || lang === "rus") return "rus";
     return "en"; // default to English for everything else
   };
-  const [words, setWords] = useState<Word[]>([]);
+  const { words } = useWordsContext();
   const [categories, setCategories] = useState<Category[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
@@ -51,44 +52,12 @@ const Quiz = () => {
 
   const [showUpsell, setShowUpsell] = useState(false);
   useEffect(() => {
-    const fetchWords = async () => {
+    const fetchCategories = async () => {
       const allCategories = await getCategories();
       setCategories(allCategories);
-
-      let filtered: any[] = [];
-      if (!user) {
-        // Only fetch body organs words for unauthenticated users
-        filtered = await getBodyOrgansWords();
-        // Find the "body organs" category
-        const bodyOrgansCategory = allCategories.find(
-          (cat) => cat.name_en.toLowerCase() === "body organs"
-        );
-        const bodyOrgansCategoryId = bodyOrgansCategory?.id;
-        // If user tries to select another category, show upsell
-        if (selectedCategory && Number(selectedCategory) !== bodyOrgansCategoryId) {
-          setShowUpsell(true);
-        } else {
-          setShowUpsell(false);
-        }
-      } else {
-        // Registered: fetch all words with categories
-        filtered = await getMedicalTermsWithCategories();
-        if (selectedCategory) {
-          filtered = filtered.filter((w: any) => {
-            const categoryIds = Array.isArray(w.category_id) ? w.category_id : [w.category_id];
-            return categoryIds.includes(Number(selectedCategory));
-          });
-        }
-        setShowUpsell(false);
-      }
-      const cleaned = filtered.filter((w: Word) => w.he && w[targetLang]);
-      setWords(shuffleCopy(cleaned));
-      setCurrentIndex(0);
-      setScore(0);
-      setSelected(null);
     };
-    fetchWords();
-  }, [selectedCategory, targetLang, user]);
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     if (current) {
@@ -111,7 +80,7 @@ const Quiz = () => {
   };
 
   const restartQuiz = () => {
-    setWords(shuffleCopy(words));
+  // words now comes from useWordsContext, no need to setWords
     setCurrentIndex(0);
     setScore(0);
     setSelected(null);

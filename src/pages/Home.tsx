@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Book, HelpCircle, Type, Puzzle, IdCard, BookOpen, Sparkles, Users, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { getMedicalTermsWithCategories, getBodyOrgansWords } from "@/cache/medicalTermsCache";
+// Remove direct DB requests, use WordsContext
 import { useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/context/AuthContext";
+import { useWordsContext } from "@/context/WordsContext";
 
 const features = [
 	{
@@ -34,16 +35,9 @@ const features = [
 ];
 
 const Home = () => {
-	const { t } = useTranslation();
-	const { user } = useAuth();
-
-	useEffect(() => {
-		if (!user) {
-			getBodyOrgansWords();
-		} else {
-			getMedicalTermsWithCategories();
-		}
-	}, [user]);
+		const { t } = useTranslation();
+		const { user } = useAuthContext();
+		const { words, loading } = useWordsContext();
 
 		// Only allow Dictionary for unauthenticated users, lock MatchingGame and Quiz
 		const allowedFeaturePaths = user ? ["/Dictionary", "/Quiz", "/MatchingGame"] : ["/Quiz"];

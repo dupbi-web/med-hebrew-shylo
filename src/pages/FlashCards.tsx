@@ -3,7 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import Flashcard from "@/components/Flashcard";
 import { getMedicalTermsWithCategories, getBodyOrgansWords } from "@/cache/medicalTermsCache";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/context/AuthContext";
 
 type Word = { 
   en: string; 
@@ -36,7 +36,7 @@ const FlashCards = () => {
   const isDone = !current && total > 0;
 
   // Fetch words and categories from cache
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const fetchWords = useCallback(async (categoryFilter?: string | null) => {
     setLoading(true);
     let allWords;

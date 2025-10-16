@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getMedicalTermsWithCategories, getBodyOrgansWords } from "@/cache/medicalTermsCache";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
@@ -41,7 +41,7 @@ const TypingGame = () => {
     }
   }, [toastMsg]);
 
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const fetchWords = async () => {
     let allWords;
     if (!user) {

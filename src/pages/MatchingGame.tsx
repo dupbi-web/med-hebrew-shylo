@@ -2,8 +2,8 @@
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { useMatchingGame } from "@/hooks/useMatchingGame";
-import { getMedicalTermsWithCategories, getBodyOrgansWords } from "@/cache/medicalTermsCache";
-import { useAuth } from "@/hooks/useAuth";
+import { useWordsContext } from "@/context/WordsContext";
+import { useAuthContext } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import { GameCard } from "@/components/matching/GameCard";
 import { GameProgress } from "@/components/matching/GameProgress";
@@ -12,22 +12,13 @@ import { useTranslation } from "react-i18next"; // <-- Add this
 
 const MatchingGame = () => {
   const { i18n, t } = useTranslation();
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const currentLang = i18n.language.split("-")[0]; // Normalize locale
   const sourceLang = currentLang === "ru" ? "rus" as const : "en" as const;
   const targetLang = "he" as const;
-  const [words, setWords] = useState<any[]>([]);
+  const { words } = useWordsContext();
 
-  useEffect(() => {
-    const fetchWords = async () => {
-      if (!user) {
-        setWords(await getBodyOrgansWords());
-      } else {
-        setWords(await getMedicalTermsWithCategories());
-      }
-    };
-    fetchWords();
-  }, [user]);
+  // words now come from useWordsContext
 
   const {
     gameState,
@@ -42,7 +33,7 @@ const MatchingGame = () => {
     handleCardClick,
     restartGame,
     gridColumns,
-  } = useMatchingGame(sourceLang, targetLang, words);
+  } = useMatchingGame(sourceLang, targetLang);
 
   return (
     <>

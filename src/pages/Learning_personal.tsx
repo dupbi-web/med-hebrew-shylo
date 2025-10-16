@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { getMedicalTermsWithCategories, getBodyOrgansWords } from "@/cache/medicalTermsCache";
 import { useLearningProgress } from "@/hooks/useLearningProgress";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/context/AuthContext";
 import { BookOpen, Target, Trophy, ArrowLeft, RotateCcw } from "lucide-react";
 
 interface Word {
@@ -39,7 +39,7 @@ const Learning = () => {
   const [showAnswer, setShowAnswer] = useState(false);
   const [inMemoryCorrectCounts, setInMemoryCorrectCounts] = useState<Record<string, number>>({});
 
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const {
     loadMasteredWords,
     addMasteredWord,

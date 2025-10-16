@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -22,7 +22,7 @@ const navItems: NavItem[] = [
 const Navbar = () => {
 	const location = useLocation();
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-	const { user, signOut } = useAuth();
+	const { user, signOut } = useAuthContext();
 	const { t } = useTranslation(); // <-- Add this
 
 	const toggleMenu = () => setIsMobileMenuOpen((prev) => !prev);

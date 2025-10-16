@@ -17,7 +17,8 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import { HelmetProvider } from "react-helmet-async";
 import Layout from "@/components/Layout";
-import { AuthProvider } from "@/hooks/useAuth";
+import { AuthProvider } from "@/context/AuthContext";
+import { WordsProvider } from "@/context/WordsContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Dictionary from "@/pages/Dictionary";
 
@@ -27,52 +28,54 @@ const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route element={<Layout />}>
-                <Route path="/" element={<Home />} />
-                <Route path="/FlashCards" element={
-                  <ProtectedRoute>
-                    <FlashCards />
-                  </ProtectedRoute>
-                } />
-                <Route path="/Quiz" element={<Quiz />} />
-                <Route path="/TypingGame" element={<TypingGame />} />
-                <Route path="/MatchingGame" element={
-                  <ProtectedRoute>
-                    <MatchingGame />
-                  </ProtectedRoute>
-                } />
-                <Route path="/Dictionary" element={
-                  <ProtectedRoute>
-                    <Dictionary />
-                  </ProtectedRoute>
-                } />
-                <Route path="/Learning" element={
-                  <ProtectedRoute>
-                    <Learning />
-                  </ProtectedRoute>
-                } />
-                <Route path="/profile" element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                } />
-                <Route path="/ContactUs" element={<ContactUs />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <WordsProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
+                      <Route element={<Layout />}>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/FlashCards" element={
+                          <ProtectedRoute>
+                            <FlashCards />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/Quiz" element={<Quiz />} />
+                        <Route path="/TypingGame" element={<TypingGame />} />
+                        <Route path="/MatchingGame" element={
+                          <ProtectedRoute>
+                            <MatchingGame />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/Dictionary" element={
+                          <ProtectedRoute>
+                            <Dictionary />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/Learning" element={
+                          <ProtectedRoute>
+                            <Learning />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/profile" element={
+                          <ProtectedRoute>
+                            <Profile />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/ContactUs" element={<ContactUs />} />
+                        <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+        </BrowserRouter>
+            </TooltipProvider>
+        </WordsProvider>
       </AuthProvider>
-    </QueryClientProvider>
-  </HelmetProvider>
-);
+      </QueryClientProvider>
+    </HelmetProvider>
+  );
 
 export default App;

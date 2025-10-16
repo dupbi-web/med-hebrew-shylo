@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { 
   getUserMasteredWords, 
@@ -9,7 +9,7 @@ import {
 } from "@/cache/medicalTermsCache";
 
 export const useLearningProgress = () => {
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [masteredWords, setMasteredWords] = useState<Set<string>>(new Set());

@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getMedicalTermsWithCategories, getCategories, getBodyOrgansWords } from "@/cache/medicalTermsCache";
-import { useAuth } from "@/hooks/useAuth";
+import { getCategories } from "@/cache/medicalTermsCache";
+import { useWordsContext } from "@/context/WordsContext";
+import { useAuthContext } from "@/context/AuthContext";
 import { fetchHebrewSentence } from "@/utils/fetchHebrewSentence";
 import { BookOpen, ArrowLeft, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -46,7 +47,7 @@ const Learning = () => {
   };
   const targetLang = normalizeLang(i18n.language);
 
-  const [words, setWords] = useState<Word[]>([]);
+  // words state now comes from useWordsContext
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
@@ -64,20 +65,13 @@ const Learning = () => {
   const [loadingExample, setLoadingExample] = useState(false); // <-- loading state
 
   /** Load words and categories */
-  const { user } = useAuth();
+  const { words } = useWordsContext();
   useEffect(() => {
     (async () => {
-      let allWords;
-      if (!user) {
-        allWords = await getBodyOrgansWords();
-      } else {
-        allWords = await getMedicalTermsWithCategories();
-      }
       const allCategories = await getCategories();
-      setWords(allWords);
       setCategories(allCategories);
     })();
-  }, [user]);
+  }, []);
 
   /** Start category */
   const startCategory = (category: Category) => {

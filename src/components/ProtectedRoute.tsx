@@ -13,7 +13,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate("/auth");
+      // Preserve intended destination for post-login redirect
+      navigate("/auth", { state: { from: window.location.pathname } });
     }
   }, [user, loading, navigate]);
 

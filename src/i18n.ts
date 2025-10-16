@@ -65,7 +65,10 @@ const i18nInit = async () => {
         quiz_incorrect_answer: "Incorrect Answer",
         quiz_topics: "Focus on specific medical topics",
         quiz_preferred_language: "Choose your preferred translation language",
-        
+  continue_learning: "Continue Learning",
+  play_game: "Play Game",
+  explore_quiz: "Try Quiz",
+  get_started_free: "Get Started Free",
       },
     },
     he: {
@@ -113,6 +116,10 @@ const i18nInit = async () => {
         quiz_incorrect_answer: "תשובה שגויה",
         quiz_topics: "התמקדות בנושאים רפואיים ספציפיים",
         quiz_preferred_language: "בחרו את שפת התרגום המועדפת עליכם",
+  continue_learning: "המשך ללמוד",
+  play_game: "שחק משחק",
+  explore_quiz: "נסה חידון",
+  get_started_free: "התחל בחינם",
       },
     },
     ru: {
@@ -160,7 +167,10 @@ const i18nInit = async () => {
         quiz_incorrect_answer: "Неправильный ответ",
         quiz_topics: "Сосредоточьтесь на определённых медицинских темах",
         quiz_preferred_language: "Выберите предпочитаемый язык перевода",
-
+  continue_learning: "Продолжить обучение",
+  play_game: "Играть в игру",
+  explore_quiz: "Попробовать викторину",
+  get_started_free: "Начать бесплатно",
       },
     },
     },

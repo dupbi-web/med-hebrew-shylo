@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { getMedicalTermsWithCategories, getCategories } from "@/cache/medicalTermsCache";
+import { getMedicalTermsWithCategories, getCategories, getBodyOrgansWords } from "@/cache/medicalTermsCache";
 import { useTranslation } from "react-i18next";
 
 type Word = { en: string; he: string; rus: string; category?: string | null };
@@ -28,6 +29,7 @@ function getRandomDistractors(words: Word[], correct: Word, lang: Lang, count: n
 }
 
 const Quiz = () => {
+  const { user } = useAuth();
   const { t, i18n } = useTranslation();
     // Helper to normalize i18n.language to your Lang type
   const normalizeLang = (lang: string): Lang => {
@@ -47,20 +49,38 @@ const Quiz = () => {
  // Use i18n.language instead of targetLang state
   const targetLang = normalizeLang(i18n.language);
 
+  const [showUpsell, setShowUpsell] = useState(false);
   useEffect(() => {
     const fetchWords = async () => {
-      const allWords = await getMedicalTermsWithCategories();
       const allCategories = await getCategories();
       setCategories(allCategories);
 
-      let filtered = allWords;
-      if (selectedCategory) {
-        filtered = allWords.filter((w: any) => {
-          const categoryIds = Array.isArray(w.category_id) ? w.category_id : [w.category_id];
-          return categoryIds.includes(Number(selectedCategory));
-        });
+      let filtered: any[] = [];
+      if (!user) {
+        // Only fetch body organs words for unauthenticated users
+        filtered = await getBodyOrgansWords();
+        // Find the "body organs" category
+        const bodyOrgansCategory = allCategories.find(
+          (cat) => cat.name_en.toLowerCase() === "body organs"
+        );
+        const bodyOrgansCategoryId = bodyOrgansCategory?.id;
+        // If user tries to select another category, show upsell
+        if (selectedCategory && Number(selectedCategory) !== bodyOrgansCategoryId) {
+          setShowUpsell(true);
+        } else {
+          setShowUpsell(false);
+        }
+      } else {
+        // Registered: fetch all words with categories
+        filtered = await getMedicalTermsWithCategories();
+        if (selectedCategory) {
+          filtered = filtered.filter((w: any) => {
+            const categoryIds = Array.isArray(w.category_id) ? w.category_id : [w.category_id];
+            return categoryIds.includes(Number(selectedCategory));
+          });
+        }
+        setShowUpsell(false);
       }
-
       const cleaned = filtered.filter((w: Word) => w.he && w[targetLang]);
       setWords(shuffleCopy(cleaned));
       setCurrentIndex(0);
@@ -68,7 +88,7 @@ const Quiz = () => {
       setSelected(null);
     };
     fetchWords();
-  }, [selectedCategory, targetLang]);
+  }, [selectedCategory, targetLang, user]);
 
   useEffect(() => {
     if (current) {
@@ -109,6 +129,18 @@ const Quiz = () => {
         return cat.name_en;
     }
   };
+  // Upsell banner for unregistered users
+  const UpsellBanner = () => (
+    <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded relative mb-4">
+      <span>
+        {t("Unlock all categories and words!")}
+      </span>
+      <Button className="ml-4" onClick={() => window.location.href = "/auth"}>
+        {t("Sign in to unlock")}
+      </Button>
+    </div>
+  );
+
   return (
     <>
       <Helmet>
@@ -118,6 +150,7 @@ const Quiz = () => {
       <main className="container mx-auto max-w-6xl">
         <section className="container py-8 md:py-12 px-4 max-w-4xl mx-auto">
           {isDone ? (
+            // ...existing code...
             <div 
               className="bg-card border border-border rounded-lg p-6 md:p-8 max-w-md mx-auto text-center shadow-lg"
               role="alert"
@@ -148,28 +181,42 @@ const Quiz = () => {
           ) : current ? (
             <div className="max-w-2xl mx-auto">
               <div className="text-center mb-8">
-               <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <label htmlFor="category-select" className="sr-only">{t("select_category")}</label>
-                <select
-                  id="category-select"
-                  value={selectedCategory ?? ""}
-                  onChange={(e) => setSelectedCategory(e.target.value || null)}
-                  className="px-4 py-3 bg-background border border-input rounded-lg text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all max-w-xs"
-                  aria-describedby="category-help"
-                >
-                  <option value="">🔄 {t("all_categories")}</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      📚 {getCategoryLabel(cat)}
-                    </option>
-                  ))}
-                </select>
+                <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <label htmlFor="category-select" className="sr-only">{t("select_category")}</label>
+                  <select
+                    id="category-select"
+                    value={selectedCategory ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value || null;
+                      if (!user && categories.length) {
+                        const bodyOrgansCategory = categories.find(
+                          (cat) => cat.name_en.toLowerCase() === "body organs"
+                        );
+                        if (val && val !== String(bodyOrgansCategory?.id)) {
+                          setShowUpsell(true);
+                          return;
+                        }
+                      }
+                      setSelectedCategory(val);
+                    }}
+                    className="px-4 py-3 bg-background border border-input rounded-lg text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all max-w-xs"
+                    aria-describedby="category-help"
+                  >
+                    <option value="">🔄 {t("all_categories")}</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        📚 {getCategoryLabel(cat)}
+                        {!user && cat.name_en.toLowerCase() !== "body organs" ? " 🔒" : ""}
+                      </option>
+                    ))}
+                  </select>
 
-                <h2 className="text-xl md:text-2xl font-semibold text-muted-foreground">
-                  {t("quiz_header")}
-                </h2>
-              </div>
-
+                  <h2 className="text-xl md:text-2xl font-semibold text-muted-foreground">
+                    {t("quiz_header")}
+                  </h2>
+                </div>
+                {showUpsell && <UpsellBanner />}
+                {/* ...existing code for quiz question and options... */}
                 <div 
                   className="bg-card/50 border border-border rounded-lg p-6 md:p-8 mb-6"
                   role="region"
@@ -184,8 +231,8 @@ const Quiz = () => {
                     {current.he}
                   </h3>
                 </div>
-        
               </div>
+              {/* ...existing code for answer options and counter... */}
               <div 
                 className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 max-w-2xl mx-auto"
                 role="radiogroup"
@@ -195,7 +242,6 @@ const Quiz = () => {
                   const isCorrect = opt === current[targetLang];
                   const isSelected = opt === selected;
                   const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
-
                   return (
                     <button
                       key={opt}
@@ -254,7 +300,6 @@ const Quiz = () => {
                   );
                 })}
               </div>
-
               <div className="mt-8 text-center">
                 <p className="text-sm text-muted-foreground" aria-live="polite">
                   {t("quiz_counter")} <span className="font-medium">{currentIndex + 1}</span> of{" "}
@@ -270,7 +315,6 @@ const Quiz = () => {
               </div>
             </div>
           )}
-
         </section>
       </main>
     </>

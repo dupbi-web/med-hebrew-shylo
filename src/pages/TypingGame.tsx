@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { getMedicalTerms } from "@/cache/medicalTermsCache"; // <-- Use the cache!
+import { getMedicalTermsWithCategories, getBodyOrgansWords } from "@/cache/medicalTermsCache";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
@@ -40,8 +41,14 @@ const TypingGame = () => {
     }
   }, [toastMsg]);
 
+  const { user } = useAuth();
   const fetchWords = async () => {
-    const allWords = await getMedicalTerms(); // <-- Use cached data
+    let allWords;
+    if (!user) {
+      allWords = await getBodyOrgansWords();
+    } else {
+      allWords = await getMedicalTermsWithCategories();
+    }
     setWords(allWords.sort(() => Math.random() - 0.5));
     setCurrentIndex(0);
     setScore(0);

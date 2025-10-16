@@ -1,5 +1,42 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { openDB } from "idb";
+// Fetch only words from the 'body organs' category for unauthenticated users
+export async function getBodyOrgansWords(): Promise<any[]> {
+  // Try cache first
+  const cached = await getCache("bodyOrgansWordsCache");
+  if (cached) return cached;
+
+  // Use known category_id for 'body organs' (id=1)
+  const bodyOrgansCategoryId = 1;
+
+  // Fetch words from that category
+  const { data: words, error: wordsError } = await supabase
+    .from("words")
+    .select("id, en, he, rus, category_id")
+    .eq("category_id", bodyOrgansCategoryId);
+  if (wordsError || !words) {
+    console.error("Error fetching body organs words:", wordsError);
+    return [];
+  }
+  await setCache("bodyOrgansWordsCache", words);
+  return words;
+}
+
+// After login, fetch all words and update local cache
+export async function fetchAndCacheAllWordsAfterLogin(): Promise<any[]> {
+  const { data: words, error } = await supabase
+    .from("words")
+    .select("id, en, he, rus, category_id");
+  if (error || !words) {
+    console.error("Error fetching all words after login:", error);
+    return [];
+  }
+  await setCache("medicalTermsWithCategoriesCache", words);
+  // Optionally clear the limited cache
+  await removeCache("bodyOrgansWordsCache");
+  return words;
+}
 
 // --- IndexedDB setup ---
 const DB_NAME = "AppDB";
@@ -42,31 +79,6 @@ async function removeCache(key: string) {
 // --- Medical Terms Caching ---
 let medicalTermsCache: any[] | null = null;
 
-export async function getMedicalTerms(): Promise<any[]> {
-  if (medicalTermsCache) return medicalTermsCache;
-
-  const cached = await getCache("medicalTermsCache");
-  if (cached) {
-    medicalTermsCache = cached;
-    return cached;
-  }
-
-  const { data, error } = await supabase.from("medical_terms").select("*");
-
-  if (error || !data) {
-    console.error("Supabase error fetching medical_terms:", error);
-    throw new Error("Failed to fetch medical terms");
-  }
-
-  medicalTermsCache = data;
-  await setCache("medicalTermsCache", data);
-  return data;
-}
-
-export async function clearMedicalTermsCache() {
-  medicalTermsCache = null;
-  await removeCache("medicalTermsCache");
-}
 
 
 // --- Categories Caching ---
@@ -118,6 +130,7 @@ async function getRemoteVersion(key: string): Promise<string | null> {
 
 	return data.value;
 }
+
 export async function getMedicalTermsWithCategories(): Promise<any[]> {
   const cachedData = await getCache("medicalTermsWithCategoriesCache");
   const cachedVersion = await getCache("medicalTermsWithCategoriesVersion");

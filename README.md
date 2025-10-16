@@ -1,5 +1,6 @@
 # Medical Hebrew Hub
 
+
 Medical Hebrew Hub is an open-source web application designed to help medical professionals and students learn Hebrew medical terminology through interactive games, flashcards, quizzes, and a comprehensive dictionary. The platform supports multiple languages and offers a modern, engaging learning experience.
 
 ## Table of Contents

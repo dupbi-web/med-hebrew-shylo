@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import Flashcard from "@/components/Flashcard";
-import { getMedicalTerms } from "@/cache/medicalTermsCache"; // <-- Use the cache!
+import { getMedicalTermsWithCategories, getBodyOrgansWords } from "@/cache/medicalTermsCache";
+import { useAuth } from "@/hooks/useAuth";
 
 type Word = { 
   en: string; 
@@ -35,9 +36,15 @@ const FlashCards = () => {
   const isDone = !current && total > 0;
 
   // Fetch words and categories from cache
+  const { user } = useAuth();
   const fetchWords = useCallback(async (categoryFilter?: string | null) => {
     setLoading(true);
-    const allWords = await getMedicalTerms();
+    let allWords;
+    if (!user) {
+      allWords = await getBodyOrgansWords();
+    } else {
+      allWords = await getMedicalTermsWithCategories();
+    }
 
     // Extract unique categories from cached data
     const uniqueCategories = Array.from(
@@ -61,7 +68,7 @@ const FlashCards = () => {
     setIndex(0);
     setFlipped(false);
     setLoading(false);
-  }, []);
+  }, [user]);
 
   // Refetch when category changes
   useEffect(() => {

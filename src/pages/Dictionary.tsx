@@ -4,7 +4,8 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { getMedicalTermsWithCategories, getCategories } from "@/cache/medicalTermsCache";
+import { getMedicalTermsWithCategories, getCategories, getBodyOrgansWords } from "@/cache/medicalTermsCache";
+import { useAuth } from "@/hooks/useAuth";
 import { Star, StarOff } from "lucide-react";
 import Fuse from "fuse.js";
 import { useTranslation } from "react-i18next";
@@ -36,13 +37,16 @@ const Dictionary = () => {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
+  const { user } = useAuth();
   const fetchWords = useCallback(async () => {
     setLoading(true);
-
-    const [allWords, allCategories] = await Promise.all([
-      getMedicalTermsWithCategories(),
-      getCategories(),
-    ]);
+    let allWords;
+    if (!user) {
+      allWords = await getBodyOrgansWords();
+    } else {
+      allWords = await getMedicalTermsWithCategories();
+    }
+    const allCategories = await getCategories();
 
     // Filter out the "Фразы для пациентов" category
     const filteredCategories = allCategories.filter(
@@ -51,24 +55,24 @@ const Dictionary = () => {
     setCategories(filteredCategories);
 
     const mappedWords = allWords
-    // 🛑 First, filter out any words with category_id 5
-    .filter((w: Word) => {
-      const categoryIds = Array.isArray(w.category_id) ? w.category_id : [w.category_id];
-      return !categoryIds.includes(5);
-    })
-    // ✅ Then map to include category object
-    .map((w: Word) => {
-      const wordCategoryIds = Array.isArray(w.category_id) ? w.category_id : [w.category_id];
-      const matchedCategory =
-        wordCategoryIds.length === 0 || wordCategoryIds[0] == null
-          ? null
-          : filteredCategories.find((c) => wordCategoryIds.includes(c.id)) ?? null;
+      // 🛑 First, filter out any words with category_id 5
+      .filter((w: Word) => {
+        const categoryIds = Array.isArray(w.category_id) ? w.category_id : [w.category_id];
+        return !categoryIds.includes(5);
+      })
+      // ✅ Then map to include category object
+      .map((w: Word) => {
+        const wordCategoryIds = Array.isArray(w.category_id) ? w.category_id : [w.category_id];
+        const matchedCategory =
+          wordCategoryIds.length === 0 || wordCategoryIds[0] == null
+            ? null
+            : filteredCategories.find((c) => wordCategoryIds.includes(c.id)) ?? null;
 
-      return {
-        ...w,
-        category: matchedCategory,
-      };
-    });
+        return {
+          ...w,
+          category: matchedCategory,
+        };
+      });
 
     // Sort words by category id (or put uncategorized at the end)
     const sortedWords = mappedWords.sort((a, b) => {
@@ -79,7 +83,7 @@ const Dictionary = () => {
 
     setWords(sortedWords);
     setLoading(false);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchWords();

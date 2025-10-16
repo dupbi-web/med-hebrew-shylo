@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { getMedicalTerms } from "@/cache/medicalTermsCache";
+import { getMedicalTermsWithCategories, getBodyOrgansWords } from "@/cache/medicalTermsCache";
 import { useLearningProgress } from "@/hooks/useLearningProgress";
 import { useAuth } from "@/hooks/useAuth";
 import { BookOpen, Target, Trophy, ArrowLeft, RotateCcw } from "lucide-react";
@@ -52,7 +52,12 @@ const Learning = () => {
 
   useEffect(() => {
     const loadCategories = async () => {
-      const words = await getMedicalTerms();
+      let words;
+      if (!user) {
+        words = await getBodyOrgansWords();
+      } else {
+        words = await getMedicalTermsWithCategories();
+      }
       setAllWords(words);
 
       await loadMasteredWords();
@@ -92,10 +97,7 @@ const Learning = () => {
 
       setCategories(categoriesArray);
     };
-
-    if (user) {
-      loadCategories();
-    }
+    loadCategories();
   }, [user, loadMasteredWords, isWordMastered, inMemoryCorrectCounts]);
 
   const startCategory = (category: Category) => {
@@ -216,7 +218,8 @@ const Learning = () => {
     // await resetProgress();
     setInMemoryCorrectCounts({});
 
-    const words = await getMedicalTerms();
+    const words = await getMedicalTermsWithCategories();
+
     const categoryMap: Record<string, GameCard[]> = {};
     for (const word of words) {
       if (!categoryMap[word.category]) categoryMap[word.category] = [];

@@ -37,11 +37,23 @@ const App = () => (
               <Route path="/terms" element={<Terms />} />
               <Route element={<Layout />}>
                 <Route path="/" element={<Home />} />
-                <Route path="/FlashCards" element={<FlashCards />} />
+                <Route path="/FlashCards" element={
+                  <ProtectedRoute>
+                    <FlashCards />
+                  </ProtectedRoute>
+                } />
                 <Route path="/Quiz" element={<Quiz />} />
                 <Route path="/TypingGame" element={<TypingGame />} />
-                <Route path="/MatchingGame" element={<MatchingGame />} />
-                <Route path="/Dictionary" element={<Dictionary />} />
+                <Route path="/MatchingGame" element={
+                  <ProtectedRoute>
+                    <MatchingGame />
+                  </ProtectedRoute>
+                } />
+                <Route path="/Dictionary" element={
+                  <ProtectedRoute>
+                    <Dictionary />
+                  </ProtectedRoute>
+                } />
                 <Route path="/Learning" element={
                   <ProtectedRoute>
                     <Learning />

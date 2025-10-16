@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getMedicalTermsWithCategories, getCategories } from "@/cache/medicalTermsCache";
+import { getMedicalTermsWithCategories, getCategories, getBodyOrgansWords } from "@/cache/medicalTermsCache";
+import { useAuth } from "@/hooks/useAuth";
 import { fetchHebrewSentence } from "@/utils/fetchHebrewSentence";
 import { BookOpen, ArrowLeft, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -63,14 +64,20 @@ const Learning = () => {
   const [loadingExample, setLoadingExample] = useState(false); // <-- loading state
 
   /** Load words and categories */
+  const { user } = useAuth();
   useEffect(() => {
     (async () => {
-      const allWords = await getMedicalTermsWithCategories();
+      let allWords;
+      if (!user) {
+        allWords = await getBodyOrgansWords();
+      } else {
+        allWords = await getMedicalTermsWithCategories();
+      }
       const allCategories = await getCategories();
       setWords(allWords);
       setCategories(allCategories);
     })();
-  }, []);
+  }, [user]);
 
   /** Start category */
   const startCategory = (category: Category) => {

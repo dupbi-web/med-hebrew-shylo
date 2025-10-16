@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Book, HelpCircle, Type, Puzzle, IdCard, BookOpen } from "lucide-react";
+import { Book, HelpCircle, Type, Puzzle, IdCard, BookOpen, Sparkles, Users, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { getMedicalTermsWithCategories } from "@/cache/medicalTermsCache"; // cache של מילים עם קטגוריות
+import { getMedicalTermsWithCategories, getBodyOrgansWords } from "@/cache/medicalTermsCache";
 import { useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 const features = [
 	{
@@ -33,94 +35,169 @@ const features = [
 
 const Home = () => {
 	const { t } = useTranslation();
+	const { user } = useAuth();
 
 	useEffect(() => {
-		// Preload medical terms with categories when Home mounts
-		getMedicalTermsWithCategories();
-	}, []);
+		if (!user) {
+			getBodyOrgansWords();
+		} else {
+			getMedicalTermsWithCategories();
+		}
+	}, [user]);
 
-	return (
-		<>
-			<Helmet>
-				<title>{t("home_title")}</title>
-			</Helmet>
+		// Only allow Dictionary for unauthenticated users, lock MatchingGame and Quiz
+		const allowedFeaturePaths = user ? ["/Dictionary", "/Quiz", "/MatchingGame"] : ["/Quiz"];
+		return (
+			<>
+				<Helmet>
+					<title>{t("home_title")}</title>
+				</Helmet>
 
-			<main className="container mx-auto max-w-6xl px-4 py-10">
-				{/* 1️⃣ Заголовок / Hero Section */}
-				<header className="text-center mb-12">
-					<motion.h1
-						className="text-4xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent mb-4"
-						initial={{ opacity: 0, y: -20 }}
-						animate={{ opacity: 1, y: 0 }}
-						transition={{ duration: 0.6 }}
-					>
-						{t("home_title")}
-					</motion.h1>
-					<motion.p
-						className="mt-4 text-lg text-gray-600 dark:text-gray-300 max-w-xl mx-auto"
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						transition={{ delay: 0.2, duration: 0.6 }}
-					>
-						{t("home_description")}
-					</motion.p>
-					<div className="mt-6 flex justify-center gap-4">
-						<Link to="/Dictionary">
-							<button className="px-6 py-3 dark:bg-gray-500 rounded-lg hover:bg-primary/50 transition">
-								{t("view_dictionary")}
-							</button>
-						</Link>
-						<Link to="/MatchingGame">
-							<button className="px-6 py-3 bg-secondary dark:text-white rounded-lg dark:hover:bg-secondary/80 transition">
-								{t("nav_matching_game")}
-							</button>
-						</Link>
-					</div>
-				</header>
+				<main className="container mx-auto max-w-6xl px-4 py-8 md:py-12">
+					{/* Hero Section with Registration CTA */}
+					<section className="text-center mb-16 md:mb-20">
+						<motion.div
+							initial={{ opacity: 0, y: -20 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ duration: 0.6 }}
+							className="space-y-6"
+						>
+							<h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent leading-tight">
+								{t("home_title")}
+							</h1>
+            
+							<p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+								{t("home_description")}
+							</p>
 
-				{/* 2️⃣ Краткое объяснение сайта */}
-				<section className="mb-12 text-center">
-					<h2 className="text-2xl font-semibold mb-4">{t("home_what_can_do")}</h2>
-					<p className="text-gray-600 dark:text-gray-300 mb-2">{t("home_learn_words")}</p>
-					<p className="text-gray-600 dark:text-gray-300">{t("home_practice_games")}</p>
-				</section>
-
-				{/* 3️⃣ Кнопки / CTA с пояснением */}
-				<section className="mb-12 text-center">
-					<h2 className="text-2xl font-semibold mb-4">{t("home_choose_method")}</h2>
-					<div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-						{features.map((feature, index) => {
-							const Icon = feature.icon;
-							return (
+							{!user ? (
 								<motion.div
-									key={feature.nameKey}
-									whileHover={{ scale: 1.05 }}
-									whileTap={{ scale: 0.97 }}
-									initial={{ opacity: 0, y: 30 }}
+									initial={{ opacity: 0 }}
 									animate={{ opacity: 1 }}
-									transition={{ delay: index * 0.1, duration: 0.4 }}
+									transition={{ delay: 0.3 }}
+									className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
 								>
-									<Link to={feature.path}>
-										<Card className="h-full overflow-hidden border-none shadow-lg hover:shadow-xl transition-shadow">
-											<div
-												className={`h-32 flex items-center justify-center bg-gradient-to-br ${feature.color} text-white`}
-											>
-												<Icon size={48} />
-											</div>
-											<CardHeader>
-												<CardTitle>{t(feature.nameKey)}</CardTitle>
-												<CardDescription>{t(feature.descriptionKey)}</CardDescription>
-											</CardHeader>
-										</Card>
+									<Link to="/auth">
+										<Button size="lg" className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all">
+											{t("get_started_free", "Get Started Free")}
+										</Button>
+									</Link>
+									<Link to="/Quiz">
+										<Button size="lg" variant="outline" className="text-base px-8 py-6">
+											{t("explore_quiz", "Try Quiz")}
+										</Button>
 									</Link>
 								</motion.div>
-							);
-						})}
-					</div>
-				</section>
-			</main>
-		</>
-	);
+							) : (
+								<motion.div
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									transition={{ delay: 0.3 }}
+									className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
+								>
+									<Link to="/Learning">
+										<Button size="lg" className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all">
+											{t("continue_learning", "Continue Learning")}
+										</Button>
+									</Link>
+									<Link to="/MatchingGame">
+										<Button size="lg" variant="outline" className="text-base px-8 py-6">
+											{t("play_game", "Play Game")}
+										</Button>
+									</Link>
+								</motion.div>
+							)}
+
+							{/* Social Proof */}
+							<motion.div
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								transition={{ delay: 0.5 }}
+								className="flex items-center justify-center gap-8 mt-12 text-sm text-muted-foreground"
+							>
+								<div className="flex items-center gap-2">
+									<Users className="h-5 w-5 text-primary" />
+									<span>{t("join_learners", "Join learners worldwide")}</span>
+								</div>
+								<div className="flex items-center gap-2">
+									<TrendingUp className="h-5 w-5 text-primary" />
+									<span>{t("improve_skills", "Improve your skills")}</span>
+								</div>
+							</motion.div>
+						</motion.div>
+					</section>
+
+					{/* Benefits Section */}
+					<section className="mb-16 md:mb-20">
+						<motion.div
+							initial={{ opacity: 0, y: 20 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ delay: 0.4 }}
+							className="text-center mb-12"
+						>
+							<h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+								{t("home_what_can_do")}
+							</h2>
+							<p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+								{t("home_comprehensive_learning", "A comprehensive platform to master medical Hebrew through interactive learning")}
+							</p>
+						</motion.div>
+
+						<div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+							{features.map((feature, index) => {
+								const Icon = feature.icon;
+								const isAllowed = allowedFeaturePaths.includes(feature.path);
+								return (
+									<motion.div
+										key={feature.nameKey}
+										whileHover={{ scale: 1.03, y: -5 }}
+										whileTap={{ scale: 0.98 }}
+										initial={{ opacity: 0, y: 30 }}
+										animate={{ opacity: 1, y: 0 }}
+										transition={{ delay: 0.5 + index * 0.1, duration: 0.4 }}
+									>
+										{isAllowed ? (
+											<Link to={feature.path}>
+												<Card className="h-full overflow-hidden border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-card/50 backdrop-blur">
+													<div className={`h-40 flex items-center justify-center bg-gradient-to-br ${feature.color} relative overflow-hidden`}>
+														<div className="absolute inset-0 bg-black/5" />
+														<Icon size={56} className="relative z-10 text-white drop-shadow-lg" />
+													</div>
+													<CardHeader className="space-y-3">
+														<CardTitle className="text-xl">{t(feature.nameKey)}</CardTitle>
+														<CardDescription className="text-base leading-relaxed">
+															{t(feature.descriptionKey)}
+														</CardDescription>
+													</CardHeader>
+												</Card>
+											</Link>
+										) : (
+											<div className="h-full overflow-hidden border border-border/50 shadow-md bg-card/50 backdrop-blur opacity-60 cursor-not-allowed relative">
+												<div className={`h-40 flex items-center justify-center bg-gradient-to-br ${feature.color} relative overflow-hidden`}>
+													<div className="absolute inset-0 bg-black/5" />
+													<Icon size={56} className="relative z-10 text-white drop-shadow-lg" />
+													<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute top-2 right-2 text-gray-400 dark:text-gray-500"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+												</div>
+												<CardHeader className="space-y-3">
+													<CardTitle className="text-xl flex items-center gap-2">
+														{t(feature.nameKey)}
+														<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 dark:text-gray-500"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+													</CardTitle>
+													<CardDescription className="text-base leading-relaxed">
+														{t(feature.descriptionKey)}
+													</CardDescription>
+												</CardHeader>
+												<div className="absolute inset-0 bg-black/10 pointer-events-none" />
+											</div>
+										)}
+									</motion.div>
+								);
+							})}
+						</div>
+					</section>
+				</main>
+			</>
+		);
 };
 
 export default Home;

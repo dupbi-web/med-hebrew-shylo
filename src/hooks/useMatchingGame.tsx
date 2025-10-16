@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { getMedicalTerms, getMedicalTermsWithCategories } from "@/cache/medicalTermsCache";
+import { getMedicalTermsWithCategories } from "@/cache/medicalTermsCache";
 import { Word, Card, GameState, GameStats } from "@/types/matching";
 
 const TOTAL_WORDS = 64;
@@ -81,7 +81,6 @@ export const useMatchingGame = (sourceLang: "en" | "rus", targetLang: "he" = "he
 
   const loadWordPool = useCallback(async () => {
     try {
-      // const allWords = await getMedicalTerms();
       const allWords = await getMedicalTermsWithCategories();
       const filtered = allWords.filter((w: any) => w.rus && w.he && w.en && w.id);
       const shuffled = shuffleArray(filtered).slice(0, TOTAL_WORDS);

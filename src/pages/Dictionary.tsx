@@ -61,11 +61,19 @@ const Dictionary = () => {
 
   let filtered = [...words];
 
+    // if (selectedCategory) {
+    //   filtered = filtered.filter(
+    //     (w) => w.category?.id.toString() === selectedCategory
+    //   );
+    // }
     if (selectedCategory) {
-      filtered = filtered.filter(
-        (w) => w.category?.id.toString() === selectedCategory
-      );
+  filtered = filtered.filter((w) => {
+    if (Array.isArray(w.category_id)) {
+      return w.category_id.map(String).includes(selectedCategory);
     }
+    return w.category_id?.toString() === selectedCategory;
+  });
+}
 
     if (searchQuery.trim()) {
       const fuse = new Fuse(filtered, {

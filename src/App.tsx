@@ -15,6 +15,7 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import ResetPassword from "./pages/ResetPassword";
 import { HelmetProvider } from "react-helmet-async";
 import Layout from "@/components/Layout";
 import { AuthProvider } from "@/context/AuthContext";
@@ -35,6 +36,7 @@ const App = () => (
             <BrowserRouter>
               <Routes>
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/terms" element={<Terms />} />
                       <Route element={<Layout />}>

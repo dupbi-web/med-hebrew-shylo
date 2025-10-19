@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,15 +24,36 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Check if the user came from a password reset link or already has a session
   useEffect(() => {
-    // Check if user came from reset password email
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/auth");
+    const initSession = async () => {
+      try {
+        const hash = window.location.hash;
+
+        if (hash.includes("type=recovery")) {
+          // When user opens from the email reset link
+          const { error } = await supabase.auth.exchangeCodeForSession(hash);
+          if (error) {
+            console.error("Failed to exchange recovery code:", error);
+            setError("Invalid or expired password reset link.");
+            return;
+          }
+        } else {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+
+          if (!session) {
+            navigate("/auth");
+          }
+        }
+      } catch (err: any) {
+        console.error("Session check failed:", err);
+        setError("An unexpected error occurred. Please try again later.");
       }
     };
-    checkSession();
+
+    initSession();
   }, [navigate]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -34,37 +61,42 @@ const ResetPassword = () => {
     setLoading(true);
     setError("");
 
-    // Validate passwords match
+    // Basic password validation
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError("Passwords do not match.");
       setLoading(false);
       return;
     }
 
-    // Validate password length
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError("Password must be at least 6 characters long.");
       setLoading(false);
       return;
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: password,
-      });
+      const { data, error } = await supabase.auth.updateUser({ password });
 
       if (error) throw error;
+      if (!data?.user) throw new Error("No user data returned after update.");
 
       toast({
         title: "Success!",
-        description: "Your password has been updated successfully.",
+        description:
+          "Your password has been updated successfully. Please log in again.",
       });
 
-      // Redirect to main page
-      navigate("/");
+      // Supabase invalidates the session after password update
+      await supabase.auth.signOut();
+
+      // Delay slightly so toast can appear before navigation
+      setTimeout(() => {
+        setLoading(false);
+        navigate("/auth");
+      }, 1200);
     } catch (err: any) {
-      setError(err?.message || "Failed to reset password");
-    } finally {
+      console.error("Password update failed:", err);
+      setError(err?.message || "Failed to reset password.");
       setLoading(false);
     }
   };
@@ -82,7 +114,9 @@ const ResetPassword = () => {
               <Shield className="h-5 w-5" />
               Reset Your Password
             </CardTitle>
-            <CardDescription>Enter your new password below.</CardDescription>
+            <CardDescription>
+              Enter your new password below to complete the reset process.
+            </CardDescription>
           </CardHeader>
 
           <CardContent>
@@ -107,6 +141,7 @@ const ResetPassword = () => {
                   minLength={6}
                   maxLength={100}
                   autoComplete="new-password"
+                  disabled={loading}
                 />
               </div>
 
@@ -124,6 +159,7 @@ const ResetPassword = () => {
                   minLength={6}
                   maxLength={100}
                   autoComplete="new-password"
+                  disabled={loading}
                 />
               </div>
 

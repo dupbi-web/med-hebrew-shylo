@@ -160,9 +160,6 @@ const Dictionary = () => {
               </option>
             ))}
           </select>
-          <Button onClick={exportFavorites} disabled={favorites.size === 0}>
-            {t("export_favorites")}
-          </Button>
         </div>
 
         {/* Word Grid */}
@@ -192,17 +189,6 @@ const Dictionary = () => {
                         {word.category && getCategoryLabel(word.category)}
                       </CardDescription>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => toggleFavorite(word.he)}
-                    >
-                      {favorites.has(word.he) ? (
-                        <Star className="text-yellow-400" />
-                      ) : (
-                        <StarOff />
-                      )}
-                    </Button>
                   </CardHeader>
                 </Card>
               </motion.div>

@@ -328,16 +328,29 @@ const Auth = () => {
     setResetLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
+      
+      // Validate email format
+            const emailSchema = z.string().trim().email({ message: "Invalid email address" });
+                  const validationResult = emailSchema.safeParse(resetEmail);
+                        
+                              if (!validationResult.success) {
+                                      throw new Error("Please enter a valid email address");
+                                            }
 
-      if (error) throw error;
+                                                  const trimmedEmail = resetEmail.trim();
 
-      toast({
-        title: "Check your email",
-        description: "We've sent you a password reset link.",
-      });
+                                                        // Send reset email - Supabase will handle checking if user exists
+                                                              // For security reasons, we don't reveal whether the email exists or not
+                                                                    const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+                                                                            redirectTo: `${window.location.origin}/reset-password`,
+                                                                                  });
+
+                                                                                        if (error) throw error;
+
+                                                                                              toast({
+                                                                                                      title: "Check your email",
+                                                                                                              description: "If an account exists with this email, you will receive a password reset link.",
+                                                                                                                    });
       
       setShowResetDialog(false);
       setResetEmail("");

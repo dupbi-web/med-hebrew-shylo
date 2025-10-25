@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
-
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
-
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -25,6 +24,21 @@ const signUpSchema = z.object({
   privacyAccepted: z.boolean().refine((v) => v === true, { message: "You must accept the privacy policy" }),
   dataProcessingAccepted: z.boolean().refine((v) => v === true, { message: "You must consent to data processing" }),
 });
+
+// Small helper for compact legal links
+const LegalLinks = () => (
+  <p className="mt-2 text-xs text-muted-foreground">
+    Read the{" "}
+    <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+      Terms & Conditions
+    </a>{" "}
+    and{" "}
+    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+      Privacy Policy
+    </a>
+    .
+  </p>
+);
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -50,10 +64,16 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
+
   // Redirect if already authenticated
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session) {
         navigate("/");
       }
@@ -185,19 +205,17 @@ const Auth = () => {
       }
     } catch {}
 
-    const { error } = await supabase
-      .from("user_consent")
-      .upsert(
-        {
-          user_id: u.id,
-          terms_accepted: consent.termsAccepted,
-          privacy_accepted: consent.privacyAccepted,
-          data_processing_accepted: consent.dataProcessingAccepted,
-          marketing_accepted: consent.marketingAccepted,
-          user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
-        },
-        { onConflict: "user_id" }
-      );
+    const { error } = await supabase.from("user_consent").upsert(
+      {
+        user_id: u.id,
+        terms_accepted: consent.termsAccepted,
+        privacy_accepted: consent.privacyAccepted,
+        data_processing_accepted: consent.dataProcessingAccepted,
+        marketing_accepted: consent.marketingAccepted,
+        user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+      },
+      { onConflict: "user_id" }
+    );
 
     if (error) throw error;
 
@@ -305,7 +323,47 @@ const Auth = () => {
       setLoading(false);
     }
   };
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetLoading(true);
 
+    try {
+      
+      // Validate email format
+            const emailSchema = z.string().trim().email({ message: "Invalid email address" });
+                  const validationResult = emailSchema.safeParse(resetEmail);
+                        
+                              if (!validationResult.success) {
+                                      throw new Error("Please enter a valid email address");
+                                            }
+
+                                                  const trimmedEmail = resetEmail.trim();
+
+                                                        // Send reset email - Supabase will handle checking if user exists
+                                                              // For security reasons, we don't reveal whether the email exists or not
+                                                                    const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+                                                                            redirectTo: `${window.location.origin}/reset-password`,
+                                                                                  });
+
+                                                                                        if (error) throw error;
+
+                                                                                              toast({
+                                                                                                      title: "Check your email",
+                                                                                                              description: "If an account exists with this email, you will receive a password reset link.",
+                                                                                                                    });
+      
+      setShowResetDialog(false);
+      setResetEmail("");
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err?.message || "Failed to send reset email",
+        variant: "destructive",
+      });
+    } finally {
+      setResetLoading(false);
+    }
+  };
   return (
     <>
       <Helmet>
@@ -362,11 +420,49 @@ const Auth = () => {
                       required
                       autoComplete="current-password"
                     />
+                    <LegalLinks />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     <Lock className="mr-2 h-4 w-4" />
                     {loading ? "Signing in..." : "Sign In"}
                   </Button>
+                    <div className="text-center mt-4">
+                    <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+                      <DialogTrigger asChild>
+                        <Button variant="link" className="text-sm text-muted-foreground hover:text-primary">
+                          Forgot your password?
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center gap-2">
+                            <Mail className="h-5 w-5" />
+                            Reset Password
+                          </DialogTitle>
+                          <DialogDescription>
+                            Enter your email address and we'll send you a link to reset your password.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleForgotPassword} className="space-y-4">
+                          <div>
+                            <Label htmlFor="reset-email">Email</Label>
+                            <Input
+                              id="reset-email"
+                              type="email"
+                              value={resetEmail}
+                              onChange={(e) => setResetEmail(e.target.value)}
+                              placeholder="you@example.com"
+                              required
+                              autoComplete="email"
+                            />
+                          </div>
+                          <Button type="submit" className="w-full" disabled={resetLoading}>
+                            {resetLoading ? "Sending..." : "Send Reset Link"}
+                          </Button>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </form>
               </TabsContent>
 
@@ -398,26 +494,48 @@ const Auth = () => {
                   </div>
 
                   {/* Required consents */}
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-start space-x-2">
                     <Checkbox id="terms" checked={termsAccepted} onCheckedChange={(v) => setTermsAccepted(!!v)} />
-                    <Label htmlFor="terms" className="cursor-pointer flex items-center">
-                      <Shield className="mr-2 h-4 w-4" />
-                      I accept the Terms & Conditions
-                    </Label>
+                    <div className="grid gap-1 leading-none">
+                      <Label htmlFor="terms" className="cursor-pointer flex items-center">
+                        <Shield className="mr-2 h-4 w-4" />
+                        I accept the Terms & Conditions
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+                          Read the Terms & Conditions
+                        </a>
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+
+                  <div className="flex items-start space-x-2">
                     <Checkbox id="privacy" checked={privacyAccepted} onCheckedChange={(v) => setPrivacyAccepted(!!v)} />
-                    <Label htmlFor="privacy" className="cursor-pointer">I accept the Privacy Policy</Label>
+                    <div className="grid gap-1 leading-none">
+                      <Label htmlFor="privacy" className="cursor-pointer">
+                        I accept the Privacy Policy
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+                          Read the Privacy Policy
+                        </a>
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+
+                  <div className="flex items-start space-x-2">
                     <Checkbox id="dataproc" checked={dataProcessingAccepted} onCheckedChange={(v) => setDataProcessingAccepted(!!v)} />
-                    <Label htmlFor="dataproc" className="cursor-pointer">I consent to data processing</Label>
+                    <Label htmlFor="dataproc" className="cursor-pointer">
+                      I consent to data processing
+                    </Label>
                   </div>
 
                   {/* Optional marketing */}
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-start space-x-2">
                     <Checkbox id="marketing" checked={marketingAccepted} onCheckedChange={(v) => setMarketingAccepted(!!v)} />
-                    <Label htmlFor="marketing" className="cursor-pointer">I agree to receive marketing emails (optional)</Label>
+                    <Label htmlFor="marketing" className="cursor-pointer">
+                      I agree to receive marketing emails (optional)
+                    </Label>
                   </div>
 
                   {/* Professional details (optional but encouraged) */}

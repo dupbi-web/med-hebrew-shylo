@@ -37,7 +37,6 @@ Thumbs.db
 *.sw?
 
 # Test & Misc
-*.test.ts
 *.test.js
 *.spec.ts
 *.spec.js

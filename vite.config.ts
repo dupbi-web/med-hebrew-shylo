@@ -35,4 +35,13 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+    //  Vitest Configuration
+  test: {
+    globals: true,           // lets you use describe/it/expect globally
+    environment: 'happy-dom',    // simulates the browser environment for React
+    setupFiles: './src/setupTests.js', // setup file for test utilities
+    coverage: {
+      reporter: ['text', 'json', 'html'], // optional: code coverage report
+    },
+  },
 }));

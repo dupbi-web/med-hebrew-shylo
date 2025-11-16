@@ -5,6 +5,7 @@ Medical Hebrew Hub is an open-source web application designed to help medical pr
 
 ## Table of Contents
 
+
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)

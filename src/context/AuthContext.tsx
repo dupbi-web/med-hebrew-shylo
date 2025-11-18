@@ -248,6 +248,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         console.log("user_consent entry created successfully for user:", data.user.id);
       }
+
+      // Invoke the send-welcome-email function only for new users
+      try {
+        const { data: emailData, error: emailError } = await supabase.functions.invoke(
+          "send-welcome-email",
+          {
+            body: JSON.stringify({ email: data.user.email, userId: data.user.id }),
+          }
+        );
+
+        if (emailError) {
+          console.error("Error sending welcome email:", emailError.message);
+        } else {
+          console.log("Welcome email sent successfully:", emailData);
+        }
+      } catch (err) {
+        console.error("Unexpected error sending welcome email:", err);
+      }
     } catch (err) {
       console.error("Unexpected error during Google sign-in:", err);
     }

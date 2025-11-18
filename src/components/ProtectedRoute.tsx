@@ -25,9 +25,6 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       ) {
         // Redirect to consent/profile completion page if terms not accepted
         navigate("/CompleteProfile");
-      } else if (profile && !profile.isComplete) {
-        // Redirect to CompleteProfile if profile is incomplete
-        navigate("/CompleteProfile");
       }
     }
   }, [user, consent, loading, profile, navigate, location.pathname]);

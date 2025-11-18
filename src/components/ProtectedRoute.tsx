@@ -18,10 +18,10 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         // Preserve intended destination for post-login redirect
         navigate("/auth", { state: { from: location.pathname } });
       } else if (
-        consent &&
-        (!consent.terms_accepted ||
-          !consent.privacy_accepted ||
-          !consent.data_processing_accepted)
+        !consent ||
+        !consent.terms_accepted ||
+        !consent.privacy_accepted ||
+        !consent.data_processing_accepted
       ) {
         // Redirect to consent/profile completion page if terms not accepted
         navigate("/CompleteProfile");

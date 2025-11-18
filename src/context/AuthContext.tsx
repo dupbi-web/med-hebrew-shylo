@@ -198,21 +198,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
+
+      // Ensure any persisted session tokens are removed from localStorage as a fallback
+      try {
+        localStorage.removeItem("supabase.auth.token");
+        localStorage.removeItem("supabase.auth");
+      } catch (e) {
+        console.error("Error clearing local storage during sign out:", e);
+      }
+
+      // Clear user-related state only after successful sign-out
+      setUser(null);
+      setProfile(null);
+      setConsent(null);
     } catch (err) {
       console.error("Error during supabase signOut:", err);
     }
-
-    // Ensure any persisted session tokens are removed from localStorage as a fallback
-    try {
-      localStorage.removeItem("supabase.auth.token");
-      localStorage.removeItem("supabase.auth");
-    } catch (e) {
-      // ignore
-    }
-
-    setUser(null);
-    setProfile(null);
-    setConsent(null);
   };
 
   const signInWithGoogle = async () => {

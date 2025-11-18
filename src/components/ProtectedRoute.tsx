@@ -8,15 +8,26 @@
 // }
 
 // const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-//   const { user, loading } = useAuthContext();
+//   const { user, consent, loading } = useAuthContext();
 //   const navigate = useNavigate();
+//   const location = useLocation();
 
 //   useEffect(() => {
-//     if (!loading && !user) {
-//       // Preserve intended destination for post-login redirect
-//       navigate("/auth", { state: { from: window.location.pathname } });
+//     if (!loading) {
+//       if (!user) {
+//         // Preserve intended destination for post-login redirect
+//         navigate("/auth", { state: { from: location.pathname } });
+//       } else if (
+//         consent &&
+//         (!consent.terms_accepted ||
+//           !consent.privacy_accepted ||
+//           !consent.data_processing_accepted)
+//       ) {
+//         // Redirect to consent/profile completion page if terms not accepted
+//         navigate("/CompleteProfile");
+//       }
 //     }
-//   }, [user, loading, navigate]);
+//   }, [user, consent, loading, navigate, location.pathname]);
 
 //   if (loading) {
 //     return (
@@ -35,9 +46,11 @@
 //   }
 
 //   if (!user) {
+//     // Not logged in and finished loading
 //     return null;
 //   }
 
+//   // User logged in and consent accepted: render protected content
 //   return <>{children}</>;
 // };
 
@@ -61,12 +74,14 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       if (!user) {
         // Preserve intended destination for post-login redirect
         navigate("/auth", { state: { from: location.pathname } });
-      } else if (   !consent?.terms_accepted ||
-  !consent?.privacy_accepted ||
-  !consent?.data_processing_accepted) {
+      } else if (
+        consent &&
+        (!consent.terms_accepted ||
+          !consent.privacy_accepted ||
+          !consent.data_processing_accepted)
+      ) {
         // Redirect to consent/profile completion page if terms not accepted
-          navigate("/CompleteProfile");
-        
+        navigate("/CompleteProfile");
       }
     }
   }, [user, consent, loading, navigate, location.pathname]);

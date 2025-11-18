@@ -10,6 +10,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { FileText, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -230,11 +231,25 @@ const CompleteProfile = () => {
               <div className="flex items-center space-x-2">
                 <Checkbox id="terms" checked={termsAccepted} onCheckedChange={(v) => setTermsAccepted(!!v)} />
                 <Label htmlFor="terms">I accept the Terms & Conditions *</Label>
+                <Button variant="ghost" size="sm" asChild>
+                  <a href="/terms" target="_blank" rel="noopener noreferrer">
+                    <FileText className="h-3 w-3 mr-1" />
+                    View
+                    <ExternalLink className="h-3 w-3 ml-1" />
+                  </a>
+              </Button>
               </div>
 
               <div className="flex items-center space-x-2">
                 <Checkbox id="privacy" checked={privacyAccepted} onCheckedChange={(v) => setPrivacyAccepted(!!v)} />
                 <Label htmlFor="privacy">I accept the Privacy Policy *</Label>
+                <Button variant="ghost" size="sm" asChild>
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer">
+                    <FileText className="h-3 w-3 mr-1" />
+                      View
+                    <ExternalLink className="h-3 w-3 ml-1" />
+                  </a>
+                </Button>
               </div>
 
               <div className="flex items-center space-x-2">

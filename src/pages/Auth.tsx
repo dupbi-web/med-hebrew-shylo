@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { LogIn, UserPlus, Mail, Lock, Shield } from "lucide-react";
+import { LogIn, UserPlus, Mail, Lock, Shield, FileText, ExternalLink } from "lucide-react";
 import { z } from "zod";
 import { Chrome as GoogleIcon } from "lucide-react";
 type HowFoundUs = "friend" | "telegram" | "social" | "search" | "other";
@@ -365,7 +365,7 @@ const Auth = () => {
 return (
   <>
     <Helmet>
-      <title>Sign In / Sign Up</title>
+      <title>Sign In / </title>
     </Helmet>
 
     <div className="mx-auto max-w-md py-10">
@@ -535,6 +535,13 @@ return (
                       <Shield className="mr-2 h-4 w-4 inline-block" />
                       I accept the Terms & Conditions
                     </Label>
+                      <Button variant="ghost" size="sm" asChild>
+                        <a href="/terms" target="_blank" rel="noopener noreferrer">
+                          <FileText className="h-3 w-3 mr-1" />
+                          View
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      </Button>
                   </div>
 
                   <div className="flex items-start space-x-2">
@@ -546,6 +553,13 @@ return (
                     <Label htmlFor="privacy" className="cursor-pointer">
                       I accept the Privacy Policy
                     </Label>
+                      <Button variant="ghost" size="sm" asChild>
+                        <a href="/privacy" target="_blank" rel="noopener noreferrer">
+                          <FileText className="h-3 w-3 mr-1" />
+                          View
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      </Button>
                   </div>
 
                   <div className="flex items-start space-x-2">

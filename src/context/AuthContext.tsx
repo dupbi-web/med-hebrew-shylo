@@ -164,11 +164,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const currentUser = session?.user || null;
       setUser(currentUser);
       if (currentUser) {
-        loadUserData(currentUser).finally(() => setLoading(false));
+        await loadUserData(currentUser);
+        setLoading(false);
       } else {
         setProfile(null);
         setConsent(null);
@@ -176,11 +177,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       const currentUser = data?.session?.user || null;
       setUser(currentUser);
       if (currentUser) {
-        loadUserData(currentUser).finally(() => setLoading(false));
+        await loadUserData(currentUser);
+        setLoading(false);
       } else {
         setProfile(null);
         setConsent(null);

@@ -233,22 +233,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      console.log("Google sign-in successful. User data:", data.user);
-
-      // Create default user_consent entry for new users
-      const { error: consentError } = await supabase.from("user_consent").insert({
-        user_id: data.user.id,
-        terms_accepted: false,
-        privacy_accepted: false,
-        data_processing_accepted: false,
-      });
-
-      if (consentError) {
-        console.error("Error creating user_consent entry:", consentError.message);
-      } else {
-        console.log("user_consent entry created successfully for user:", data.user.id);
-      }
-
       // Invoke the send-welcome-email function only for new users
       try {
         const { data: emailData, error: emailError } = await supabase.functions.invoke(

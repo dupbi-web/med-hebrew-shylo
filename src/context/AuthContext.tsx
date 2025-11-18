@@ -217,9 +217,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
+    const { data, error } = await supabase.auth.signInWithOAuth({ provider: "google" });
+
     if (error) {
       console.error("Google sign-in error:", error.message);
+      return;
+    }
+
+    if (data?.user) {
+      try {
+        // Create default user_consent entry for new users
+        const { error: consentError } = await supabase.from("user_consent").insert({
+          user_id: data.user.id,
+          terms_accepted: false,
+          privacy_accepted: false,
+          data_processing_accepted: false,
+        });
+
+        if (consentError) {
+          console.error("Error creating user_consent entry:", consentError.message);
+        }
+      } catch (err) {
+        console.error("Unexpected error during user_consent creation:", err);
+      }
     }
   };
 

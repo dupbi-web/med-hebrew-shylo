@@ -211,35 +211,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       setProfile(null);
       setConsent(null);
+
+      // Redirect to Home page after sign-out
+      window.location.href = "/";
     } catch (err) {
       console.error("Error during supabase signOut:", err);
     }
   };
-
+  
   const signInWithGoogle = async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({ provider: "google" });
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({ provider: "google" });
 
-    if (error) {
-      console.error("Google sign-in error:", error.message);
-      return;
-    }
-
-    if (data?.user) {
-      try {
-        // Create default user_consent entry for new users
-        const { error: consentError } = await supabase.from("user_consent").insert({
-          user_id: data.user.id,
-          terms_accepted: false,
-          privacy_accepted: false,
-          data_processing_accepted: false,
-        });
-
-        if (consentError) {
-          console.error("Error creating user_consent entry:", consentError.message);
-        }
-      } catch (err) {
-        console.error("Unexpected error during user_consent creation:", err);
+      if (error) {
+        console.error("Google sign-in error:", error.message);
+        return;
       }
+
+      if (!data?.user) {
+        console.error("No user data returned after Google sign-in.");
+        return;
+      }
+
+      console.log("Google sign-in successful. User data:", data.user);
+
+      // Create default user_consent entry for new users
+      const { error: consentError } = await supabase.from("user_consent").insert({
+        user_id: data.user.id,
+        terms_accepted: false,
+        privacy_accepted: false,
+        data_processing_accepted: false,
+      });
+
+      if (consentError) {
+        console.error("Error creating user_consent entry:", consentError.message);
+      } else {
+        console.log("user_consent entry created successfully for user:", data.user.id);
+      }
+    } catch (err) {
+      console.error("Unexpected error during Google sign-in:", err);
     }
   };
 

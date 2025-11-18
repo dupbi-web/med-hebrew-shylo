@@ -24,58 +24,178 @@ const Navbar = () => {
 	const location = useLocation();
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 	const { user, signOut } = useAuthContext();
-	const { t } = useTranslation(); // <-- Add this
+	const { t } = useTranslation();
 
 	const toggleMenu = () => setIsMobileMenuOpen((prev) => !prev);
 	const closeMenu = () => setIsMobileMenuOpen(false);
 
-		// Only allow Home, Quiz, About, and ContactUs for unauthenticated users
-		const allowedPaths = ["/", "/Quiz", "/About", "/ContactUs"];
-		return (
-			<header className="bg-white dark:bg-gray-900 border-b shadow-sm sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:supports-[backdrop-filter]:bg-gray-900/80">
-				<div className="mx-auto flex items-center justify-between py-4 px-6">
-					{/* Logo */}
-					<h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-						<Link to="/">
-							MED-IVRIT
-						</Link>      
-					</h1>
-					{/* Desktop Nav and Theme Toggle */}
-					<div className="hidden md:flex items-center gap-4">
-						<nav className="flex space-x-6">
-							{navItems.map((game) => {
-								const isAllowed = user || allowedPaths.includes(game.path);
-								return isAllowed ? (
-									<Link
-										key={game.path}
-										to={game.path}
-										className={`font-semibold transition-colors duration-200 ${
-											location.pathname === game.path
-												? "text-blue-600 dark:text-blue-400"
-												: "text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400"
-										}`}
+	// Only allow Home, Quiz, About, and ContactUs for unauthenticated users
+	const allowedPaths = ["/", "/Quiz", "/About", "/ContactUs"];
+
+	return (
+		<header className="bg-white dark:bg-gray-900 border-b shadow-sm sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:supports-[backdrop-filter]:bg-gray-900/80">
+			<div className="mx-auto flex items-center justify-between py-4 px-6">
+				{/* Logo */}
+				<h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+					<Link to="/">MED-IVRIT</Link>
+				</h1>
+
+				{/* Desktop Nav and Theme Toggle */}
+				<div className="hidden md:flex items-center gap-4">
+					<nav className="flex space-x-6">
+						{navItems.map((game) => {
+							const isAllowed = user || allowedPaths.includes(game.path);
+							return isAllowed ? (
+								<Link
+									key={game.path}
+									to={isAllowed ? game.path : "/auth"} // Redirect unauthenticated users to /auth
+									className={`font-semibold transition-colors duration-200 ${
+										location.pathname === game.path
+											? "text-blue-600 dark:text-blue-400"
+											: "text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400"
+									}`}
+								>
+									{t(game.nameKey)}
+								</Link>
+							) : (
+								<span
+									key={game.path}
+									className="font-semibold text-gray-400 dark:text-gray-600 flex items-center gap-1 cursor-not-allowed select-none opacity-70"
+									title={t("nav_locked", "Sign in to access")}
+								>
+									{t(game.nameKey)}
+									<svg
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										className="ml-1 text-gray-400 dark:text-gray-500"
 									>
-										{t(game.nameKey)}
-									</Link>
-								) : (
-									<span
-										key={game.path}
-										className="font-semibold text-gray-400 dark:text-gray-600 flex items-center gap-1 cursor-not-allowed select-none opacity-70"
-										title={t("nav_locked", "Sign in to access")}
+										<rect x="3" y="11" width="18" height="11" rx="2" />
+										<path d="M7 11V7a5 5 0 0 1 10 0v4" />
+									</svg>
+								</span>
+							);
+						})}
+					</nav>
+					<div className="flex items-center gap-3">
+						<ThemeToggle />
+						<LanguageSwitcher />
+						{user ? (
+							<>
+								<Link to="/profile">
+									<Button
+										variant="outline"
+										size="sm"
+										className="flex items-center gap-2"
 									>
-										{t(game.nameKey)}
-										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 text-gray-400 dark:text-gray-500"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-									</span>
-								);
-							})}
-						</nav>
-						<div className="flex items-center gap-3">
-							<ThemeToggle />
-							<LanguageSwitcher />
+										<User className="h-4 w-4" />
+										Profile
+									</Button>
+								</Link>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={signOut}
+									className="flex items-center gap-2"
+								>
+									<LogOut className="h-4 w-4" />
+									Logout
+								</Button>
+							</>
+						) : (
+							<Link to="/auth">
+								<Button
+									variant="outline"
+									size="sm"
+									className="flex items-center gap-2"
+								>
+									<User className="h-4 w-4" />
+									Login
+								</Button>
+							</Link>
+						)}
+					</div>
+				</div>
+
+				{/* Mobile Menu Button */}
+				<div className="md:hidden flex items-center gap-2">
+					<ThemeToggle />
+					<LanguageSwitcher />
+					<button
+						onClick={toggleMenu}
+						className="focus:outline-none focus:ring-2 focus:ring-accent text-gray-900 dark:text-gray-100"
+						aria-label="Toggle menu"
+					>
+						{isMobileMenuOpen ? (
+							<X className="w-6 h-6" />
+						) : (
+							<Menu className="w-6 h-6" />
+						)}
+					</button>
+				</div>
+			</div>
+
+			{/* Mobile Menu */}
+			{isMobileMenuOpen && (
+				<div className="md:hidden bg-white dark:bg-gray-900 backdrop-blur border-t px-6 pb-4">
+					<nav className="flex flex-col space-y-4">
+						{navItems.map((game) => {
+							const isAllowed = user || allowedPaths.includes(game.path);
+							return isAllowed ? (
+								<Link
+									key={game.path}
+									to={game.path}
+									onClick={closeMenu}
+									className={`font-semibold transition-colors duration-200 ${
+										location.pathname === game.path
+											? "text-blue-600 dark:text-blue-400"
+											: "text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400"
+									}`}
+								>
+									{t(game.nameKey)}
+								</Link>
+							) : (
+								<span
+									key={game.path}
+									className="font-semibold text-gray-400 dark:text-gray-600 flex items-center gap-1 cursor-not-allowed select-none opacity-70"
+									title={t("nav_locked", "Sign in to access")}
+								>
+									{t(game.nameKey)}
+									<svg
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										className="ml-1 text-gray-400 dark:text-gray-500"
+									>
+										<rect x="3" y="11" width="18" height="11" rx="2" />
+										<path d="M7 11V7a5 5 0 0 1 10 0v4" />
+									</svg>
+								</span>
+							);
+						})}
+						<div className="pt-4 border-t">
 							{user ? (
 								<>
-									<Link to="/profile">
-										<Button variant="outline" size="sm" className="flex items-center gap-2">
+									<Link
+										to="/profile"
+										onClick={closeMenu}
+										className="block mb-2"
+									>
+										<Button
+											variant="outline"
+											size="sm"
+											className="w-full flex items-center justify-center gap-2"
+										>
 											<User className="h-4 w-4" />
 											Profile
 										</Button>
@@ -83,125 +203,34 @@ const Navbar = () => {
 									<Button
 										variant="outline"
 										size="sm"
-										onClick={signOut}
-										className="flex items-center gap-2"
+										onClick={() => {
+											signOut();
+											closeMenu();
+										}}
+										className="w-full flex items-center justify-center gap-2"
 									>
 										<LogOut className="h-4 w-4" />
 										Logout
 									</Button>
 								</>
 							) : (
-								<Link to="/auth">
-									<Button variant="outline" size="sm" className="flex items-center gap-2">
+								<Link to="/auth" onClick={closeMenu}>
+									<Button
+										variant="outline"
+										size="sm"
+										className="w-full flex items-center justify-center gap-2"
+									>
 										<User className="h-4 w-4" />
 										Login
 									</Button>
 								</Link>
 							)}
 						</div>
-					</div>
-
-					{/* Mobile Menu Button */}
-					<div className="md:hidden flex items-center gap-2">
-						<ThemeToggle />
-						<LanguageSwitcher />
-						<button
-							onClick={toggleMenu}
-							className="focus:outline-none focus:ring-2 focus:ring-accent text-gray-900 dark:text-gray-100"
-							aria-label="Toggle menu"
-						>
-							<svg
-								className="w-6 h-6"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								{isMobileMenuOpen ? (
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth="2"
-										d="M6 18L18 6M6 6l12 12"
-									/>
-								) : (
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth="2"
-										d="M4 6h16M4 12h16M4 18h16"
-									/>
-								)}
-							</svg>
-						</button>
-					</div>
+					</nav>
 				</div>
-
-				{/* Mobile Menu */}
-				{isMobileMenuOpen && (
-					<div className="md:hidden bg-white dark:bg-gray-900 backdrop-blur border-t px-6 pb-4">
-						<nav className="flex flex-col space-y-4">
-							{navItems.map((game) => {
-								const isAllowed = user || allowedPaths.includes(game.path);
-								return isAllowed ? (
-									<Link
-										key={game.path}
-										to={game.path}
-										onClick={closeMenu}
-										className={`font-semibold transition-colors duration-200 ${
-											location.pathname === game.path
-												? "text-blue-600 dark:text-blue-400"
-												: "text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400"
-										}`}
-									>
-										{t(game.nameKey)}
-									</Link>
-								) : (
-									<span
-										key={game.path}
-										className="font-semibold text-gray-400 dark:text-gray-600 flex items-center gap-1 cursor-not-allowed select-none opacity-70"
-										title={t("nav_locked", "Sign in to access")}
-									>
-										{t(game.nameKey)}
-										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 text-gray-400 dark:text-gray-500"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-									</span>
-								);
-							})}
-							<div className="pt-4 border-t">
-								{user ? (
-									<>
-										<Link to="/profile" onClick={closeMenu} className="block mb-2">
-											<Button variant="outline" size="sm" className="w-full flex items-center justify-center gap-2">
-												<User className="h-4 w-4" />
-												Profile
-											</Button>
-										</Link>
-										<Button
-											variant="outline"
-											size="sm"
-											onClick={() => {
-												signOut();
-												closeMenu();
-											}}
-											className="w-full flex items-center justify-center gap-2"
-										>
-											<LogOut className="h-4 w-4" />
-											Logout
-										</Button>
-									</>
-								) : (
-									<Link to="/auth" onClick={closeMenu}>
-										<Button variant="outline" size="sm" className="w-full flex items-center justify-center gap-2">
-											<User className="h-4 w-4" />
-											Login
-										</Button>
-									</Link>
-								)}
-							</div>
-						</nav>
-					</div>
-				)}
-			</header>
-		);
+			)}
+		</header>
+	);
 };
 
 export default Navbar;

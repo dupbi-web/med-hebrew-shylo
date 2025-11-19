@@ -13,7 +13,7 @@ async function getInitialLanguage() {
   if (!lang && typeof window !== "undefined") {
     lang = localStorage.getItem("language") || undefined;
   }
-  return lang || "ru";
+  return lang || "he";
 }
 
 const i18nInit = async () => {
@@ -79,7 +79,7 @@ const i18nInit = async () => {
   create_free_account: "Create Free Account",
     // Contact page
     contact_title: "Get In Touch",
-    contact_meta: "Contact the Doctor Hebrew team for bug reports, feature requests, translations, or collaboration opportunities.",
+    contact_meta: "Contact the Med-Ivrit team for bug reports, feature requests, translations, or collaboration opportunities.",
     contact_response_time: "We typically respond within 24-48 hours",
     contact_why_title: "Why Reach Out?",
     contact_why_text: "Your feedback is essential! We're a community-driven project built by medical students and developers. Every message helps us improve MED-IVRIT for students everywhere.",
@@ -135,7 +135,7 @@ const i18nInit = async () => {
   about_join_us_title: "Join Our Mission",
   about_join_description: "Whether you're a developer, translator, student, intern, or physician, you can help shape a better future for non-native Hebrew speakers across Israel’s medical system.",
 
-  get_in_touch: "Get In Touch",
+  get_in_touch: "Contact Us",
   explore_dictionary: "Explore Dictionary",
       },
     },
@@ -319,7 +319,7 @@ const i18nInit = async () => {
   get_started_free: "Начать бесплатно",
     // Contact page
     contact_title: "Связаться с нами",
-    contact_meta: "Свяжитесь с командой Doctor Hebrew для сообщений об ошибках, запросов функций, переводов или предложений о сотрудничестве.",
+    contact_meta: "Свяжитесь с командой Med-Ivrit для сообщений об ошибках, запросов функций, переводов или предложений о сотрудничестве.",
     contact_response_time: "Обычно мы отвечаем в течение 24-48 часов",
     contact_why_title: "Зачем обращаться?",
     contact_why_text: "Ваш отзыв важен! Мы — проект, развиваемый сообществом, созданный студентами-медиками и разработчиками. Каждое сообщение помогает улучшить MED-IVRIT для студентов по всему миру.",

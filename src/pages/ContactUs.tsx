@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useAuthContext } from "@/context/AuthContext";
 import { Helmet } from "react-helmet-async";
 import { useTranslation } from "react-i18next";
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -130,7 +129,7 @@ const ContactUs = () => {
   return (
     <>
       <Helmet>
-        <title>{t("contact_title")} - Doctor Hebrew</title>
+        <title>{t("contact_title")} - Med-Ivrit</title>
         <meta name="description" content={t("contact_meta")} />
       </Helmet>
       

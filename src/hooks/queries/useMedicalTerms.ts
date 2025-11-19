@@ -16,7 +16,8 @@ export interface MedicalTerm {
   };
 }
 
-async function fetchMedicalTerms(): Promise<MedicalTerm[]> {
+// ░░░░░░░░ SHARED FETCHER (clean) ░░░░░░░░
+async function _fetchMedicalTerms(): Promise<MedicalTerm[]> {
   const { data, error } = await supabase
     .from('words')
     .select(`
@@ -39,26 +40,49 @@ async function fetchMedicalTerms(): Promise<MedicalTerm[]> {
     throw new Error(`Failed to fetch medical terms: ${error.message}`);
   }
 
-  // Transform the data to flatten the category object
+  // Normalize the category relationship
   return (data || []).map(word => {
-    const category = Array.isArray(word.categories) ? word.categories[0] : word.categories;
+    const category = Array.isArray(word.categories)
+      ? word.categories[0]
+      : word.categories;
+
     return {
       ...word,
-      category: category ? {
-        id: category.id,
-        slug: category.slug,
-        name_he: category.name_he,
-        name_en: category.name_en,
-        name_ru: category.name_ru,
-      } : undefined,
+      category: category
+        ? {
+            id: category.id,
+            slug: category.slug,
+            name_he: category.name_he,
+            name_en: category.name_en,
+            name_ru: category.name_ru,
+          }
+        : undefined,
     };
   }) as MedicalTerm[];
 }
 
+// ░░░░░░░░ FOR LOGGED IN USERS (unchanged) ░░░░░░░░
 export function useMedicalTerms() {
   return useQuery({
     queryKey: ['medicalTerms'],
-    queryFn: fetchMedicalTerms,
-    staleTime: 10 * 60 * 1000, // 10 minutes - medical terms rarely change
+    queryFn: _fetchMedicalTerms,
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+// ░░░░░░░░ FOR FREE USERS ONLY ░░░░░░░░
+export function useFreeMedicalTerms() {
+  return useQuery({
+    queryKey: ['freeMedicalTerms'],
+    queryFn: async () => {
+      const all = await _fetchMedicalTerms();
+
+      // pick body organs category
+      return all.filter(w => {
+        const name = w.category?.name_en?.toLowerCase() || "";
+        return name === "body organs"; // free category
+      });
+    },
+    staleTime: 10 * 60 * 1000,
   });
 }

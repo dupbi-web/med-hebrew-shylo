@@ -94,14 +94,20 @@ const Auth = () => {
           marketingAccepted,
         })
       );
-    } catch {}
+      console.log("✅ Stored pending_consent:", { termsAccepted, privacyAccepted, dataProcessingAccepted, marketingAccepted });
+    } catch (e) {
+      console.error("❌ Failed to store pending_consent:", e);
+    }
   };
 
   const clearPendingConsent = () => {
     try {
       localStorage.removeItem("pending_consent");
       localStorage.removeItem("pending_oauth_consent");
-    } catch {}
+      console.log("✅ Cleared consent storage");
+    } catch (e) {
+      console.error("❌ Failed to clear consent:", e);
+    }
   };
 
   const persistPendingProfile = () => {
@@ -117,7 +123,10 @@ const Auth = () => {
           profileDescription,
         })
       );
-    } catch {}
+      console.log("✅ Stored pending_profile");
+    } catch (e) {
+      console.error("❌ Failed to store profile:", e);
+    }
   };
 
   const clearPendingProfile = () => {
@@ -129,18 +138,17 @@ const Auth = () => {
   // Persist OAuth SIGNUP consent before redirect
   const persistOAuthSignupConsent = () => {
     try {
-      localStorage.setItem(
-        "pending_oauth_consent",
-        JSON.stringify({
-          termsAccepted: googleSignupTermsAccepted,
-          privacyAccepted: googleSignupPrivacyAccepted,
-          dataProcessingAccepted: googleSignupDataProcessingAccepted,
-          marketingAccepted: googleSignupMarketingAccepted,
-          timestamp: Date.now(),
-        })
-      );
+      const consentData = {
+        termsAccepted: googleSignupTermsAccepted,
+        privacyAccepted: googleSignupPrivacyAccepted,
+        dataProcessingAccepted: googleSignupDataProcessingAccepted,
+        marketingAccepted: googleSignupMarketingAccepted,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem("pending_oauth_consent", JSON.stringify(consentData));
+      console.log("✅ Stored pending_oauth_consent:", consentData);
     } catch (e) {
-      console.error("Failed to store OAuth consent", e);
+      console.error("❌ Failed to store OAuth consent:", e);
     }
   };
 
@@ -267,94 +275,148 @@ const Auth = () => {
     if (error) throw error;
   };
 
-  // Handle both email signup AND OAuth consent
+  // CRITICAL FIX: Handle both email signup AND OAuth consent
+  // Don't use async/await directly in onAuthStateChange - use setTimeout
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("🔔 Auth event:", event, "User:", session?.user?.id);
+
       if (event === "SIGNED_IN" && session?.user) {
-        try {
-          // Check if consent already exists for this user
-          const { data: existingConsent } = await supabase
-            .from("user_consent")
-            .select("id")
-            .eq("user_id", session.user.id)
-            .maybeSingle();
+        // Use setTimeout to avoid blocking onAuthStateChange
+        setTimeout(async () => {
+          try {
+            console.log("🔍 Checking consent for user:", session.user.id);
 
-          // Only save consent if it doesn't exist (new user)
-          if (!existingConsent) {
-            const justSignedUp = localStorage.getItem("just_signed_up") === "1";
-            const pendingOAuthConsent = localStorage.getItem("pending_oauth_consent");
+            // Check if consent already exists for this user
+            const { data: existingConsent, error: consentCheckError } = await supabase
+              .from("user_consent")
+              .select("id")
+              .eq("user_id", session.user.id)
+              .maybeSingle();
 
-            let consentData = null;
+            if (consentCheckError) {
+              console.error("❌ Error checking consent:", consentCheckError);
+            }
 
-            // Check email/password signup first
-            if (justSignedUp) {
-              const saved = localStorage.getItem("pending_consent");
-              if (saved) {
-                consentData = JSON.parse(saved);
-              }
+            console.log("📋 Existing consent:", existingConsent);
 
-              // Also save profile for email signups
-              try {
-                const savedProfile = localStorage.getItem("pending_profile");
-                if (savedProfile) {
-                  const p = JSON.parse(savedProfile);
-                  const payload = {
-                    fullName: p.fullName || "",
-                    specialization: p.specialization || "",
-                    hospital: p.hospital || "",
-                    medicalField: p.medicalField || "",
-                    howFoundUs: (p.howFoundUs as HowFoundUs) || "other",
-                    profileDescription: p.profileDescription || "",
-                  };
-                  await upsertProfileForCurrentUser(payload);
+            // Only save consent if it doesn't exist (new user)
+            if (!existingConsent) {
+              console.log("🆕 New user - checking for pending consent");
+
+              const justSignedUp = localStorage.getItem("just_signed_up") === "1";
+              const pendingOAuthConsentStr = localStorage.getItem("pending_oauth_consent");
+
+              console.log("📝 justSignedUp:", justSignedUp);
+              console.log("📝 pendingOAuthConsent:", pendingOAuthConsentStr);
+
+              let consentData = null;
+
+              // Check email/password signup first
+              if (justSignedUp) {
+                const saved = localStorage.getItem("pending_consent");
+                console.log("📧 Email signup - pending_consent:", saved);
+                if (saved) {
+                  consentData = JSON.parse(saved);
                 }
-              } finally {
-                clearPendingProfile();
-                localStorage.removeItem("just_signed_up");
+
+                // Also save profile for email signups
+                try {
+                  const savedProfile = localStorage.getItem("pending_profile");
+                  if (savedProfile) {
+                    const p = JSON.parse(savedProfile);
+                    const payload = {
+                      fullName: p.fullName || "",
+                      specialization: p.specialization || "",
+                      hospital: p.hospital || "",
+                      medicalField: p.medicalField || "",
+                      howFoundUs: (p.howFoundUs as HowFoundUs) || "other",
+                      profileDescription: p.profileDescription || "",
+                    };
+                    console.log("💾 Saving profile:", payload);
+                    await upsertProfileForCurrentUser(payload);
+                  }
+                } catch (profileErr) {
+                  console.error("❌ Profile save error:", profileErr);
+                } finally {
+                  clearPendingProfile();
+                  localStorage.removeItem("just_signed_up");
+                }
+              } 
+              // Check OAuth signup
+              else if (pendingOAuthConsentStr) {
+                console.log("🔐 OAuth signup - parsing consent");
+                try {
+                  consentData = JSON.parse(pendingOAuthConsentStr);
+                  console.log("✅ Parsed OAuth consent:", consentData);
+                } catch (parseErr) {
+                  console.error("❌ Failed to parse OAuth consent:", parseErr);
+                }
               }
-            } 
-            // Check OAuth signup
-            else if (pendingOAuthConsent) {
-              consentData = JSON.parse(pendingOAuthConsent);
-            }
 
-            // Save consent if we have it
-            if (consentData) {
-              await supabase.from("user_consent").insert({
-                user_id: session.user.id,
-                terms_accepted: consentData.termsAccepted,
-                privacy_accepted: consentData.privacyAccepted,
-                data_processing_accepted: consentData.dataProcessingAccepted,
-                marketing_accepted: consentData.marketingAccepted || false,
-                user_agent: navigator.userAgent,
+              // Save consent if we have it
+              if (consentData) {
+                console.log("💾 Saving consent to database:", consentData);
+                
+                const { data: insertedConsent, error: insertError } = await supabase
+                  .from("user_consent")
+                  .insert({
+                    user_id: session.user.id,
+                    terms_accepted: consentData.termsAccepted,
+                    privacy_accepted: consentData.privacyAccepted,
+                    data_processing_accepted: consentData.dataProcessingAccepted,
+                    marketing_accepted: consentData.marketingAccepted || false,
+                    user_agent: navigator.userAgent,
+                  })
+                  .select();
+
+                if (insertError) {
+                  console.error("❌ Consent insert error:", insertError);
+                  toast({
+                    title: "Error",
+                    description: "Failed to save consent. Please contact support.",
+                    variant: "destructive",
+                  });
+                } else {
+                  console.log("✅ Consent saved successfully:", insertedConsent);
+                  clearPendingConsent();
+
+                  toast({
+                    title: "Welcome!",
+                    description: "Your account has been created successfully.",
+                  });
+
+                  // Force page reload to refresh AuthContext with new consent
+                  setTimeout(() => {
+                    console.log("🔄 Reloading page to refresh auth context");
+                    window.location.href = "/";
+                  }, 1000);
+                }
+              } else {
+                console.warn("⚠️ No consent data found in localStorage");
+                toast({
+                  title: "Action Required",
+                  description: "Please complete your consent in settings.",
+                  variant: "default",
+                });
+              }
+            } else {
+              // Existing user - just welcome back
+              console.log("👋 Existing user - consent already exists");
+              toast({
+                title: "Welcome back!",
+                description: "You have successfully signed in.",
               });
-
-              clearPendingConsent();
-
-              // FIX #2: Force page reload to refresh AuthContext with new consent
-              setTimeout(() => {
-                window.location.href = "/";
-              }, 500);
-
-              return; // Don't show toast yet, page will reload
             }
-          }
-
-          // Existing user - just navigate
-          if (existingConsent) {
+          } catch (err) {
+            console.error("❌ Error in auth state handler:", err);
             toast({
-              title: "Welcome back!",
-              description: "You have successfully signed in.",
+              title: "Notice",
+              description: "Please complete your profile in settings.",
+              variant: "default",
             });
           }
-        } catch (err) {
-          console.error("Error saving consent:", err);
-          toast({
-            title: "Notice",
-            description: "Please complete your profile in settings.",
-            variant: "default",
-          });
-        }
+        }, 0); // setTimeout with 0 delay to avoid blocking
       }
     });
 
@@ -427,7 +489,7 @@ const Auth = () => {
     }
   };
 
-  // FIX #1: Separate Google sign-in for existing users (Sign In tab)
+  // Simple Google sign-in for existing users (Sign In tab)
   const handleGoogleSignIn = async () => {
     setLoading(true);
     setError("");
@@ -450,7 +512,7 @@ const Auth = () => {
     }
   };
 
-  // FIX #1: Separate Google sign-up with consent validation (Sign Up tab)
+  // Google sign-up with consent validation (Sign Up tab)
   const handleGoogleSignUp = async () => {
     // Validate consent before OAuth redirect
     if (!googleSignupTermsAccepted || !googleSignupPrivacyAccepted || !googleSignupDataProcessingAccepted) {
@@ -532,7 +594,7 @@ const Auth = () => {
               {/* ========== SIGN IN TAB ========== */}
               <TabsContent value="sign-in">
                 <div className="space-y-6">
-                  {/* FIX #1: Simple Google Sign-In for existing users */}
+                  {/* Simple Google Sign-In for existing users */}
                   <Button
                     variant="outline"
                     onClick={handleGoogleSignIn}
@@ -641,7 +703,7 @@ const Auth = () => {
               {/* ========== SIGN UP TAB ========== */}
               <TabsContent value="sign-up">
                 <div className="space-y-6">
-                  {/* FIX #1: Google Sign-Up with Consent Section */}
+                  {/* Google Sign-Up with Consent Section */}
                   <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
                     <div className="space-y-3">
                       <p className="text-sm font-medium flex items-center gap-2">

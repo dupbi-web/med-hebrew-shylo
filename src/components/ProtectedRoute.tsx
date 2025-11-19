@@ -1,4 +1,5 @@
-import { Navigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -7,10 +8,16 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, consent, loading } = useAuthContext();
-  const location = useLocation();
+  const { user, loading } = useAuthContext();
+  const navigate = useNavigate();
 
-  // ⛔️ BLOCK navigation until AuthContext is finished
+  useEffect(() => {
+    if (!loading && !user) {
+      // Preserve intended destination for post-login redirect
+      navigate("/auth", { state: { from: window.location.pathname } });
+    }
+  }, [user, loading, navigate]);
+
   if (loading) {
     return (
       <div className="container mx-auto max-w-4xl space-y-6 py-8">
@@ -27,25 +34,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // ⛔️ If user not logged in → go to /auth
   if (!user) {
-    return (
-      <Navigate
-        to="/auth"
-        replace
-        state={{ from: location.pathname }}
-      />
-    );
-  }
-
-  // ⛔️ If user has not completed required consent → go to /CompleteProfile
-  if (
-    !consent ||
-    !consent.terms_accepted ||
-    !consent.privacy_accepted ||
-    !consent.data_processing_accepted
-  ) {
-    return <Navigate to="/CompleteProfile" replace />;
+    return null;
   }
 
   return <>{children}</>;

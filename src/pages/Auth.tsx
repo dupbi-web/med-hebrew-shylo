@@ -13,8 +13,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { LogIn, UserPlus, Mail, Lock, Shield, FileText, ExternalLink } from "lucide-react";
 import { z } from "zod";
-import { Chrome as GoogleIcon } from "lucide-react";
-
 type HowFoundUs = "friend" | "telegram" | "social" | "search" | "other";
 
 const signUpSchema = z.object({
@@ -44,17 +42,11 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Consent checkboxes for email/password signup
+  // Consent checkboxes
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [dataProcessingAccepted, setDataProcessingAccepted] = useState(false);
   const [marketingAccepted, setMarketingAccepted] = useState(false);
-
-  // Separate consent checkboxes for Google OAuth SIGNUP
-  const [googleSignupTermsAccepted, setGoogleSignupTermsAccepted] = useState(false);
-  const [googleSignupPrivacyAccepted, setGoogleSignupPrivacyAccepted] = useState(false);
-  const [googleSignupDataProcessingAccepted, setGoogleSignupDataProcessingAccepted] = useState(false);
-  const [googleSignupMarketingAccepted, setGoogleSignupMarketingAccepted] = useState(false);
 
   // Profile fields
   const [fullName, setFullName] = useState("");
@@ -95,12 +87,12 @@ const Auth = () => {
         })
       );
     } catch {}
+
   };
 
   const clearPendingConsent = () => {
     try {
       localStorage.removeItem("pending_consent");
-      localStorage.removeItem("pending_oauth_consent");
     } catch {}
   };
 
@@ -124,24 +116,6 @@ const Auth = () => {
     try {
       localStorage.removeItem("pending_profile");
     } catch {}
-  };
-
-  // Persist OAuth SIGNUP consent before redirect
-  const persistOAuthSignupConsent = () => {
-    try {
-      localStorage.setItem(
-        "pending_oauth_consent",
-        JSON.stringify({
-          termsAccepted: googleSignupTermsAccepted,
-          privacyAccepted: googleSignupPrivacyAccepted,
-          dataProcessingAccepted: googleSignupDataProcessingAccepted,
-          marketingAccepted: googleSignupMarketingAccepted,
-          timestamp: Date.now(),
-        })
-      );
-    } catch (e) {
-      console.error("Failed to store OAuth consent", e);
-    }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -267,101 +241,45 @@ const Auth = () => {
     if (error) throw error;
   };
 
-  // Handle both email signup AND OAuth consent
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        try {
-          // Check if consent already exists for this user
-          const { data: existingConsent } = await supabase
-            .from("user_consent")
-            .select("id")
-            .eq("user_id", session.user.id)
-            .maybeSingle();
-
-          // Only save consent if it doesn't exist (new user)
-          if (!existingConsent) {
-            const justSignedUp = localStorage.getItem("just_signed_up") === "1";
-            const pendingOAuthConsent = localStorage.getItem("pending_oauth_consent");
-
-            let consentData = null;
-
-            // Check email/password signup first
-            if (justSignedUp) {
-              const saved = localStorage.getItem("pending_consent");
-              if (saved) {
-                consentData = JSON.parse(saved);
-              }
-
-              // Also save profile for email signups
-              try {
-                const savedProfile = localStorage.getItem("pending_profile");
-                if (savedProfile) {
-                  const p = JSON.parse(savedProfile);
-                  const payload = {
-                    fullName: p.fullName || "",
-                    specialization: p.specialization || "",
-                    hospital: p.hospital || "",
-                    medicalField: p.medicalField || "",
-                    howFoundUs: (p.howFoundUs as HowFoundUs) || "other",
-                    profileDescription: p.profileDescription || "",
-                  };
-                  await upsertProfileForCurrentUser(payload);
-                }
-              } finally {
-                clearPendingProfile();
-                localStorage.removeItem("just_signed_up");
-              }
-            } 
-            // Check OAuth signup
-            else if (pendingOAuthConsent) {
-              consentData = JSON.parse(pendingOAuthConsent);
+    const { data: sub } = supabase.auth.onAuthStateChange(async (event) => {
+      try {
+        const justSignedUp = localStorage.getItem("just_signed_up") === "1";
+        if (event === "SIGNED_IN" && justSignedUp) {
+          try {
+            const saved = localStorage.getItem("pending_profile");
+            if (saved) {
+              const p = JSON.parse(saved);
+              const payload = {
+                fullName: p.fullName || "",
+                specialization: p.specialization || "",
+                hospital: p.hospital || "",
+                medicalField: p.medicalField || "",
+                howFoundUs: (p.howFoundUs as HowFoundUs) || "other",
+                profileDescription: p.profileDescription || "",
+              };
+              await upsertProfileForCurrentUser(payload);
             }
-
-            // Save consent if we have it
-            if (consentData) {
-              await supabase.from("user_consent").insert({
-                user_id: session.user.id,
-                terms_accepted: consentData.termsAccepted,
-                privacy_accepted: consentData.privacyAccepted,
-                data_processing_accepted: consentData.dataProcessingAccepted,
-                marketing_accepted: consentData.marketingAccepted || false,
-                user_agent: navigator.userAgent,
-              });
-
-              clearPendingConsent();
-
-              // FIX #2: Force page reload to refresh AuthContext with new consent
-              setTimeout(() => {
-                window.location.href = "/";
-              }, 500);
-
-              return; // Don't show toast yet, page will reload
-            }
+          } finally {
+            clearPendingProfile();
+            try {
+              localStorage.removeItem("just_signed_up");
+            } catch {}
           }
 
-          // Existing user - just navigate
-          if (existingConsent) {
-            toast({
-              title: "Welcome back!",
-              description: "You have successfully signed in.",
-            });
-          }
-        } catch (err) {
-          console.error("Error saving consent:", err);
-          toast({
-            title: "Notice",
-            description: "Please complete your profile in settings.",
-            variant: "default",
-          });
+          try {
+            await upsertConsentForCurrentUser();
+          } catch {}
         }
+      } catch {
+        // ignore
       }
     });
 
     return () => {
       sub.subscription.unsubscribe();
     };
-  }, [toast]);
+  }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -427,483 +345,298 @@ const Auth = () => {
     }
   };
 
-  // FIX #1: Separate Google sign-in for existing users (Sign In tab)
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setError("");
 
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({ 
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/`
-        }
-      });
-      if (error) throw error;
-    } catch (err: any) {
-      toast({
-        title: "Google Sign-in failed",
-        description: err?.message || "Please try again.",
-        variant: "destructive",
-      });
-      setLoading(false);
-    }
-  };
+return (
+  <>
+    <Helmet>
+      <title>Sign In / </title>
+    </Helmet>
 
-  // FIX #1: Separate Google sign-up with consent validation (Sign Up tab)
-  const handleGoogleSignUp = async () => {
-    // Validate consent before OAuth redirect
-    if (!googleSignupTermsAccepted || !googleSignupPrivacyAccepted || !googleSignupDataProcessingAccepted) {
-      setError("Please accept the required terms to continue with Google");
-      toast({
-        title: "Consent Required",
-        description: "You must accept the Terms, Privacy Policy, and Data Processing consent to sign up with Google.",
-        variant: "destructive",
-      });
-      return;
-    }
+    <div className="mx-auto max-w-md py-10">
+      <Card className="shadow-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">Account</CardTitle>
+          <CardDescription>
+            Access your account or create a new one.
+          </CardDescription>
+        </CardHeader>
 
-    // Store consent before redirect
-    persistOAuthSignupConsent();
+        <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-    setLoading(true);
-    setError("");
+          <Tabs defaultValue="sign-in" className="w-full">
+            <TabsList className="grid grid-cols-2 w-full mb-4">
+              <TabsTrigger value="sign-in">
+                <LogIn className="mr-2 h-4 w-4" />
+                Sign In
+              </TabsTrigger>
+              <TabsTrigger value="sign-up">
+                <UserPlus className="mr-2 h-4 w-4" />
+                Sign Up
+              </TabsTrigger>
+            </TabsList>
 
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({ 
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/`
-        }
-      });
-      if (error) throw error;
-    } catch (err: any) {
-      toast({
-        title: "Google Sign-up failed",
-        description: err?.message || "Please try again.",
-        variant: "destructive",
-      });
-      setLoading(false);
-      
-      // Clear stored consent on error
-      try {
-        localStorage.removeItem("pending_oauth_consent");
-      } catch {}
-    }
-  };
-
-  // Check if all required Google SIGNUP consents are accepted
-  const googleSignupConsentComplete = googleSignupTermsAccepted && googleSignupPrivacyAccepted && googleSignupDataProcessingAccepted;
-
-  return (
-    <>
-      <Helmet>
-        <title>Sign In / Sign Up</title>
-      </Helmet>
-
-      <div className="mx-auto max-w-md py-10">
-        <Card className="shadow-sm">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Account</CardTitle>
-            <CardDescription>
-              Access your account or create a new one.
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent>
-            {error && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <Tabs defaultValue="sign-in" className="w-full">
-              <TabsList className="grid grid-cols-2 w-full mb-4">
-                <TabsTrigger value="sign-in">
-                  <LogIn className="mr-2 h-4 w-4" />
-                  Sign In
-                </TabsTrigger>
-                <TabsTrigger value="sign-up">
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Sign Up
-                </TabsTrigger>
-              </TabsList>
-
-              {/* ========== SIGN IN TAB ========== */}
-              <TabsContent value="sign-in">
-                <div className="space-y-6">
-                  {/* FIX #1: Simple Google Sign-In for existing users */}
-                  <Button
-                    variant="outline"
-                    onClick={handleGoogleSignIn}
-                    disabled={loading}
-                    className="flex items-center gap-2 w-full justify-center"
-                  >
-                    <GoogleIcon className="h-5 w-5" />
-                    Continue with Google
-                  </Button>
-
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-background px-2 text-muted-foreground">
-                        Or continue with email
-                      </span>
-                    </div>
-                  </div>
-
-                  <form onSubmit={handleSignIn} className="space-y-5">
-                    <div className="space-y-2">
-                      <Label htmlFor="email-in">Email</Label>
-                      <Input
-                        id="email-in"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="you@example.com"
-                        required
-                        autoComplete="email"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="password-in">Password</Label>
-                      <Input
-                        id="password-in"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        required
-                        autoComplete="current-password"
-                      />
-                      <LegalLinks />
-                    </div>
-
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      <Lock className="mr-2 h-4 w-4" />
-                      {loading ? "Signing in..." : "Sign In"}
-                    </Button>
-
-                    {/* Reset password */}
-                    <div className="text-center">
-                      <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="link"
-                            className="text-sm text-muted-foreground hover:text-primary"
-                          >
-                            Forgot your password?
-                          </Button>
-                        </DialogTrigger>
-
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2">
-                              <Mail className="h-5 w-5" />
-                              Reset Password
-                            </DialogTitle>
-                            <DialogDescription>
-                              Enter your email and we'll send you a reset link.
-                            </DialogDescription>
-                          </DialogHeader>
-
-                          <form onSubmit={handleForgotPassword} className="space-y-4">
-                            <div>
-                              <Label htmlFor="reset-email">Email</Label>
-                              <Input
-                                id="reset-email"
-                                type="email"
-                                value={resetEmail}
-                                onChange={(e) => setResetEmail(e.target.value)}
-                                placeholder="you@example.com"
-                                required
-                                autoComplete="email"
-                              />
-                            </div>
-                            <Button
-                              type="submit"
-                              className="w-full"
-                              disabled={resetLoading}
-                            >
-                              {resetLoading ? "Sending..." : "Send Reset Link"}
-                            </Button>
-                          </form>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </form>
+            {/* ---------- SIGN IN ---------- */}
+            <TabsContent value="sign-in">
+              <form onSubmit={handleSignIn} className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="email-in">Email</Label>
+                  <Input
+                    id="email-in"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    required
+                    autoComplete="email"
+                  />
                 </div>
-              </TabsContent>
 
-              {/* ========== SIGN UP TAB ========== */}
-              <TabsContent value="sign-up">
-                <div className="space-y-6">
-                  {/* FIX #1: Google Sign-Up with Consent Section */}
-                  <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium flex items-center gap-2">
-                        <Shield className="h-4 w-4" />
-                        Accept terms to sign up with Google:
-                      </p>
+                <div className="space-y-2">
+                  <Label htmlFor="password-in">Password</Label>
+                  <Input
+                    id="password-in"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    autoComplete="current-password"
+                  />
+                  <LegalLinks />
+                </div>
 
-                      <div className="space-y-2 pl-6">
-                        <div className="flex items-start space-x-2">
-                          <Checkbox
-                            id="google-signup-terms"
-                            checked={googleSignupTermsAccepted}
-                            onCheckedChange={(v) => setGoogleSignupTermsAccepted(!!v)}
-                          />
-                          <div className="flex-1">
-                            <Label htmlFor="google-signup-terms" className="text-xs cursor-pointer leading-tight">
-                              I accept the{" "}
-                              <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline font-medium">
-                                Terms & Conditions
-                              </a>
-                            </Label>
-                          </div>
-                        </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  <Lock className="mr-2 h-4 w-4" />
+                  {loading ? "Signing in..." : "Sign In"}
+                </Button>
 
-                        <div className="flex items-start space-x-2">
-                          <Checkbox
-                            id="google-signup-privacy"
-                            checked={googleSignupPrivacyAccepted}
-                            onCheckedChange={(v) => setGoogleSignupPrivacyAccepted(!!v)}
-                          />
-                          <div className="flex-1">
-                            <Label htmlFor="google-signup-privacy" className="text-xs cursor-pointer leading-tight">
-                              I accept the{" "}
-                              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline font-medium">
-                                Privacy Policy
-                              </a>
-                            </Label>
-                          </div>
-                        </div>
-
-                        <div className="flex items-start space-x-2">
-                          <Checkbox
-                            id="google-signup-dataproc"
-                            checked={googleSignupDataProcessingAccepted}
-                            onCheckedChange={(v) => setGoogleSignupDataProcessingAccepted(!!v)}
-                          />
-                          <Label htmlFor="google-signup-dataproc" className="text-xs cursor-pointer leading-tight">
-                            I consent to data processing
-                          </Label>
-                        </div>
-
-                        <div className="flex items-start space-x-2">
-                          <Checkbox
-                            id="google-signup-marketing"
-                            checked={googleSignupMarketingAccepted}
-                            onCheckedChange={(v) => setGoogleSignupMarketingAccepted(!!v)}
-                          />
-                          <Label htmlFor="google-signup-marketing" className="text-xs cursor-pointer leading-tight text-muted-foreground">
-                            I agree to receive marketing emails (optional)
-                          </Label>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      onClick={handleGoogleSignUp}
-                      disabled={loading || !googleSignupConsentComplete}
-                      className="flex items-center gap-2 w-full justify-center"
-                    >
-                      <GoogleIcon className="h-5 w-5" />
-                      {googleSignupConsentComplete ? "Sign up with Google" : "Accept terms to enable"}
-                    </Button>
-
-                    {!googleSignupConsentComplete && (
-                      <p className="text-xs text-muted-foreground text-center">
-                        Please accept the required terms above to sign up with Google
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-background px-2 text-muted-foreground">
-                        Or sign up with email
-                      </span>
-                    </div>
-                  </div>
-
-                  <form onSubmit={handleSignUp} className="space-y-5">
-                    <div className="space-y-2">
-                      <Label htmlFor="email-up">Email (required)</Label>
-                      <Input
-                        id="email-up"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="you@example.com"
-                        required
-                        autoComplete="email"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="password-up">Password (required)</Label>
-                      <Input
-                        id="password-up"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="At least 6 characters"
-                        required
-                        autoComplete="new-password"
-                      />
-                    </div>
-
-                    {/* Consent Checkboxes */}
-                    <div className="space-y-3">
-                      <div className="flex items-start space-x-2">
-                        <Checkbox
-                          id="terms"
-                          checked={termsAccepted}
-                          onCheckedChange={(v) => setTermsAccepted(!!v)}
-                        />
-                        <Label htmlFor="terms" className="cursor-pointer">
-                          <Shield className="mr-2 h-4 w-4 inline-block" />
-                          I accept the Terms & Conditions
-                        </Label>
-                        <Button variant="ghost" size="sm" asChild>
-                          <a href="/terms" target="_blank" rel="noopener noreferrer">
-                            <FileText className="h-3 w-3 mr-1" />
-                            View
-                            <ExternalLink className="h-3 w-3 ml-1" />
-                          </a>
-                        </Button>
-                      </div>
-
-                      <div className="flex items-start space-x-2">
-                        <Checkbox
-                          id="privacy"
-                          checked={privacyAccepted}
-                          onCheckedChange={(v) => setPrivacyAccepted(!!v)}
-                        />
-                        <Label htmlFor="privacy" className="cursor-pointer">
-                          I accept the Privacy Policy
-                        </Label>
-                        <Button variant="ghost" size="sm" asChild>
-                          <a href="/privacy" target="_blank" rel="noopener noreferrer">
-                            <FileText className="h-3 w-3 mr-1" />
-                            View
-                            <ExternalLink className="h-3 w-3 ml-1" />
-                          </a>
-                        </Button>
-                      </div>
-
-                      <div className="flex items-start space-x-2">
-                        <Checkbox
-                          id="dataproc"
-                          checked={dataProcessingAccepted}
-                          onCheckedChange={(v) => setDataProcessingAccepted(!!v)}
-                        />
-                        <Label htmlFor="dataproc" className="cursor-pointer">
-                          I consent to data processing
-                        </Label>
-                      </div>
-
-                      <div className="flex items-start space-x-2">
-                        <Checkbox
-                          id="marketing"
-                          checked={marketingAccepted}
-                          onCheckedChange={(v) => setMarketingAccepted(!!v)}
-                        />
-                        <Label htmlFor="marketing" className="cursor-pointer">
-                          I agree to receive marketing emails (optional)
-                        </Label>
-                      </div>
-                    </div>
-
-                    {/* Optional Profile Fields */}
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName">Full name</Label>
-                      <Input
-                        id="fullName"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Dr. Jane Doe"
-                        autoComplete="name"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="specialization">Specialization</Label>
-                      <Input
-                        id="specialization"
-                        value={specialization}
-                        onChange={(e) => setSpecialization(e.target.value)}
-                        placeholder="Internal Medicine"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="hospital">Hospital</Label>
-                      <Input
-                        id="hospital"
-                        value={hospital}
-                        onChange={(e) => setHospital(e.target.value)}
-                        placeholder="Bnei Zion Medical Center"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="medicalField">Medical field</Label>
-                      <Input
-                        id="medicalField"
-                        value={medicalField}
-                        onChange={(e) => setMedicalField(e.target.value)}
-                        placeholder="NICU / Pediatrics / Surgery"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="howFoundUs">How did you find us?</Label>
-                      <select
-                        id="howFoundUs"
-                        className="dark:bg-gray-800 dark:border-gray-700 w-full border rounded px-3 py-2"
-                        value={howFoundUs}
-                        onChange={(e) => setHowFoundUs(e.target.value as HowFoundUs)}
+                {/* Reset password */}
+                <div className="text-center">
+                  <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="link"
+                        className="text-sm text-muted-foreground hover:text-primary"
                       >
-                        <option value="friend">Friend</option>
-                        <option value="telegram">Telegram</option>
-                        <option value="social">Social</option>
-                        <option value="search">Search</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
+                        Forgot your password?
+                      </Button>
+                    </DialogTrigger>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="profileDescription">Short description</Label>
-                      <Input
-                        id="profileDescription"
-                        value={profileDescription}
-                        onChange={(e) => setProfileDescription(e.target.value)}
-                        placeholder="Your role and interests"
-                      />
-                    </div>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                          <Mail className="h-5 w-5" />
+                          Reset Password
+                        </DialogTitle>
+                        <DialogDescription>
+                          Enter your email and we’ll send you a reset link.
+                        </DialogDescription>
+                      </DialogHeader>
 
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      <Mail className="mr-2 h-4 w-4" />
-                      {loading ? "Creating account..." : "Create Account"}
-                    </Button>
-                  </form>
+                      <form onSubmit={handleForgotPassword} className="space-y-4">
+                        <div>
+                          <Label htmlFor="reset-email">Email</Label>
+                          <Input
+                            id="reset-email"
+                            type="email"
+                            value={resetEmail}
+                            onChange={(e) => setResetEmail(e.target.value)}
+                            placeholder="you@example.com"
+                            required
+                            autoComplete="email"
+                          />
+                        </div>
+                        <Button
+                          type="submit"
+                          className="w-full"
+                          disabled={resetLoading}
+                        >
+                          {resetLoading ? "Sending..." : "Send Reset Link"}
+                        </Button>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
                 </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </div>
-    </>
-  );
+              </form>
+            </TabsContent>
+
+            {/* ---------- SIGN UP ---------- */}
+            <TabsContent value="sign-up">
+              <form onSubmit={handleSignUp} className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="email-up">Email (required)</Label>
+                  <Input
+                    id="email-up"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password-up">Password (required)</Label>
+                  <Input
+                    id="password-up"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="At least 6 characters"
+                    required
+                    autoComplete="new-password"
+                  />
+                </div>
+
+                {/* Consent Checkboxes */}
+                <div className="space-y-3">
+                  <div className="flex items-start space-x-2">
+                    <Checkbox
+                      id="terms"
+                      checked={termsAccepted}
+                      onCheckedChange={(v) => setTermsAccepted(!!v)}
+                    />
+                    <Label htmlFor="terms" className="cursor-pointer">
+                      <Shield className="mr-2 h-4 w-4 inline-block" />
+                      I accept the Terms & Conditions
+                    </Label>
+                      <Button variant="ghost" size="sm" asChild>
+                        <a href="/terms" target="_blank" rel="noopener noreferrer">
+                          <FileText className="h-3 w-3 mr-1" />
+                          View
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      </Button>
+                  </div>
+
+                  <div className="flex items-start space-x-2">
+                    <Checkbox
+                      id="privacy"
+                      checked={privacyAccepted}
+                      onCheckedChange={(v) => setPrivacyAccepted(!!v)}
+                    />
+                    <Label htmlFor="privacy" className="cursor-pointer">
+                      I accept the Privacy Policy
+                    </Label>
+                      <Button variant="ghost" size="sm" asChild>
+                        <a href="/privacy" target="_blank" rel="noopener noreferrer">
+                          <FileText className="h-3 w-3 mr-1" />
+                          View
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      </Button>
+                  </div>
+
+                  <div className="flex items-start space-x-2">
+                    <Checkbox
+                      id="dataproc"
+                      checked={dataProcessingAccepted}
+                      onCheckedChange={(v) => setDataProcessingAccepted(!!v)}
+                    />
+                    <Label htmlFor="dataproc" className="cursor-pointer">
+                      I consent to data processing
+                    </Label>
+                  </div>
+
+                  <div className="flex items-start space-x-2">
+                    <Checkbox
+                      id="marketing"
+                      checked={marketingAccepted}
+                      onCheckedChange={(v) => setMarketingAccepted(!!v)}
+                    />
+                    <Label htmlFor="marketing" className="cursor-pointer">
+                      I agree to receive marketing emails (optional)
+                    </Label>
+                  </div>
+                </div>
+
+                {/* Optional Profile Fields */}
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full name</Label>
+                  <Input
+                    id="fullName"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Dr. Jane Doe"
+                    autoComplete="name"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="specialization">Specialization</Label>
+                  <Input
+                    id="specialization"
+                    value={specialization}
+                    onChange={(e) => setSpecialization(e.target.value)}
+                    placeholder="Internal Medicine"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="hospital">Hospital</Label>
+                  <Input
+                    id="hospital"
+                    value={hospital}
+                    onChange={(e) => setHospital(e.target.value)}
+                    placeholder="Bnei Zion Medical Center"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="medicalField">Medical field</Label>
+                  <Input
+                    id="medicalField"
+                    value={medicalField}
+                    onChange={(e) => setMedicalField(e.target.value)}
+                    placeholder="NICU / Pediatrics / Surgery"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="howFoundUs">How did you find us?</Label>
+                  <select
+                    id="howFoundUs"
+                    className="dark:bg-gray-800 dark:border-gray-700 w-full border rounded px-3 py-2"
+                    value={howFoundUs}
+                    onChange={(e) => setHowFoundUs(e.target.value as HowFoundUs)}
+                  >
+                    <option value="friend">Friend</option>
+                    <option value="telegram">Telegram</option>
+                    <option value="social">Social</option>
+                    <option value="search">Search</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="profileDescription">Short description</Label>
+                  <Input
+                    id="profileDescription"
+                    value={profileDescription}
+                    onChange={(e) => setProfileDescription(e.target.value)}
+                    placeholder="Your role and interests"
+                  />
+                </div>
+
+                <Button type="submit" className="w-full" disabled={loading}>
+                  <Mail className="mr-2 h-4 w-4" />
+                  {loading ? "Creating account..." : "Create Account"}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  </>
+);
+
 };
 
 export default Auth;

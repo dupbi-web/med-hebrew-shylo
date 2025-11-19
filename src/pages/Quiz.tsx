@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuthContext } from "@/context/AuthContext";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
@@ -44,17 +44,12 @@ const Quiz = () => {
   const { user } = useAuthContext();
   const { t, i18n } = useTranslation();
 
-  // ➜ FREE users get only the "body organs" category
-  // ➜ Logged users get everything
-  const {
-    data: allMedicalTerms = [],
-    isLoading: wordsLoading
-  } = user ? useMedicalTerms() : useFreeMedicalTerms();
+  // Use different hooks based on login
+  const { data: allMedicalTerms = [], isLoading: wordsLoading } = user
+    ? useMedicalTerms()
+    : useFreeMedicalTerms();
 
-  const {
-    data: allCategories = [],
-    isLoading: categoriesLoading
-  } = useCategories();
+  const { data: allCategories = [], isLoading: categoriesLoading } = useCategories();
 
   const normalizeLang = (lang: string): Lang => {
     if (lang.startsWith("ru") || lang === "rus") return "rus";
@@ -72,20 +67,16 @@ const Quiz = () => {
   const [options, setOptions] = useState<string[]>([]);
   const [showUpsell, setShowUpsell] = useState(false);
 
-  // Load categories + filter words
   useEffect(() => {
     if (!allMedicalTerms.length) return;
 
     setCategories(allCategories);
 
     let filtered = allMedicalTerms;
-
     if (selectedCategory) {
       filtered = allMedicalTerms.filter((w) => {
-        const ids = Array.isArray(w.category_id)
-          ? w.category_id
-          : [w.category_id];
-        return ids.includes(Number(selectedCategory));
+        const categoryIds = Array.isArray(w.category_id) ? w.category_id : [w.category_id];
+        return categoryIds.includes(Number(selectedCategory));
       });
     }
 
@@ -97,9 +88,8 @@ const Quiz = () => {
         he: w.he,
         rus: w.rus,
         category_id: w.category_id,
-        category_slug: w.category?.slug || null
+        category_slug: w.category?.slug || null,
       }));
-
     setWords(shuffleCopy(cleaned));
     setCurrentIndex(0);
     setScore(0);
@@ -107,28 +97,25 @@ const Quiz = () => {
   }, [allMedicalTerms, allCategories, selectedCategory, targetLang]);
 
   const current = words[currentIndex];
-  const isDone = currentIndex >= words.length;
 
-  // Recompute options
   useEffect(() => {
     if (!current) {
       setOptions([]);
       return;
     }
     const distractors = getRandomDistractors(words, current, targetLang, 3);
-    setOptions(
-      shuffleCopy([current[targetLang], ...distractors.map((w) => w[targetLang])])
-    );
+    const opts = shuffleCopy([current[targetLang], ...distractors.map((w) => w[targetLang])]);
+    setOptions(opts);
   }, [current, targetLang, words]);
+
+  const isDone = currentIndex >= words.length;
 
   const handleSelect = (choice: string) => {
     if (selected || !current) return;
-
     setSelected(choice);
     if (choice === current[targetLang]) {
       setScore((s) => s + 1);
     }
-
     setTimeout(() => {
       setSelected(null);
       setCurrentIndex((i) => i + 1);
@@ -143,6 +130,7 @@ const Quiz = () => {
   };
 
   const getCategoryLabel = (cat: Category) => {
+    if (!cat) return "";
     switch (i18n.language) {
       case "he":
         return cat.name_he;
@@ -153,8 +141,6 @@ const Quiz = () => {
         return cat.name_en;
     }
   };
-
-  const FREE_CATEGORY_NAME = "body organs";
 
   const UpsellBanner = () => (
     <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded relative mb-4">
@@ -169,115 +155,184 @@ const Quiz = () => {
     <>
       <Helmet>
         <title>Medical Hebrew Quiz</title>
+        <meta
+          name="description"
+          content="Test your knowledge of medical Hebrew with multiple choice questions."
+        />
       </Helmet>
-
       <main className="container mx-auto max-w-6xl">
         <section className="container py-8 md:py-12 px-4 max-w-4xl mx-auto">
-          {(wordsLoading || categoriesLoading) && (
-            <LoadingState message="Loading quiz..." />
-          )}
-
-          {isDone ? (
+          {wordsLoading || categoriesLoading ? (
+            <LoadingState message="Loading quiz questions..." />
+          ) : isDone ? (
             <CompletionScreen
               emoji="🏁"
               title="Quiz Complete!"
               description={
                 <>
-                  You scored <b>{score}</b> out of <b>{words.length}</b>
+                  You scored <span className="font-semibold text-foreground">{score}</span> out of{" "}
+                  <span className="font-semibold text-foreground">{words.length}</span> correct
+                  <span className="sr-only">
+                    . That's {words.length ? Math.round((score / words.length) * 100) : 0}% accuracy.
+                  </span>
                 </>
               }
               onAction={restartQuiz}
               actionLabel="Restart Quiz"
+              className="bg-card border border-border rounded-lg p-6 md:p-8 shadow-lg"
             />
           ) : current ? (
             <div className="max-w-2xl mx-auto">
-              {/* Category Selector */}
-              <div className="mb-8">
-                <select
-                  value={selectedCategory ?? ""}
-                  onChange={(e) => {
-                    const val = e.target.value || null;
-                    const freeCat = categories.find(
-                      (c) => c.name_en.toLowerCase() === FREE_CATEGORY_NAME
-                    );
-
-                    if (!user && val !== String(freeCat?.id)) {
-                      setShowUpsell(true);
-                      setSelectedCategory(String(freeCat?.id));
-                      return;
-                    }
-
-                    setShowUpsell(false);
-                    setSelectedCategory(val);
-                  }}
-                  className="px-4 py-3 border rounded-lg"
-                >
-                  {categories.map((cat) => (
-                    <option
-                      key={cat.id}
-                      value={cat.id}
-                      disabled={
-                        !user &&
-                        cat.name_en.toLowerCase() !== FREE_CATEGORY_NAME
+              <div className="text-center mb-8">
+                <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <label htmlFor="category-select" className="sr-only">
+                    {t("select_category")}
+                  </label>
+                  <select
+                    id="category-select"
+                    value={selectedCategory ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value || null;
+                      if (!user && categories.length) {
+                        const bodyOrgansCategory = categories.find(
+                          (cat) => cat.name_en.toLowerCase() === "body organs"
+                        );
+                        if (val && val !== String(bodyOrgansCategory?.id)) {
+                          setShowUpsell(true);
+                          return;
+                        }
                       }
-                    >
-                      {getCategoryLabel(cat)}
-                      {!user &&
-                      cat.name_en.toLowerCase() !== FREE_CATEGORY_NAME
-                        ? " 🔒"
-                        : ""}
-                    </option>
-                  ))}
-                </select>
+                      setShowUpsell(false);
+                      setSelectedCategory(val);
+                    }}
+                    className="px-4 py-3 bg-background border border-input rounded-lg text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all max-w-xs"
+                    aria-describedby="category-help"
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={String(cat.id)}>
+                        {getCategoryLabel(cat)}
+                        {!user && cat.name_en.toLowerCase() !== "body organs" ? " 🔒" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
                 {showUpsell && <UpsellBanner />}
+
+                <div
+                  className="bg-card/50 border border-border rounded-lg p-6 md:p-8 mb-6"
+                  role="region"
+                  aria-label="Hebrew term to translate"
+                >
+                  <h3
+                    className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary"
+                    dir="rtl"
+                    lang="he"
+                    aria-label={`Hebrew term: ${current.he}`}
+                  >
+                    {current.he}
+                  </h3>
+                </div>
               </div>
 
-              {/* Question */}
-              <div className="mb-6 p-6 border rounded-lg bg-card">
-                <h3 className="text-4xl font-bold text-primary" dir="rtl">
-                  {current.he}
-                </h3>
-              </div>
-
-              {/* Options */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div
+                className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 max-w-2xl mx-auto"
+                role="radiogroup"
+                aria-label="Answer options"
+              >
                 {options.map((opt, index) => {
-                  const isCorrect = opt === current[targetLang];
+                  const isCorrect = current && opt === current[targetLang];
                   const isSelected = opt === selected;
-                  const letter = String.fromCharCode(65 + index);
-
+                  const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
                   return (
                     <button
-                      key={opt}
-                      onClick={() => handleSelect(opt)}
+                      key={`${opt}-${index}`}
+                      role="radio"
+                      aria-checked={isSelected}
+                      aria-labelledby={`option-${index}-text`}
                       className={`
-                        p-4 border rounded-lg text-left
+                        group relative p-4 md:p-5 border-2 rounded-lg transition-all duration-200 text-left min-h-[60px] md:min-h-[80px]
+                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background
                         ${
                           selected
                             ? isCorrect
-                              ? "bg-green-100 border-green-500"
+                              ? "bg-green-50 border-green-500 text-green-900 dark:bg-green-950 dark:text-green-100"
                               : isSelected
-                              ? "bg-red-100 border-red-500"
-                              : "opacity-50"
-                            : "hover:bg-accent"
+                              ? "bg-red-50 border-red-500 text-red-900 dark:bg-red-950 dark:text-red-100"
+                              : "opacity-50 bg-muted border-muted-foreground/20"
+                            : "bg-card border-border hover:bg-accent hover:border-accent-foreground/20 active:scale-[0.98]"
                         }
                       `}
+                      onClick={() => handleSelect(opt)}
                       disabled={!!selected}
+                      aria-describedby={
+                        selected && isCorrect
+                          ? "correct-answer"
+                          : selected && isSelected
+                          ? "incorrect-answer"
+                          : undefined
+                      }
                     >
-                      <b>{letter}.</b> {opt}
+                      <div className="flex items-start gap-3">
+                        <span
+                          className={`
+                            flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold
+                            ${
+                              selected && isCorrect
+                                ? "bg-green-500 border-green-500 text-white"
+                                : selected && isSelected
+                                ? "bg-red-500 border-red-500 text-white"
+                                : "border-muted-foreground/40 text-muted-foreground group-hover:border-accent-foreground/60 group-hover:text-accent-foreground"
+                            }
+                          `}
+                          aria-hidden="true"
+                        >
+                          {selected && isCorrect ? "✓" : selected && isSelected ? "✗" : optionLetter}
+                        </span>
+                        <span id={`option-${index}-text`} className="flex-1 break-words leading-relaxed">
+                          {opt}
+                        </span>
+                      </div>
+                      {selected && isCorrect && (
+                        <span id="correct-answer" className="sr-only">
+                          {t("quiz_correct_answer")}
+                        </span>
+                      )}
+                      {selected && isSelected && !isCorrect && (
+                        <span id="incorrect-answer" className="sr-only">
+                          {t("quiz_incorrect_answer")}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
               </div>
 
-              {/* Counter */}
-              <p className="text-center mt-8 text-muted-foreground">
-                {t("quiz_counter")} {currentIndex + 1} {t("of")} {words.length}
-              </p>
+              <div className="mt-8 text-center">
+                <p className="text-sm text-muted-foreground" aria-live="polite">
+                  {t("quiz_counter")} <span className="font-medium">{currentIndex + 1}</span> {t("of")}{" "}
+                  <span className="font-medium">{words.length}</span>
+                </p>
+              </div>
             </div>
           ) : (
-            <p className="text-center py-8">No words found.</p>
+            <div className="text-center" aria-live="polite">
+              {words.length === 0 ? (
+                <div className="max-w-md mx-auto">
+                  <p className="text-muted-foreground">
+                    {t("No words found for this category. Try another one or show all.")}
+                  </p>
+                  <div className="mt-4">
+                    <Button onClick={() => setSelectedCategory(null)}>{t("Show all categories")}</Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="animate-pulse">
+                  <div className="w-8 h-8 bg-primary/20 rounded-full mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Loading quiz questions...</p>
+                </div>
+              )}
+            </div>
           )}
         </section>
       </main>

@@ -16,7 +16,6 @@ export interface MedicalTerm {
   };
 }
 
-// ░░░░░░░░ SHARED FETCHER (clean) ░░░░░░░░
 async function _fetchMedicalTerms(): Promise<MedicalTerm[]> {
   const { data, error } = await supabase
     .from('words')

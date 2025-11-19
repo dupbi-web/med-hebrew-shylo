@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -8,27 +7,10 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, consent, loading, profile } = useAuthContext();
-  const navigate = useNavigate();
+  const { user, consent, loading } = useAuthContext();
   const location = useLocation();
 
-  useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        // Preserve intended destination for post-login redirect
-        navigate("/auth", { state: { from: location.pathname } });
-      } else if (
-        !consent ||
-        !consent.terms_accepted ||
-        !consent.privacy_accepted ||
-        !consent.data_processing_accepted
-      ) {
-        // Redirect to consent/profile completion page if terms not accepted
-        navigate("/CompleteProfile");
-      }
-    }
-  }, [user, consent, loading, profile, navigate, location.pathname]);
-
+  // ⛔️ BLOCK navigation until AuthContext is finished
   if (loading) {
     return (
       <div className="container mx-auto max-w-4xl space-y-6 py-8">
@@ -45,12 +27,27 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
+  // ⛔️ If user not logged in → go to /auth
   if (!user) {
-    // Not logged in and finished loading
-    return null;
+    return (
+      <Navigate
+        to="/auth"
+        replace
+        state={{ from: location.pathname }}
+      />
+    );
   }
 
-  // User logged in and consent accepted: render protected content
+  // ⛔️ If user has not completed required consent → go to /CompleteProfile
+  if (
+    !consent ||
+    !consent.terms_accepted ||
+    !consent.privacy_accepted ||
+    !consent.data_processing_accepted
+  ) {
+    return <Navigate to="/CompleteProfile" replace />;
+  }
+
   return <>{children}</>;
 };
 

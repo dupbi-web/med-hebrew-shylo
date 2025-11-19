@@ -103,27 +103,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: "local" });
 
-      // Ensure any persisted session tokens are removed from localStorage as a fallback
-      try {
-        localStorage.removeItem("supabase.auth.token");
-        localStorage.removeItem("supabase.auth");
-      } catch (e) {
-        console.error("Error clearing local storage during sign out:", e);
-      }
+      // Safely wait until Supabase state is fully cleared
+      await new Promise(res => setTimeout(res, 200));
 
-      // Clear user-related state only after successful sign-out
+      // Reset your app state
       setUser(null);
       setProfile(null);
       setConsent(null);
 
-      // Redirect to Home page after sign-out
-      window.location.href = "/";
+      // Redirect using navigate instead of hard reload
+      window.location.assign("/auth");
     } catch (err) {
       console.error("Error during supabase signOut:", err);
     }
   };
+
   
   const signInWithGoogle = async () => {
     try {

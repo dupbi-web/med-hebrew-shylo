@@ -1,0 +1,35 @@
+name: Supabase Health Check
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  healthcheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run Supabase Health Check
+        env:
+          HEALTHCHECK_URL: ${{ secrets.SUPABASE_HEALTHCHECK_URL }}
+          SUPABASE_PUBLIC_KEY: ${{ secrets.SUPABASE_PUBLIC_KEY }}
+        run: |
+          echo "Sending GET request to Supabase health check..."
+
+          HTTP_CODE=$(curl -s -o response.json -w "%{http_code}" \
+            -X GET "$HEALTHCHECK_URL" \
+            -H "Authorization: Bearer $SUPABASE_PUBLIC_KEY" \
+            -H "Content-Type: application/json" \
+          )
+
+          echo "HTTP Code: $HTTP_CODE"
+          echo "Response Body:"
+          cat response.json
+
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "::error ::Supabase health check failed with status $HTTP_CODE"
+            exit 1
+          fi
+
+          echo "Supabase health check successful!"

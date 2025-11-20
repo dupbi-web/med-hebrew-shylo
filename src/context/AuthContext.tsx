@@ -78,6 +78,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
+
+    // Remove the auth token from local storage
+    localStorage.removeItem('sb-feyntpyfpuuelkatomvr-auth-token');
   };
 
   return (

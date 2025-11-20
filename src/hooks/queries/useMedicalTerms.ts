@@ -60,6 +60,26 @@ async function _fetchMedicalTerms(): Promise<MedicalTerm[]> {
   }) as MedicalTerm[];
 }
 
+// New function to fetch free words from the "free_words" table
+async function _fetchFreeWords(): Promise<MedicalTerm[]> {
+  const { data, error } = await supabase
+    .from('free_words')
+    .select(`
+      id,
+      en,
+      he,
+      rus,
+      category_id
+    `)
+    .order('id');
+
+  if (error) {
+    throw new Error(`Failed to fetch free words: ${error.message}`);
+  }
+
+  return data || [];
+}
+
 // ░░░░░░░░ FOR LOGGED IN USERS (unchanged) ░░░░░░░░
 export function useMedicalTerms() {
   return useQuery({
@@ -73,15 +93,7 @@ export function useMedicalTerms() {
 export function useFreeMedicalTerms() {
   return useQuery({
     queryKey: ['freeMedicalTerms'],
-    queryFn: async () => {
-      const all = await _fetchMedicalTerms();
-
-      // pick body organs category
-      return all.filter(w => {
-        const name = w.category?.name_en?.toLowerCase() || "";
-        return name === "body organs"; // free category
-      });
-    },
+    queryFn: _fetchFreeWords,
     staleTime: 10 * 60 * 1000,
   });
 }

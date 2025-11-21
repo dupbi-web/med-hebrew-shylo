@@ -208,11 +208,12 @@ const Profile = () => {
     if (!user) return;
     setExporting(true);
     try {
-      // Fetch learning progress from user_progress table
-      const { data: progressData, error: progressError } = await supabase
-        .from("user_progress")
-        .select("word_id, correct, attempts, last_seen")
-        .eq("user_id", user.id);
+      // Fetch learning progress from `user_progress_v2` (stores a JSONB `progress` column)
+      const { data: progressRow, error: progressError } = await supabase
+        .from("user_progress_v2")
+        .select("progress")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
       if (progressError) throw progressError;
 
@@ -232,7 +233,7 @@ const Profile = () => {
           how_found_us: howFoundUs,
           description: profileDescription,
         },
-        learning_progress: progressData || [],
+        learning_progress: progressRow?.progress ?? {},
       };
 
       const dataStr = JSON.stringify(userData, null, 2);

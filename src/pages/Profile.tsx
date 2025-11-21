@@ -233,8 +233,6 @@ const Profile = () => {
           how_found_us: howFoundUs,
           description: profileDescription,
         },
-        // `progressRow.progress` is expected to be an object mapping word IDs to progress
-        // e.g. { "<word_id>": { correct: 3, attempts: 5, last_seen: "..." }, ... }
         learning_progress: progressRow?.progress ?? {},
       };
 

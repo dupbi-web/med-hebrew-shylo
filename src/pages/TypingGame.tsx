@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { PageContainer, PageHeader } from "@/components/common";
+import { useAuthContext } from "@/context/AuthContext";
 
 type Word = {
   en: string;
@@ -14,7 +15,8 @@ type Word = {
 type Mode = "EN→HE" | "RU→HE" | "HE→EN" | "HE→RU";
 
 const TypingGame = () => {
-  const { data: allMedicalTerms = [], isLoading } = useMedicalTerms();
+  const { user, loading } = useAuthContext();
+  const { data: allMedicalTerms = [], isLoading } = useMedicalTerms(user, loading);
   const [words, setWords] = useState<Word[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [input, setInput] = useState("");

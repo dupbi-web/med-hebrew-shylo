@@ -9,10 +9,12 @@ import { useCategories, Category } from "@/hooks/queries/useCategories";
 import Fuse from "fuse.js";
 import { useTranslation } from "react-i18next";
 import { PageContainer } from "@/components/common";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 const Dictionary = () => {
   const { t, i18n } = useTranslation();
-  const { data: allWords = [], isLoading: wordsLoading } = useMedicalTerms();
+  const { user, loading } = useAuthContext();
+  const { data: allWords = [], isLoading: wordsLoading } = useMedicalTerms(user, loading);
   const { data: allCategories = [], isLoading: categoriesLoading } = useCategories();
 
   const [baseWords, setBaseWords] = useState<MedicalTerm[]>([]);

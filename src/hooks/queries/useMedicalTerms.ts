@@ -81,10 +81,11 @@ async function _fetchFreeWords(): Promise<MedicalTerm[]> {
 }
 
 // ░░░░░░░░ FOR LOGGED IN USERS (unchanged) ░░░░░░░░
-export function useMedicalTerms() {
+export function useMedicalTerms(user: any, loading: boolean) {
   return useQuery({
     queryKey: ['medicalTerms'],
     queryFn: _fetchMedicalTerms,
+    enabled: !loading && !!user, // Only fetch when user is authenticated and not loading
     staleTime: 10 * 60 * 1000,
   });
 }

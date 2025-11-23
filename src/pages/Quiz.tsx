@@ -41,12 +41,12 @@ function getRandomDistractors(words: Word[], correct: Word, lang: Lang, count: n
 }
 
 const Quiz = () => {
-  const { user } = useAuthContext();
+  const { user, loading } = useAuthContext();
   const { t, i18n } = useTranslation();
 
   // Use different hooks based on login
-  const { data: allMedicalTerms = [], isLoading: wordsLoading } = user
-    ? useMedicalTerms()
+  const { data: allMedicalTerms = [], isLoading: wordsLoading } = user && !loading
+    ? useMedicalTerms(user, loading)
     : useFreeMedicalTerms();
 
   const { data: allCategories = [], isLoading: categoriesLoading } = useCategories();

@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import Flashcard from "@/components/Flashcard";
 import { useMedicalTerms } from "@/hooks/queries/useMedicalTerms";
+import { useAuthContext } from "@/context/AuthContext";
 
 type Word = { 
   en: string; 

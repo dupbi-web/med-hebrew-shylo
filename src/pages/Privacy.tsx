@@ -229,7 +229,7 @@ const Privacy = () => {
               </ul>
               <p className="mt-3">
                 For other requests or questions about your privacy rights, please contact us through the 
-                <a href="/ContactUs" className="text-primary hover:underline ml-1">Contact Us</a> page or email 
+                <a href="/contact" className="text-primary hover:underline ml-1">Contact Us</a> page or email 
                 contact.medivrit@gmail.com. We will respond to all requests within 30 days (or one month for 
                 GDPR requests) as required by law.
               </p>
@@ -418,7 +418,7 @@ const Privacy = () => {
             </p>
             <p>
               For privacy-related inquiries, you can contact us through the 
-              <a href="/ContactUs" className="text-primary hover:underline ml-1">Contact Us</a> page or 
+              <a href="/contact" className="text-primary hover:underline ml-1">Contact Us</a> page or 
               email contact.medivrit@gmail.com.
             </p>
           </CardContent>
@@ -473,7 +473,7 @@ const Privacy = () => {
               practices, please contact us:
             </p>
             <ul className="list-none space-y-2 mt-3">
-              <li><strong>Via Contact Form:</strong> <a href="/ContactUs" className="text-primary hover:underline">Contact Us page</a></li>
+              <li><strong>Via Contact Form:</strong> <a href="/contact" className="text-primary hover:underline">Contact Us page</a></li>
               <li><strong>Email:</strong> contact.medivrit@gmail.com</li>
               <li><strong>Postal Address:</strong> Nick, Med-Ivrit Project, Haifa, Israel</li>
             </ul>

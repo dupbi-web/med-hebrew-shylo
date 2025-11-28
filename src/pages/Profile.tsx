@@ -65,12 +65,11 @@ const Profile = () => {
   const [profileDescription, setProfileDescription] = useState("");
 
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false); // consent toggle
-  const [saving, setSaving] = useState(false); // profile save
-  const [notifying, setNotifying] = useState(false); // telegram notify while deletion request
+  const [updating, setUpdating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [notifying, setNotifying] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  // Deletion modal and UX
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
 
@@ -93,18 +92,19 @@ const Profile = () => {
           .from("user_consent")
           .select("*")
           .eq("user_id", session.user.id)
-          .maybeSingle();
+          .maybeSingle(); // FIX: safe, no limit
+
         if (consentData) setConsent(consentData as UserConsent);
 
-        // Load existing deletion request (pending/processing)
+        // Load existing deletion request
         const { data: delReqData } = await supabase
           .from("data_deletion_requests")
           .select("*")
           .eq("user_id", session.user.id)
           .in("status", ["pending", "processing"])
           .order("request_date", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .maybeSingle(); // FIX: removed limit(1)
+
         if (delReqData) setDeletionRequest(delReqData as DataDeletionRequest);
 
         // Load profile
@@ -112,7 +112,8 @@ const Profile = () => {
           .from("profiles")
           .select("*")
           .eq("id", session.user.id)
-          .maybeSingle();
+          .maybeSingle(); // FIX: safe
+
         if (profile) {
           setFullName(profile.full_name || "");
           setSpecialization(profile.specialization || "");
@@ -121,6 +122,7 @@ const Profile = () => {
           setHowFoundUs((profile.how_found_us || "other") as HowFoundUs);
           setProfileDescription(profile.description || "");
         }
+
       } finally {
         setLoading(false);
       }
@@ -129,7 +131,10 @@ const Profile = () => {
     loadUserData();
   }, [navigate]);
 
-  const updateConsent = async (field: keyof Pick<UserConsent, "marketing_accepted">, value: boolean) => {
+  const updateConsent = async (
+    field: keyof Pick<UserConsent, "marketing_accepted">,
+    value: boolean
+  ) => {
     if (!user || !consent) return;
 
     setUpdating(true);
@@ -144,7 +149,7 @@ const Profile = () => {
 
       if (error) throw error;
 
-      setConsent((prev) =>
+      setConsent(prev =>
         prev ? { ...prev, [field]: value, updated_at: new Date().toISOString() } : prev
       );
 
@@ -152,7 +157,7 @@ const Profile = () => {
         title: "Preferences updated",
         description: "Your consent preferences have been saved.",
       });
-    } catch (err: any) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to update preferences. Please try again.",
@@ -163,7 +168,6 @@ const Profile = () => {
     }
   };
 
-  // Simple non-empty validation for required fields
   const profileValid =
     fullName.trim().length > 0 &&
     specialization.trim().length > 0 &&
@@ -172,13 +176,19 @@ const Profile = () => {
 
   const saveProfile = async () => {
     if (!profileValid) {
-      toast({ title: "Incomplete fields", description: "Please fill all fields", variant: "destructive" });
+      toast({
+        title: "Incomplete fields",
+        description: "Please fill all fields",
+        variant: "destructive",
+      });
       return;
     }
     setSaving(true);
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error("Not authenticated");
+
       const { error } = await supabase.from("profiles").upsert(
         {
           id: session.user.id,
@@ -192,7 +202,9 @@ const Profile = () => {
         { onConflict: "id" }
       );
       if (error) throw error;
+
       toast({ title: "Profile saved", description: "Your details have been updated." });
+
     } catch (err: any) {
       toast({
         title: "Save failed",
@@ -207,6 +219,7 @@ const Profile = () => {
   const exportUserData = async () => {
     if (!user) return;
     setExporting(true);
+
     try {
       // Fetch learning progress from `user_progress_v2` (stores a JSONB `progress` column)
       const { data: progressRow, error: progressError } = await supabase
@@ -224,7 +237,7 @@ const Profile = () => {
           created_at: user.created_at,
           last_sign_in: user.last_sign_in_at,
         },
-        consent: consent || null,
+        consent,
         profile: {
           full_name: fullName,
           specialization,
@@ -233,6 +246,7 @@ const Profile = () => {
           how_found_us: howFoundUs,
           description: profileDescription,
         },
+        learning_progress: progressRow?.progress ?? {},
         learning_progress: progressRow?.progress ?? {},
       };
 
@@ -252,6 +266,7 @@ const Profile = () => {
         title: "Data exported",
         description: "Your data has been downloaded as a JSON file.",
       });
+
     } catch (err: any) {
       console.error("Export error:", err);
       toast({
@@ -264,7 +279,6 @@ const Profile = () => {
     }
   };
 
-  // Notify admin on Telegram (no debug surfaced to user)
   const sendTelegram = async (text: string) => {
     try {
       setNotifying(true);
@@ -278,7 +292,6 @@ const Profile = () => {
     }
   };
 
-  // Request deletion modal
   const handleDeleteClick = () => {
     setDeleteConfirm("");
     setShowDeleteModal(true);
@@ -286,6 +299,7 @@ const Profile = () => {
 
   const handleSubmitDeletion = async () => {
     if (!user) return;
+
     if (deleteConfirm.trim().toUpperCase() !== "DELETE") {
       toast({
         title: "Confirmation required",
@@ -294,18 +308,18 @@ const Profile = () => {
       });
       return;
     }
+
     setShowDeleteModal(false);
 
     try {
-      // Check for existing pending/processing request
+      // Check if a pending request exists
       const { data: existingReq, error: existingErr } = await supabase
         .from("data_deletion_requests")
         .select("id, status, request_date, created_at, completed_date, user_id")
         .eq("user_id", user.id)
         .in("status", ["pending", "processing"])
         .order("request_date", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .maybeSingle(); // FIX: removed limit
 
       if (existingErr) throw existingErr;
 
@@ -323,6 +337,7 @@ const Profile = () => {
           `Status: ${existingReq.status}`,
           `Requested: ${existingReq.request_date}`,
         ].join("\n");
+
         await sendTelegram(duplicateText);
 
         await supabase.auth.signOut();
@@ -330,7 +345,7 @@ const Profile = () => {
         return;
       }
 
-      // Insert new pending request
+      // Submit new request
       const { data, error } = await supabase
         .from("data_deletion_requests")
         .insert({
@@ -343,6 +358,7 @@ const Profile = () => {
       if (error) throw error;
 
       setDeletionRequest(data as DataDeletionRequest);
+
       toast({
         title: "Deletion requested",
         description: "An administrator will process your request soon.",
@@ -356,10 +372,12 @@ const Profile = () => {
         `Created: ${data.created_at}`,
         `Status: ${data.status}`,
       ].join("\n");
+
       await sendTelegram(notifyText);
 
       await supabase.auth.signOut();
       navigate("/auth");
+
     } catch (err: any) {
       toast({
         title: "Request failed",
@@ -377,9 +395,7 @@ const Profile = () => {
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return (
     <>
@@ -391,12 +407,9 @@ const Profile = () => {
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/70">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md space-y-4 text-gray-900 dark:text-gray-100">
-            <h2 className="text-lg font-bold mb-2">
-              Confirm Account Deletion
-            </h2>
+            <h2 className="text-lg font-bold mb-2">Confirm Account Deletion</h2>
             <p className="text-sm mb-2">
-              To request deletion, type <span className="font-mono font-semibold">DELETE</span> and click Confirm.<br />
-              This action will log you out and an admin will review your request.
+              To request deletion, type <span className="font-mono font-semibold">DELETE</span> and click Confirm.
             </p>
             <Input
               value={deleteConfirm}
@@ -421,18 +434,16 @@ const Profile = () => {
             </div>
             <Alert className="dark:bg-gray-700 dark:text-gray-100">
               <AlertTriangle className="h-4 w-4 inline mr-2" />
-              <AlertDescription>
-                Account deletion cannot be undone once processed.
-              </AlertDescription>
+              <AlertDescription>Account deletion cannot be undone once processed.</AlertDescription>
             </Alert>
           </div>
         </div>
       )}
 
-
+      {/* MAIN PAGE */}
       <div className="container mx-auto max-w-4xl py-8 space-y-6">
 
-        {/* Account Information */}
+        {/* Account Info */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -449,6 +460,7 @@ const Profile = () => {
               </Label>
               <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
             </div>
+
             <div>
               <Label className="flex items-center gap-2 text-sm font-medium">
                 <UserCheck className="h-4 w-4" />
@@ -456,6 +468,7 @@ const Profile = () => {
               </Label>
               <p className="text-sm text-muted-foreground mt-1 font-mono">{user.id}</p>
             </div>
+
             <div>
               <Label className="flex items-center gap-2 text-sm font-medium">
                 <Calendar className="h-4 w-4" />
@@ -477,12 +490,16 @@ const Profile = () => {
           <CardContent className="space-y-3">
             <Label>Full name</Label>
             <Input value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+
             <Label>Specialization</Label>
             <Input value={specialization} onChange={(e) => setSpecialization(e.target.value)} required />
+
             <Label>Hospital</Label>
             <Input value={hospital} onChange={(e) => setHospital(e.target.value)} required />
+
             <Label>Medical field</Label>
             <Input value={medicalField} onChange={(e) => setMedicalField(e.target.value)} required />
+
             <Label>Short description</Label>
             <Input value={profileDescription} onChange={(e) => setProfileDescription(e.target.value)} />
 
@@ -504,8 +521,8 @@ const Profile = () => {
           <CardContent className="space-y-6">
             {consent ? (
               <>
-                {/* Required (read-only) */}
                 <div className="space-y-4">
+
                   <div className="flex items-center justify-between">
                     <div>
                       <Label className="text-sm font-medium">Terms & Conditions</Label>
@@ -524,6 +541,7 @@ const Profile = () => {
                       </Button>
                     </div>
                   </div>
+
                   <div className="flex items-center justify-between">
                     <div>
                       <Label className="text-sm font-medium">Privacy Policy</Label>
@@ -542,6 +560,7 @@ const Profile = () => {
                       </Button>
                     </div>
                   </div>
+
                   <div className="flex items-center justify-between">
                     <div>
                       <Label className="text-sm font-medium">Data Processing</Label>
@@ -551,7 +570,9 @@ const Profile = () => {
                       Accepted {new Date(consent.created_at).toLocaleDateString()}
                     </Badge>
                   </div>
+
                 </div>
+
                 <Separator />
               </>
             ) : (
@@ -562,7 +583,7 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-        {/* Data Management */}
+        {/* Data management */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -572,6 +593,7 @@ const Profile = () => {
             <CardDescription>Export your data or request account deletion</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+
             <div className="flex flex-col sm:flex-row gap-3">
               <Button
                 onClick={exportUserData}
@@ -582,25 +604,23 @@ const Profile = () => {
                 <Download className="h-4 w-4" />
                 {exporting ? "Exporting..." : "Export Your Data"}
               </Button>
+
               <Button
                 onClick={handleDeleteClick}
                 variant="destructive"
                 className="flex items-center gap-2"
                 disabled={
                   notifying ||
-                  (!!deletionRequest && (deletionRequest.status === "pending" || deletionRequest.status === "processing"))
-                }
-                title={
-                  notifying
-                    ? "Notifying admin..."
-                    : deletionRequest && (deletionRequest.status === "pending" || deletionRequest.status === "processing")
-                    ? "Deletion request already in progress"
-                    : "Request account deletion"
+                  (!!deletionRequest &&
+                    (deletionRequest.status === "pending" ||
+                      deletionRequest.status === "processing"))
                 }
               >
                 {notifying ? (
                   <>Notifying...</>
-                ) : deletionRequest && (deletionRequest.status === "pending" || deletionRequest.status === "processing") ? (
+                ) : deletionRequest &&
+                  (deletionRequest.status === "pending" ||
+                    deletionRequest.status === "processing") ? (
                   <>
                     <Timer className="h-4 w-4" />
                     Request Pending
@@ -617,8 +637,10 @@ const Profile = () => {
                 Account deletion is performed by an administrator after reviewing your request, and is irreversible once completed.
               </AlertDescription>
             </Alert>
+
           </CardContent>
         </Card>
+
       </div>
     </>
   );

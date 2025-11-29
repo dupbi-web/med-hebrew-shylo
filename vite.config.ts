@@ -2,26 +2,6 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
-// https://vitejs.dev/config/
-// export default defineConfig(({ mode }) => ({
-//   server: {
-//     host: "::",
-//     port: 8080,
-//   },
-//   plugins: [
-//     react(),
-//     mode === 'development' &&
-//     componentTagger(),
-//   ].filter(Boolean),
-//   resolve: {
-//     alias: {
-//       "@": path.resolve(__dirname, "./src"),
-//     },
-//   },
-// }));
-
-
-
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
@@ -73,22 +53,13 @@ export default defineConfig(({ mode }) => ({
     },
     // Increase chunk size warning limit (we're handling it with chunking)
     chunkSizeWarningLimit: 1000,
-
-    // Enable minification
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: mode === 'production', // Remove console.logs in production
-      },
-    },
   },
-  //  Vitest Configuration
   test: {
-    globals: true,           // lets you use describe/it/expect globally
-    environment: 'happy-dom',    // simulates the browser environment for React
-    setupFiles: './src/setupTests.js', // setup file for test utilities
+    globals: true,
+    environment: 'happy-dom',
+    setupFiles: './src/setupTests.js',
     coverage: {
-      reporter: ['text', 'json', 'html'], // optional: code coverage report
+      reporter: ['text', 'json', 'html'],
     },
   },
 }));

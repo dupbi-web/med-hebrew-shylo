@@ -45,8 +45,8 @@ export function useUserProgressQueryV2() {
     queryKey: ['userProgressV2', userId],
     enabled: typeof userId === 'string',
     queryFn: () => fetchUserProgressV2(userId!),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
+    staleTime: 60 * 60 * 1000, // 1 hour - we rely on optimistic updates for immediate feedback
+    gcTime: 24 * 60 * 60 * 1000, // 24 hours
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchInterval: false,

@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useRateLimit } from "@/hooks/useRateLimit";
 import { LogIn, UserPlus, Mail, Lock } from "lucide-react";
 import { z } from "zod";
 
@@ -74,6 +75,9 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Rate limiting: 5 attempts per minute for auth operations
+  const { checkLimit: checkAuthLimit, getRemainingTime: getAuthRemainingTime } = useRateLimit(5, 60000);
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -89,6 +93,17 @@ const Auth = () => {
   }, [navigate]);
 
   const handleGoogleSignIn = async () => {
+    if (!checkAuthLimit()) {
+      const remainingSeconds = Math.ceil(getAuthRemainingTime() / 1000);
+      setError(`Too many attempts. Please wait ${remainingSeconds} seconds.`);
+      toast({
+        title: "Rate limit exceeded",
+        description: `Please wait ${remainingSeconds} seconds before trying again.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     setError("");
 

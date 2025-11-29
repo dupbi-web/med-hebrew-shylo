@@ -16,7 +16,12 @@ import { useAuthContext } from "@/context/AuthContext";
 type HowFoundUs = "friend" | "telegram" | "social" | "search" | "other";
 
 const profileSchema = z.object({
-  fullName: z.string().trim().min(2, { message: "Full name must be at least 2 characters" }).max(100),
+  fullName: z.string().trim().min(2, { message: "Full name must be at least 2 characters" }).max(100, { message: "Full name must be at most 100 characters" }),
+  specialization: z.string().trim().max(100, { message: "Specialization must be at most 100 characters" }).optional().or(z.literal("")),
+  hospital: z.string().trim().max(100, { message: "Hospital name must be at most 100 characters" }).optional().or(z.literal("")),
+  medicalField: z.string().trim().max(100, { message: "Medical field must be at most 100 characters" }).optional().or(z.literal("")),
+  profileDescription: z.string().trim().max(500, { message: "Description must be at most 500 characters" }).optional().or(z.literal("")),
+  howFoundUs: z.enum(["friend", "telegram", "social", "search", "other"]),
   termsAccepted: z.boolean().refine((v) => v === true, { message: "You must accept the terms and conditions" }),
   privacyAccepted: z.boolean().refine((v) => v === true, { message: "You must accept the privacy policy" }),
   dataProcessingAccepted: z.boolean().refine((v) => v === true, { message: "You must consent to data processing" }),
@@ -32,7 +37,10 @@ const CompleteProfile = () => {
   const [specialization, setSpecialization] = useState("");
   const [hospital, setHospital] = useState("");
   const [medicalField, setMedicalField] = useState("");
-  const [howFoundUs, setHowFoundUs] = useState<HowFoundUs>("other");
+
+  // FIX HERE — starts EMPTY so "required" works
+  const [howFoundUs, setHowFoundUs] = useState<HowFoundUs | "">("");
+
   const [profileDescription, setProfileDescription] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
@@ -46,8 +54,6 @@ const CompleteProfile = () => {
     if (!authLoading && user) {
       const isProfileComplete = profile?.full_name && profile.full_name.trim().length >= 2;
       if (isProfileComplete && hasConsent) {
-        // If we just came from completing it, don't loop, but otherwise redirect home
-        // The state check prevents infinite loops if there's a delay in data propagation
         if (!location.state?.justCompletedProfile) {
           navigate("/");
         }
@@ -64,7 +70,7 @@ const CompleteProfile = () => {
       setSpecialization(profile.specialization || "");
       setHospital(profile.hospital || "");
       setMedicalField(profile.medical_field || "");
-      setHowFoundUs((profile.how_found_us as HowFoundUs) || "other");
+      setHowFoundUs((profile.how_found_us as HowFoundUs) || "");
       setProfileDescription(profile.description || "");
     } else if (user?.user_metadata?.full_name) {
       setFullName(user.user_metadata.full_name);
@@ -79,6 +85,11 @@ const CompleteProfile = () => {
     try {
       const validation = profileSchema.safeParse({
         fullName,
+        specialization,
+        hospital,
+        medicalField,
+        profileDescription,
+        howFoundUs,
         termsAccepted,
         privacyAccepted,
         dataProcessingAccepted,
@@ -128,7 +139,6 @@ const CompleteProfile = () => {
         description: "Your profile has been set up successfully.",
       });
 
-      // Navigate with state to avoid immediate redirect loop if data isn't fresh yet
       navigate("/home", { state: { justCompletedProfile: true } });
 
     } catch (err: any) {
@@ -190,6 +200,7 @@ const CompleteProfile = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
+
               <div className="space-y-2">
                 <Label htmlFor="fullName">
                   Full name <span className="text-red-500">*</span>
@@ -199,7 +210,7 @@ const CompleteProfile = () => {
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Dr. Jane Doe"
+                  placeholder="Dr. Kenobi"
                   required
                   autoComplete="name"
                   minLength={2}
@@ -208,7 +219,9 @@ const CompleteProfile = () => {
                 />
               </div>
 
+              {/* TERMS, PRIVACY, DATA PROCESSING */}
               <div className="space-y-3 bg-muted/50 p-4 rounded-lg">
+
                 <div className="flex items-start space-x-2">
                   <Checkbox
                     id="terms"
@@ -316,15 +329,20 @@ const CompleteProfile = () => {
                 />
               </div>
 
+              {/* FIXED SELECT */}
               <div className="space-y-2">
-                <Label htmlFor="howFoundUs">How did you find us?</Label>
+                <Label htmlFor="howFoundUs">How did you find us? <span className="text-red-500">*</span></Label>
                 <select
                   id="howFoundUs"
                   className="dark:bg-gray-800 dark:border-gray-700 w-full border rounded px-3 py-2"
                   value={howFoundUs}
                   onChange={(e) => setHowFoundUs(e.target.value as HowFoundUs)}
                   disabled={submitting}
+                  required
                 >
+                  <option value="" disabled hidden>
+                    Select an option…
+                  </option>
                   <option value="friend">Friend</option>
                   <option value="telegram">Telegram</option>
                   <option value="social">Social Media</option>

@@ -247,7 +247,6 @@ const Profile = () => {
           description: profileDescription,
         },
         learning_progress: progressRow?.progress ?? {},
-        learning_progress: progressRow?.progress ?? {},
       };
 
       const dataStr = JSON.stringify(userData, null, 2);

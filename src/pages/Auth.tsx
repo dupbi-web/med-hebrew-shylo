@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -8,50 +8,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { LogIn, UserPlus, Mail, Lock, Shield, FileText, ExternalLink } from "lucide-react";
+import { LogIn, UserPlus, Mail, Lock } from "lucide-react";
 import { z } from "zod";
 
-type HowFoundUs = "friend" | "telegram" | "social" | "search" | "other";
-
-interface PendingProfile {
-  fullName: string;
-  specialization: string;
-  hospital: string;
-  medicalField: string;
-  howFoundUs: HowFoundUs;
-  profileDescription: string;
-}
-
-interface PendingConsent {
-  termsAccepted: boolean;
-  privacyAccepted: boolean;
-  dataProcessingAccepted: boolean;
-  marketingAccepted: boolean;
-}
-
-const signUpSchema = z.object({
-  email: z.string().trim().email({ message: "Invalid email address" }).max(255),
-  password: z.string().min(8, { message: "Password must be at least 8 characters" }).max(100),
-  fullName: z.string().trim().min(2, { message: "Full name must be at least 2 characters" }).max(100),
-  termsAccepted: z.boolean().refine((v) => v === true, { message: "You must accept the terms and conditions" }),
-  privacyAccepted: z.boolean().refine((v) => v === true, { message: "You must accept the privacy policy" }),
-  dataProcessingAccepted: z.boolean().refine((v) => v === true, { message: "You must consent to data processing" }),
-});
-
-const profileSchema = z.object({
-  fullName: z.string().trim().min(2, { message: "Full name must be at least 2 characters" }).max(100),
-  termsAccepted: z.boolean().refine((v) => v === true, { message: "You must accept the terms and conditions" }),
-  privacyAccepted: z.boolean().refine((v) => v === true, { message: "You must accept the privacy policy" }),
-  dataProcessingAccepted: z.boolean().refine((v) => v === true, { message: "You must consent to data processing" }),
-});
+const signUpSchema = z
+  .object({
+    email: z.string().trim().email({ message: "Invalid email address" }).max(255),
+    password: z.string().min(8, { message: "Password must be at least 8 characters" }).max(100),
+    confirmPassword: z.string().min(8, { message: "Confirm password must be at least 8 characters" })
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 const LegalLinks = () => (
   <p className="mt-2 text-xs text-muted-foreground">
-    Read the{" "}
+    By continuing, you agree to our{" "}
     <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
       Terms & Conditions
     </a>{" "}
@@ -88,55 +64,15 @@ const GoogleIcon = () => (
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [privacyAccepted, setPrivacyAccepted] = useState(false);
-  const [dataProcessingAccepted, setDataProcessingAccepted] = useState(false);
-  const [marketingAccepted, setMarketingAccepted] = useState(false);
-  const [fullName, setFullName] = useState("");
-  const [specialization, setSpecialization] = useState("");
-  const [hospital, setHospital] = useState("");
-  const [medicalField, setMedicalField] = useState("");
-  const [howFoundUs, setHowFoundUs] = useState<HowFoundUs>("other");
-  const [profileDescription, setProfileDescription] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState(""); // *** ADDED ***
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [resetEmail, setResetEmail] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
-  const [showGoogleProfileDialog, setShowGoogleProfileDialog] = useState(false);
 
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  // Session storage helpers
-  const saveToSessionStorage = useCallback((key: string, data: unknown): boolean => {
-    try {
-      if (typeof window === "undefined" || !window.sessionStorage) return false;
-      sessionStorage.setItem(key, JSON.stringify(data));
-      return true;
-    } catch (err) {
-      return false;
-    }
-  }, []);
-
-  const loadFromSessionStorage = useCallback(<T,>(key: string): T | null => {
-    try {
-      if (typeof window === "undefined" || !window.sessionStorage) return null;
-      const item = sessionStorage.getItem(key);
-      return item ? JSON.parse(item) : null;
-    } catch (err) {
-      return null;
-    }
-  }, []);
-
-  const clearFromSessionStorage = useCallback((key: string): void => {
-    try {
-      if (typeof window === "undefined" || !window.sessionStorage) return;
-      sessionStorage.removeItem(key);
-    } catch (err) {
-      console.error(`Failed`);
-    }
-  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -159,12 +95,12 @@ const Auth = () => {
     try {
       const origin = window.location.origin;
       const isSecure = origin.startsWith("https://") || origin.includes("localhost");
-      
+
       if (!isSecure && import.meta.env.PROD) {
         throw new Error("Production environment requires HTTPS");
       }
 
-      const { data, error: signInError } = await supabase.auth.signInWithOAuth({
+      const { error: signInError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${origin}/`,
@@ -176,8 +112,6 @@ const Auth = () => {
       });
 
       if (signInError) throw signInError;
-
-      // OAuth will redirect, so no need to handle response here
     } catch (err: any) {
       const errorMessage = err?.message || "Google sign in failed. Please try again.";
       setError(errorMessage);
@@ -190,84 +124,7 @@ const Auth = () => {
     }
   };
 
-  const handleGoogleSignUp = async () => {
-    setError("");
-
-    try {
-      // Validate profile data before Google OAuth
-      const validation = profileSchema.safeParse({
-        fullName,
-        termsAccepted,
-        privacyAccepted,
-        dataProcessingAccepted,
-      });
-
-      if (!validation.success) {
-        const msg = validation.error.errors[0]?.message || "Please complete all required fields";
-        setError(msg);
-        return;
-      }
-
-      // Save pending data to session storage
-      const consent: PendingConsent = {
-        termsAccepted,
-        privacyAccepted,
-        dataProcessingAccepted,
-        marketingAccepted,
-      };
-
-      const profile: PendingProfile = {
-        fullName,
-        specialization,
-        hospital,
-        medicalField,
-        howFoundUs,
-        profileDescription,
-      };
-
-      saveToSessionStorage("pending_consent", consent);
-      saveToSessionStorage("pending_profile", profile);
-      saveToSessionStorage("just_signed_up", true);
-      saveToSessionStorage("auth_method", "google");
-
-      setShowGoogleProfileDialog(false);
-      setLoading(true);
-
-      const origin = window.location.origin;
-      const isSecure = origin.startsWith("https://") || origin.includes("localhost");
-      
-      if (!isSecure && import.meta.env.PROD) {
-        throw new Error("Production environment requires HTTPS");
-      }
-
-      const { data, error: signUpError } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${origin}/`,
-          queryParams: {
-            access_type: "offline",
-            prompt: "consent",
-          },
-        },
-      });
-
-      if (signUpError) throw signUpError;
-
-      // OAuth will redirect automatically
-    } catch (err: any) {
-      const errorMessage = err?.message || "Google sign up failed. Please try again.";
-      setError(errorMessage);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-      setLoading(false);
-    }
-  };
-
   const handleEmailSignUp = async (e: React.FormEvent) => {
-
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -276,10 +133,7 @@ const Auth = () => {
       const validation = signUpSchema.safeParse({
         email,
         password,
-        fullName,
-        termsAccepted,
-        privacyAccepted,
-        dataProcessingAccepted,
+        confirmPassword,
       });
 
       if (!validation.success) {
@@ -288,30 +142,9 @@ const Auth = () => {
         return;
       }
 
-      const consent: PendingConsent = {
-        termsAccepted,
-        privacyAccepted,
-        dataProcessingAccepted,
-        marketingAccepted,
-      };
-
-      const profile: PendingProfile = {
-        fullName,
-        specialization,
-        hospital,
-        medicalField,
-        howFoundUs,
-        profileDescription,
-      };
-
-      saveToSessionStorage("pending_consent", consent);
-      saveToSessionStorage("pending_profile", profile);
-      saveToSessionStorage("just_signed_up", true);
-      saveToSessionStorage("auth_method", "email");
-
       const origin = window.location.origin;
       const isSecure = origin.startsWith("https://") || origin.includes("localhost");
-      
+
       if (!isSecure && import.meta.env.PROD) {
         throw new Error("Production environment requires HTTPS");
       }
@@ -321,9 +154,6 @@ const Auth = () => {
         password,
         options: {
           emailRedirectTo: `${origin}/`,
-          data: {
-            full_name: fullName.trim(),
-          }
         },
       });
 
@@ -343,12 +173,13 @@ const Auth = () => {
 
       setEmail("");
       setPassword("");
-      setFullName("");
+      setConfirmPassword(""); // *** ADDED ***
     } catch (err: any) {
       const errorMessage = err?.message || "Sign up failed. Please try again.";
       setError(errorMessage);
       setPassword("");
-      
+      setConfirmPassword(""); // *** ADDED ***
+
       toast({
         title: "Error",
         description: errorMessage,
@@ -358,112 +189,6 @@ const Auth = () => {
       setLoading(false);
     }
   };
-const upsertConsentForCurrentUser = useCallback(async () => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("No authenticated user");
-
-    const saved = loadFromSessionStorage<PendingConsent>("pending_consent");
-    const consent = saved || {
-      termsAccepted: false,
-      privacyAccepted: false,
-      dataProcessingAccepted: false,
-      marketingAccepted: false,
-    };
-
-    const payload = {
-      user_id: user.id,
-      terms_accepted: consent.termsAccepted,
-      privacy_accepted: consent.privacyAccepted,
-      data_processing_accepted: consent.dataProcessingAccepted,
-      marketing_accepted: consent.marketingAccepted,
-      user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
-    };
-
-    const { error } = await supabase
-      .from("user_consent")
-      .upsert(payload, { onConflict: "user_id" });
-
-
-    if (error) throw error;
-
-    clearFromSessionStorage("pending_consent");
-  } catch (err) {
-    console.error("Failed");
-    throw err;
-  }
-}, [loadFromSessionStorage, clearFromSessionStorage]);
-
-  const upsertProfileForCurrentUser = useCallback(async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No authenticated user");
-
-      const saved = loadFromSessionStorage<PendingProfile>("pending_profile");
-      if (!saved) return;
-
-      const { error } = await supabase.from("profiles").upsert(
-        {
-          id: user.id,
-          full_name: saved.fullName.trim(),
-          specialization: saved.specialization.trim(),
-          hospital: saved.hospital.trim(),
-          medical_field: saved.medicalField.trim(),
-          how_found_us: saved.howFoundUs,
-          description: saved.profileDescription.trim(),
-        },
-        { onConflict: "id" }
-      );
-
-      if (error) throw error;
-      clearFromSessionStorage("pending_profile");
-    } catch (err) {
-      console.error("Failed");
-      throw err;
-    }
-  }, [loadFromSessionStorage, clearFromSessionStorage]);
-
-useEffect(() => {
-  const { data: { subscription } } = supabase.auth.onAuthStateChange(
-    async (event, session) => {
-      if (event === "SIGNED_IN" && session) {
-        const justSignedUp = loadFromSessionStorage<boolean>("just_signed_up");
-        const pendingConsent = loadFromSessionStorage<boolean>("pending_consent");
-        if (justSignedUp) {
-          try {
-            await upsertProfileForCurrentUser();
-            await upsertConsentForCurrentUser();
-
-            clearFromSessionStorage("just_signed_up");
-            clearFromSessionStorage("auth_method");
-
-            toast({
-              title: "Welcome!",
-              description: "Your profile has been set up successfully.",
-            });
-          } catch (err) {
-            console.error("signup failed:");
-            toast({
-              title: "Warning",
-              description: "Account created but profile setup incomplete. Please update your profile.",
-              variant: "destructive",
-            });
-          }
-        }
-      }
-    }
-  );
-
-  return () => {
-    subscription.unsubscribe();
-  };
-}, [
-  loadFromSessionStorage,
-  clearFromSessionStorage,
-  upsertProfileForCurrentUser,
-  upsertConsentForCurrentUser,
-  toast,
-]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -493,7 +218,7 @@ useEffect(() => {
       const errorMessage = err?.message || "Sign in failed. Please check your credentials.";
       setError(errorMessage);
       setPassword("");
-      
+
       toast({
         title: "Error",
         description: errorMessage,
@@ -696,193 +421,17 @@ useEffect(() => {
               {/* ---------- SIGN UP TAB ---------- */}
               <TabsContent value="sign-up">
                 <div className="space-y-4">
-                  {/* Google Sign Up with Dialog */}
-                  <Dialog open={showGoogleProfileDialog} onOpenChange={setShowGoogleProfileDialog}>
-                    <DialogTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full"
-                        disabled={loading}
-                      >
-                        <GoogleIcon />
-                        <span className="ml-2">Sign up with Google</span>
-                      </Button>
-                    </DialogTrigger>
-
-                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>Complete Your Profile</DialogTitle>
-                        <DialogDescription>
-                          Please provide the following information before continuing with Google.
-                        </DialogDescription>
-                      </DialogHeader>
-
-                      <div className="space-y-4 mt-4">
-                        {error && (
-                          <Alert variant="destructive">
-                            <AlertDescription>{error}</AlertDescription>
-                          </Alert>
-                        )}
-
-                        <div className="space-y-2">
-                          <Label htmlFor="google-fullName">
-                            Full name <span className="text-red-500">*</span>
-                          </Label>
-                          <Input
-                            id="google-fullName"
-                            type="text"
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            placeholder="Dr. Jane Doe"
-                            required
-                            autoComplete="name"
-                            minLength={2}
-                            maxLength={100}
-                          />
-                        </div>
-
-                        {/* Consent Checkboxes */}
-                        <div className="space-y-3">
-                          <div className="flex items-start space-x-2">
-                            <Checkbox
-                              id="google-terms"
-                              checked={termsAccepted}
-                              onCheckedChange={(v) => setTermsAccepted(!!v)}
-                            />
-                            <div className="flex-1 flex items-center justify-between gap-2">
-                              <Label htmlFor="google-terms" className="cursor-pointer text-sm">
-                                <Shield className="mr-2 h-4 w-4 inline-block" />
-                                I accept the Terms & Conditions <span className="text-red-500">*</span>
-                              </Label>
-                              <Button variant="ghost" size="sm" asChild>
-                                <a href="/terms" target="_blank" rel="noopener noreferrer">
-                                  <FileText className="h-3 w-3 mr-1" />
-                                  View
-                                  <ExternalLink className="h-3 w-3 ml-1" />
-                                </a>
-                              </Button>
-                            </div>
-                          </div>
-
-                          <div className="flex items-start space-x-2">
-                            <Checkbox
-                              id="google-privacy"
-                              checked={privacyAccepted}
-                              onCheckedChange={(v) => setPrivacyAccepted(!!v)}
-                            />
-                            <div className="flex-1 flex items-center justify-between gap-2">
-                              <Label htmlFor="google-privacy" className="cursor-pointer text-sm">
-                                I accept the Privacy Policy <span className="text-red-500">*</span>
-                              </Label>
-                              <Button variant="ghost" size="sm" asChild>
-                                <a href="/privacy" target="_blank" rel="noopener noreferrer">
-                                  <FileText className="h-3 w-3 mr-1" />
-                                  View
-                                  <ExternalLink className="h-3 w-3 ml-1" />
-                                </a>
-                              </Button>
-                            </div>
-                          </div>
-
-                          <div className="flex items-start space-x-2">
-                            <Checkbox
-                              id="google-dataproc"
-                              checked={dataProcessingAccepted}
-                              onCheckedChange={(v) => setDataProcessingAccepted(!!v)}
-                            />
-                            <Label htmlFor="google-dataproc" className="cursor-pointer text-sm">
-                              I consent to data processing <span className="text-red-500">*</span>
-                            </Label>
-                          </div>
-
-                          <div className="flex items-start space-x-2">
-                            <Checkbox
-                              id="google-marketing"
-                              checked={marketingAccepted}
-                              onCheckedChange={(v) => setMarketingAccepted(!!v)}
-                            />
-                            <Label htmlFor="google-marketing" className="cursor-pointer text-sm">
-                              I agree to receive marketing emails (optional)
-                            </Label>
-                          </div>
-                        </div>
-
-                        {/* Optional Profile Fields */}
-                        <div className="space-y-2">
-                          <Label htmlFor="google-specialization">Specialization</Label>
-                          <Input
-                            id="google-specialization"
-                            type="text"
-                            value={specialization}
-                            onChange={(e) => setSpecialization(e.target.value)}
-                            placeholder="Internal Medicine"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="google-hospital">Hospital</Label>
-                          <Input
-                            id="google-hospital"
-                            type="text"
-                            value={hospital}
-                            onChange={(e) => setHospital(e.target.value)}
-                            placeholder="Bnei Zion Medical Center"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="google-medicalField">Medical field</Label>
-                          <Input
-                            id="google-medicalField"
-                            type="text"
-                            value={medicalField}
-                            onChange={(e) => setMedicalField(e.target.value)}
-                            placeholder="NICU / Pediatrics / Surgery"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="google-howFoundUs">How did you find us?</Label>
-                          <select
-                            id="google-howFoundUs"
-                            className="dark:bg-gray-800 dark:border-gray-700 w-full border rounded px-3 py-2"
-                            value={howFoundUs}
-                            onChange={(e) => setHowFoundUs(e.target.value as HowFoundUs)}
-                          >
-                            <option value="friend">Friend</option>
-                            <option value="telegram">Telegram</option>
-                            <option value="social">Social Media</option>
-                            <option value="search">Search Engine</option>
-                            <option value="other">Other</option>
-                          </select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="google-profileDescription">Short description</Label>
-                          <Input
-                            id="google-profileDescription"
-                            type="text"
-                            value={profileDescription}
-                            onChange={(e) => setProfileDescription(e.target.value)}
-                            placeholder="Your role and interests"
-                          />
-                        </div>
-
-                        <Button
-                          type="button"
-                          className="w-full"
-                          onClick={handleGoogleSignUp}
-                          disabled={loading}
-                        >
-                          <GoogleIcon />
-                          <span className="ml-2">
-                            {loading ? "Connecting to Google..." : "Continue with Google"}
-                          </span>
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                  {/* Google Sign Up */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleGoogleSignIn}
+                    disabled={loading}
+                  >
+                    <GoogleIcon />
+                    <span className="ml-2">Sign up with Google</span>
+                  </Button>
 
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
@@ -890,7 +439,7 @@ useEffect(() => {
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
                       <span className="bg-background px-2 text-muted-foreground">
-                        Or sign up with email
+                        Or continue with email
                       </span>
                     </div>
                   </div>
@@ -898,9 +447,7 @@ useEffect(() => {
                   {/* Email Sign Up Form */}
                   <form onSubmit={handleEmailSignUp} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="email-up">
-                        Email <span className="text-red-500">*</span>
-                      </Label>
+                      <Label htmlFor="email-up">Email</Label>
                       <Input
                         id="email-up"
                         type="email"
@@ -914,180 +461,40 @@ useEffect(() => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="password-up">
-                        Password <span className="text-red-500">*</span>
-                      </Label>
+                      <Label htmlFor="password-up">Password</Label>
                       <Input
                         id="password-up"
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="At least 8 characters"
+                        placeholder="••••••••"
                         required
                         autoComplete="new-password"
-                        minLength={8}
                         disabled={loading}
                       />
                     </div>
 
+                    {/* *** ADDED CONFIRM PASSWORD FIELD *** */}
                     <div className="space-y-2">
-                      <Label htmlFor="fullName">
-                        Full name <span className="text-red-500">*</span>
-                      </Label>
+                      <Label htmlFor="confirm-password-up">Confirm Password</Label>
                       <Input
-                        id="fullName"
-                        type="text"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Dr. Jane Doe"
+                        id="confirm-password-up"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
                         required
-                        autoComplete="name"
-                        minLength={2}
-                        maxLength={100}
-                        disabled={loading}
-                      />
-                    </div>
-
-                    {/* Consent Checkboxes */}
-                    <div className="space-y-3">
-                      <div className="flex items-start space-x-2">
-                        <Checkbox
-                          id="terms"
-                          checked={termsAccepted}
-                          onCheckedChange={(v) => setTermsAccepted(!!v)}
-                          disabled={loading}
-                        />
-                        <div className="flex-1 flex items-center justify-between gap-2">
-                          <Label htmlFor="terms" className="cursor-pointer text-sm">
-                            <Shield className="mr-2 h-4 w-4 inline-block" />
-                            I accept the Terms & Conditions <span className="text-red-500">*</span>
-                          </Label>
-                          <Button variant="ghost" size="sm" asChild>
-                            <a href="/terms" target="_blank" rel="noopener noreferrer">
-                              <FileText className="h-3 w-3 mr-1" />
-                              View
-                              <ExternalLink className="h-3 w-3 ml-1" />
-                            </a>
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start space-x-2">
-                        <Checkbox
-                          id="privacy"
-                          checked={privacyAccepted}
-                          onCheckedChange={(v) => setPrivacyAccepted(!!v)}
-                          disabled={loading}
-                        />
-                        <div className="flex-1 flex items-center justify-between gap-2">
-                          <Label htmlFor="privacy" className="cursor-pointer text-sm">
-                            I accept the Privacy Policy <span className="text-red-500">*</span>
-                          </Label>
-                          <Button variant="ghost" size="sm" asChild>
-                            <a href="/privacy" target="_blank" rel="noopener noreferrer">
-                              <FileText className="h-3 w-3 mr-1" />
-                              View
-                              <ExternalLink className="h-3 w-3 ml-1" />
-                            </a>
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start space-x-2">
-                        <Checkbox
-                          id="dataproc"
-                          checked={dataProcessingAccepted}
-                          onCheckedChange={(v) => setDataProcessingAccepted(!!v)}
-                          disabled={loading}
-                        />
-                        <Label htmlFor="dataproc" className="cursor-pointer text-sm">
-                          I consent to data processing <span className="text-red-500">*</span>
-                        </Label>
-                      </div>
-
-                      <div className="flex items-start space-x-2">
-                        <Checkbox
-                          id="marketing"
-                          checked={marketingAccepted}
-                          onCheckedChange={(v) => setMarketingAccepted(!!v)}
-                          disabled={loading}
-                        />
-                        <Label htmlFor="marketing" className="cursor-pointer text-sm">
-                          I agree to receive marketing emails (optional)
-                        </Label>
-                      </div>
-                    </div>
-
-                    {/* Optional Profile Fields */}
-                    <div className="space-y-2">
-                      <Label htmlFor="specialization">Specialization</Label>
-                      <Input
-                        id="specialization"
-                        type="text"
-                        value={specialization}
-                        onChange={(e) => setSpecialization(e.target.value)}
-                        placeholder="Internal Medicine"
-                        disabled={loading}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="hospital">Hospital</Label>
-                      <Input
-                        id="hospital"
-                        type="text"
-                        value={hospital}
-                        onChange={(e) => setHospital(e.target.value)}
-                        placeholder="Bnei Zion Medical Center"
-                        disabled={loading}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="medicalField">Medical field</Label>
-                      <Input
-                        id="medicalField"
-                        type="text"
-                        value={medicalField}
-                        onChange={(e) => setMedicalField(e.target.value)}
-                        placeholder="NICU / Pediatrics / Surgery"
-                        disabled={loading}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="howFoundUs">How did you find us?</Label>
-                      <select
-                        id="howFoundUs"
-                        className="dark:bg-gray-800 dark:border-gray-700 w-full border rounded px-3 py-2"
-                        value={howFoundUs}
-                        onChange={(e) => setHowFoundUs(e.target.value as HowFoundUs)}
-                        disabled={loading}
-                      >
-                        <option value="friend">Friend</option>
-                        <option value="telegram">Telegram</option>
-                        <option value="social">Social Media</option>
-                        <option value="search">Search Engine</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="profileDescription">Short description</Label>
-                      <Input
-                        id="profileDescription"
-                        type="text"
-                        value={profileDescription}
-                        onChange={(e) => setProfileDescription(e.target.value)}
-                        placeholder="Your role and interests"
+                        autoComplete="new-password"
                         disabled={loading}
                       />
                     </div>
 
                     <Button type="submit" className="w-full" disabled={loading}>
-                      <Mail className="mr-2 h-4 w-4" />
+                      <UserPlus className="mr-2 h-4 w-4" />
                       {loading ? "Creating account..." : "Create Account"}
                     </Button>
+
+                    <LegalLinks />
                   </form>
                 </div>
               </TabsContent>

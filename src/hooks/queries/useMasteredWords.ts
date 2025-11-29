@@ -52,7 +52,7 @@ export function useMasteredWords() {
     queryKey: ['masteredWords', userId],
     queryFn: () => fetchMasteredWords(userId!),
     enabled: !!userId,
-    staleTime: 2 * 60 * 1000, // 2 minutes - user data should be relatively fresh
+    staleTime: 60 * 60 * 1000, // 1 hour
   });
 
   const addMutation = useMutation({

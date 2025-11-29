@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import React, { createContext, useContext, ReactNode } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMedicalTermsWithCategories, getBodyOrgansWords } from "@/cache/medicalTermsCache";
 import { useAuthContext } from "./AuthContext";
 
@@ -21,64 +22,48 @@ interface WordsContextType {
 const WordsContext = createContext<WordsContextType | undefined>(undefined);
 
 export const WordsProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuthContext();
-  const [words, setWords] = useState<Word[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: authLoading } = useAuthContext();
+  const queryClient = useQueryClient();
 
-  const fetchWords = useCallback(async () => {
-    setLoading(true);
+  const { data: words = [], isLoading: wordsLoading, refetch } = useQuery({
+    queryKey: ['words', user?.id],
+    queryFn: async () => {
+      // Wait for auth to settle if it's loading? 
+      // Actually, user?.id will be undefined if loading or guest.
+      // We should probably wait for authLoading to be false before deciding which fetch to use?
+      // But useAuthContext 'loading' might be true initially. 
+      // Let's assume if user is null, we fetch guest words.
 
-    try {
+      let rawData: any[] = [];
       if (!user) {
-        // Guest: only body organs, already returns category_id
-        const data = await getBodyOrgansWords();
-        // Ensure normalized shape
-        const normalized: Word[] = (data ?? []).map((w: any) => ({
-          id: w.id,
-          en: w.en,
-          he: w.he,
-          rus: w.rus,
-          category_id: w.category_id ?? null,
-          // no slug for guest set (optional)
-          category_slug: w.category_slug ?? null,
-        }));
-        setWords(normalized);
+        rawData = await getBodyOrgansWords();
       } else {
-        // Auth: full set with categories; flatten to normalized shape
-        // Expect getMedicalTermsWithCategories to return e.g.:
-        // { id, en, he, rus, category_id, category: { id, slug, name_* } } or similar
-        const data = await getMedicalTermsWithCategories();
-        const normalized: Word[] = (data ?? []).map((w: any) => ({
-          id: w.id,
-          en: w.en,
-          he: w.he,
-          rus: w.rus,
-          // Prefer explicit category_id if present; else fallback to nested
-          category_id:
-            typeof w.category_id === "number"
-              ? w.category_id
-              : (w.category?.id ?? null),
-          category_slug:
-            typeof w.category_slug === "string"
-              ? w.category_slug
-              : (w.category?.slug ?? null),
-        }));
-        setWords(normalized);
+        rawData = await getMedicalTermsWithCategories();
       }
-    } catch (e) {
-      console.error("Error fetching words", e);
-      setWords([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
 
-  useEffect(() => {
-    fetchWords();
-  }, [fetchWords]);
+      // Normalize data
+      return rawData.map((w: any) => ({
+        id: w.id,
+        en: w.en,
+        he: w.he,
+        rus: w.rus,
+        category_id: typeof w.category_id === "number" ? w.category_id : (w.category?.id ?? null),
+        category_slug: typeof w.category_slug === "string" ? w.category_slug : (w.category?.slug ?? null),
+      }));
+    },
+    // Only run when we know the auth state (unless we want to eagerly fetch guest words?)
+    // Better to wait for auth to be determined to avoid double fetching (guest -> user)
+    enabled: !authLoading,
+    staleTime: Infinity, // Data is static (monthly updates), cache indefinitely in memory
+    gcTime: 1000 * 60 * 60 * 24, // Keep in garbage collection for 24 hours
+  });
+
+  const refreshWords = async () => {
+    await refetch();
+  };
 
   return (
-    <WordsContext.Provider value={{ words, loading, refreshWords: fetchWords }}>
+    <WordsContext.Provider value={{ words, loading: wordsLoading || authLoading, refreshWords }}>
       {children}
     </WordsContext.Provider>
   );

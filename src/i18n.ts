@@ -22,6 +22,10 @@ const i18nInit = async () => {
     resources: {
       en: {
         translation: {
+          try_quiz: "Try Quiz",
+          telegram_waiting_list_desc: "Private Group (Registration limited)",
+          telegram_waiting_list: "Join the Weekly Sentences Telegram Channel",
+          join_now: "Join Now",
           feature_typing_practice: "Typing Practice",
           feature_typing_practice_desc: "Practice typing Hebrew words",
           learning_header: "Learn with Flashcards",
@@ -143,6 +147,10 @@ const i18nInit = async () => {
       },
       he: {
         translation: {
+          try_quiz: "נסה חידון",
+          telegram_waiting_list_desc: "קבוצה פרטית (הרשמה מוגבלת)",
+          telegram_waiting_list: "הצטרפו לערוץ הטלגרם של המשפטים השבועיים",
+          join_now: "הצטרפו עכשיו",
           feature_typing_practice: "תרגול כתיבת",
           feature_typing_practice_desc: "תרגל כתיבת מילים בעברית",
           learning_header: "למדו עם כרטיסיות",
@@ -265,6 +273,10 @@ const i18nInit = async () => {
       },
       ru: {
         translation: {
+          try_quiz: "Попробовать викторину",
+          telegram_waiting_list_desc: "Приватная группа (ограниченная регистрация)",
+          telegram_waiting_list: "Присоединяйтесь к Telegram-каналу",
+          join_now: "Присоединяйтесь сейчас",
           feature_typing_practice_desc: "Практикуйтесь в написании слов на иврите",
           feature_typing_practice: "Практика",
           learning_header: "Учитесь с помощью карточек",

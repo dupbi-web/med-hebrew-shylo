@@ -11,6 +11,13 @@ import { useAuthContext } from "@/context/AuthContext";
 
 const features = [
 	{
+		nameKey: "feature_typing_practice", // new feature
+		path: "#", // coming soon
+		descriptionKey: "feature_typing_practice_desc", // new i18n key
+		icon: Type,
+		color: "from-green-500 to-green-300",
+	},
+	{
 		nameKey: "feature_dictionary",
 		path: "/Dictionary",
 		descriptionKey: "feature_dictionary_desc",
@@ -30,13 +37,6 @@ const features = [
 		descriptionKey: "feature_game_desc",
 		icon: Puzzle,
 		color: "from-yellow-500 to-yellow-300",
-	},
-	{
-		nameKey: "feature_typing_practice", // new feature
-		path: "#", // coming soon
-		descriptionKey: "feature_typing_practice_desc", // new i18n key
-		icon: Type,
-		color: "from-green-500 to-green-300",
 	},
 ];
 
@@ -68,8 +68,6 @@ const Home = () => {
 						<p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
 							{t("home_description")}
 						</p>
-
-						{!user ? (
 							<motion.div
 								initial={{ opacity: 0 }}
 								animate={{ opacity: 1 }}
@@ -81,31 +79,12 @@ const Home = () => {
 										{t("get_started_free", "Get Started Free")}
 									</Button>
 								</Link>
-								<Link to="/Dictionary">
+								<Link to="/public-quiz">
 									<Button size="lg" variant="outline" className="text-base px-8 py-6">
-										{t("explore_dictionary", "Explore Dictionary")}
+										{t("try_quiz", "Try Quiz")}
 									</Button>
 								</Link>
 							</motion.div>
-						) : (
-							<motion.div
-								initial={{ opacity: 0 }}
-								animate={{ opacity: 1 }}
-								transition={{ delay: 0.3 }}
-								className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
-							>
-								<Link to="/Learning">
-									<Button size="lg" className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all">
-										{t("continue_learning", "Continue Learning")}
-									</Button>
-								</Link>
-								<Link to="/MatchingGame">
-									<Button size="lg" variant="outline" className="text-base px-8 py-6">
-										{t("play_game", "Play Game")}
-									</Button>
-								</Link>
-							</motion.div>
-						)}
 
 						{/* Social Proof */}
 						<motion.div
@@ -123,6 +102,43 @@ const Home = () => {
 								<span>{t("improve_skills", "Improve your skills")}</span>
 							</div>
 						</motion.div>
+					</motion.div>
+
+					{/* Telegram Channel Section */}
+					<motion.div
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ delay: 0.6 }}
+						className="mt-12 text-center"
+					>
+						<h2 className="text-2xl md:text-3xl font-bold mb-4">
+							{t("telegram_waiting_list", "Join the Weekly Sentences Telegram Channel")}
+						</h2>
+						<p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-6">
+							{t(
+								"telegram_waiting_list_desc",
+								"Get exclusive access to weekly curated sentences to boost your language skills. Limited spots available."
+							)}
+						</p>
+						{user ? (
+							<Button
+								size="lg"
+								className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all"
+								onClick={() => window.open("https://t.me/+LTqZ-SnyElI0NGFk", "_blank")}
+							>
+								{t("join_now", "Join Now")}
+							</Button>
+						) : (
+							<Link to="/auth">
+								<Button
+									size="lg"
+									className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all"
+								>
+									{t("join_now", "Join Now")}
+								</Button>
+							</Link>
+
+						)}
 					</motion.div>
 				</section>
 
@@ -187,26 +203,26 @@ const Home = () => {
 				</section>
 
 				{/* Final CTA Section */}
-				{!user && (
-					<motion.section
-						initial={{ opacity: 0, y: 20 }}
-						animate={{ opacity: 1 }}
-						transition={{ delay: 0.8 }}
-						className="text-center py-12 px-6 rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20"
-					>
-						<p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-							{t(
-								"join_today",
-								"Join today and get access to all learning materials, games, and personalized progress tracking"
-							)}
-						</p>
-						<Link to="/auth">
-							<Button size="lg" className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all">
-								{t("create_free_account", "Create Free Account")}
-							</Button>
-						</Link>
-					</motion.section>
-				)}
+			
+				<motion.section
+					initial={{ opacity: 0, y: 20 }}
+					animate={{ opacity: 1 }}
+					transition={{ delay: 0.8 }}
+					className="text-center py-12 px-6 rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20"
+				>
+					<p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+						{t(
+							"join_today",
+							"Join today and get access to all learning materials, games, and personalized progress tracking"
+						)}
+					</p>
+					<Link to="/auth">
+						<Button size="lg" className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all">
+							{t("create_free_account", "Create Free Account")}
+						</Button>
+					</Link>
+				</motion.section>
+				
 			</main>
 		</>
 	);

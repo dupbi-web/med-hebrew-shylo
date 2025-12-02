@@ -83,7 +83,7 @@ const Auth = () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          navigate("/home");
+          navigate("/");
         }
       } catch (err) {
         console.error("Auth failed:");

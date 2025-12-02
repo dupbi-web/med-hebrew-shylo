@@ -55,36 +55,44 @@ const Home = () => {
 			<main className="container mx-auto max-w-6xl px-4 py-8 md:py-12">
 				{/* Hero Section with Registration CTA */}
 				<section className="text-center mb-16 md:mb-20">
-	                                            	<motion.div
-						initial={{ opacity: 0, y: -20 }}
-						animate={{ opacity: 1, y: 0 }}
-						transition={{ duration: 0.6 }}
-						className="space-y-6"
-					>
-						<h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent leading-tight">
-							{t("home_title")}
-						</h1>
+	                                                 {!user ? (
+                                                        <motion.div
+                                                                initial={{ opacity: 0 }}
+                                                                animate={{ opacity: 1 }}
+                                                                transition={{ delay: 0.3 }}
+                                                                className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
+                                                        >
+                                                                <Link to="/auth">
+                                                                        <Button size="lg" className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all">
+                                                                                {t("get_started_free", "Get Started Free")}
+                                                                        </Button>
+                                                                </Link>
+                                                                <Link to="/public-quiz">
+                                                                        <Button size="lg" variant="outline" className="text-base px-8 py-6">
+                                                                                {t("try_quiz", "Try Quiz")}
+                                                                        </Button>
+                                                                </Link>
+                                                        </motion.div>
+                                                ) : (
+                                                        <motion.div
+                                                                initial={{ opacity: 0 }}
+                                                                animate={{ opacity: 1 }}
+                                                                transition={{ delay: 0.3 }}
+                                                                className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
+                                                        >
+                                                                <Link to="/Learning">
+                                                                        <Button size="lg" className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all">
+                                                                                {t("continue_learning", "Continue Learning")}
+                                                                        </Button>
+                                                                </Link>
+                                                                <Link to="/matching-game">
+                                                                        <Button size="lg" variant="outline" className="text-base px-8 py-6">
+                                                                                {t("play_game", "Play Game")}
+                                                                        </Button>
+                                                                </Link>
+                                                        </motion.div>
+                                                )}
 
-						<p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-							{t("home_description")}
-						</p>
-							<motion.div
-								initial={{ opacity: 0 }}
-								animate={{ opacity: 1 }}
-								transition={{ delay: 0.3 }}
-								className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
-							>
-								<Link to="/auth">
-									<Button size="lg" className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all">
-										{t("get_started_free", "Get Started Free")}
-									</Button>
-								</Link>
-								<Link to="/public-quiz">
-									<Button size="lg" variant="outline" className="text-base px-8 py-6">
-										{t("try_quiz", "Try Quiz")}
-									</Button>
-								</Link>
-							</motion.div>    
 
 						{/* Social Proof */}
 						<motion.div
@@ -101,7 +109,7 @@ const Home = () => {
 								<TrendingUp className="h-5 w-5 text-primary" />
 								<span>{t("improve_skills", "Improve your skills")}</span>
 							</div>
-						</motion.div>
+						
 					</motion.div>
 
 					{/* Telegram Channel Section */}

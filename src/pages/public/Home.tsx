@@ -74,6 +74,13 @@ const Home = () => {
 								transition={{ delay: 0.3 }}
 								className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
 							>
+								{!user ? (
+							<motion.div
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								transition={{ delay: 0.3 }}
+								className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
+							>
 								<Link to="/auth">
 									<Button size="lg" className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all">
 										{t("get_started_free", "Get Started Free")}
@@ -84,6 +91,26 @@ const Home = () => {
 										{t("try_quiz", "Try Quiz")}
 									</Button>
 								</Link>
+							</motion.div>
+						) : (
+							<motion.div
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								transition={{ delay: 0.3 }}
+								className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
+							>
+								<Link to="/Learning">
+									<Button size="lg" className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all">
+										{t("continue_learning", "Continue Learning")}
+									</Button>
+								</Link>
+								<Link to="/matching-game">
+									<Button size="lg" variant="outline" className="text-base px-8 py-6">
+										{t("play_game", "Play Game")}
+									</Button>
+								</Link>
+							</motion.div>
+						)}
 							</motion.div>
 
 						{/* Social Proof */}

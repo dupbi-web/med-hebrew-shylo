@@ -104,7 +104,7 @@ const Home = () => {
 										{t("continue_learning", "Continue Learning")}
 									</Button>
 								</Link>
-								<Link to="/MatchingGame">
+								<Link to="/matching-game">
 									<Button size="lg" variant="outline" className="text-base px-8 py-6">
 										{t("play_game", "Play Game")}
 									</Button>

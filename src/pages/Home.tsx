@@ -218,7 +218,7 @@ const Home = () => {
 				{!user && (
 					<motion.section
 						initial={{ opacity: 0, y: 20 }}
-						animate={{ opacity: 1 }}
+						animate={{ opacity: 1, y: 0 }}
 						transition={{ delay: 0.8 }}
 						className="text-center py-12 px-6 rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20"
 					>

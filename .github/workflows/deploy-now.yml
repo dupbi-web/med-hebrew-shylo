@@ -26,12 +26,11 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Deploy to Netlify
-        run: |
-          curl -X POST -H "Content-Type: application/zip" \
-          -H "Authorization: Bearer ${{ secrets.NETLIFY_AUTH_TOKEN }}" \
-          --data-binary @./dist.zip \
-          https://api.netlify.com/api/v1/sites/${{ secrets.NETLIFY_SITE_ID }}/deploys
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
 
-      - name: Zip build folder
-        run: zip -r dist.zip ./dist
+      - name: Deploy to Netlify
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: netlify deploy --site $NETLIFY_SITE_ID --auth $NETLIFY_AUTH_TOKEN --prod --dir=build

@@ -9,6 +9,8 @@ jobs:
   build:
     name: Build and Test
     runs-on: ubuntu-latest
+    outputs:
+      version_tag: ${{ steps.vars.outputs.version_tag }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -27,10 +29,28 @@ jobs:
       - name: Run tests
         run: npm test
 
+      # -------- VERSION TAG ----------
+      - name: Set version tag
+        id: vars
+        run: |
+          MAJOR=$(jq -r '.version | split(".")[0]' package.json)
+          MINOR=$(jq -r '.version | split(".")[1]' package.json)
+          PATCH=$(jq -r '.version | split(".")[2]' package.json)
+          echo "version_tag=dev-${MAJOR}.${MINOR}.${PATCH}" >> $GITHUB_OUTPUT
+
+      # -------- ARTIFACT UPLOAD ----------
+      - name: Upload dist folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+
   docker:
     name: Build and Push Docker Image
     needs: build
     runs-on: ubuntu-latest
+    outputs:
+      version_tag: ${{ needs.build.outputs.version_tag }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -42,22 +62,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set version tag
-        id: vars
-        run: |
-          # Extract Major, Minor, Patch from package.json or use defaults
-          MAJOR=$(jq -r '.version | split(".")[0]' package.json)
-          MINOR=$(jq -r '.version | split(".")[1]' package.json)
-          PATCH=$(jq -r '.version | split(".")[2]' package.json)
-          echo "version_tag=dev-${MAJOR}.${MINOR}.${PATCH}" >> $GITHUB_OUTPUT
-
       - name: Build Docker image
         run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ steps.vars.outputs.version_tag }} .
+          docker build \
+            -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ needs.build.outputs.version_tag }} .
 
       - name: Push Docker image
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ steps.vars.outputs.version_tag }}
+          docker push \
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ needs.build.outputs.version_tag }}
 
   deploy:
     name: Deploy to Netlify
@@ -67,8 +80,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # -------- ARTIFACT DOWNLOAD ----------
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
       - name: Deploy to Netlify
         env:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-        run: netlify deploy --site $NETLIFY_SITE_ID --auth $NETLIFY_AUTH_TOKEN --prod --dir=dist
+        run: |
+          netlify deploy \
+            --message "Deploy ${{ needs.docker.outputs.version_tag }}" \
+            --site $NETLIFY_SITE_ID \
+            --auth $NETLIFY_AUTH_TOKEN \
+            --prod \
+            --dir=dist

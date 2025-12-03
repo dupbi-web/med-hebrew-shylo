@@ -74,11 +74,6 @@ const Home = () => {
 								transition={{ delay: 0.3 }}
 								className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
 							>
-								<Link to="/auth">
-									<Button size="lg" className=" color-red-500 text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all">
-										{t("get_started_free", "Get Started Free")}
-									</Button>
-								</Link>
 								{!user ? (
 							<motion.div
 								initial={{ opacity: 0 }}

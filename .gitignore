@@ -1,36 +1,58 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
+# Node & JS/TS
+node_modules/
+dist/
+dist-ssr/
+build/
+.next/
+.vercel/
+.cache/
+coverage/
 
-# testing
-/coverage
+pdf
 
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# local env files
-.env*.local
-.env
+# Env files
+.env*
+!.env.example
+supabase/.temp/
+supabase/.env*
 
-# vercel
-.vercel
+# OS & Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Test & Misc
+*.test.js
+*.spec.ts
+*.spec.js
+coverage/
+jest.config.js
+
+# Others
+*.local
+*.bak
+*.tmp
+
+# Ignore generated files
+public/*.svg
+public/*.ico
+
+# Bun
+bun.lockb

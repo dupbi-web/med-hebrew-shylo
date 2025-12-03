@@ -1,0 +1,13 @@
+/*
+  Utilities specific to the Flashcard component
+  Keeping styles minimal as we leverage Tailwind and design tokens.
+*/
+
+.backface-hidden {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.perspective-\[1200px\] {
+  perspective: 1200px;
+}

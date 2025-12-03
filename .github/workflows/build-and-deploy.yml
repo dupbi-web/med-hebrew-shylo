@@ -77,10 +77,13 @@ jobs:
     needs: docker
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      # Install Node for netlify-cli
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
 
-      # -------- ARTIFACT DOWNLOAD ----------
+      # Download the built dist folder
       - name: Download dist artifact
         uses: actions/download-artifact@v4
         with:
@@ -101,3 +104,4 @@ jobs:
             --auth $NETLIFY_AUTH_TOKEN \
             --prod \
             --dir=dist
+

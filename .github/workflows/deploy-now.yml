@@ -27,10 +27,11 @@ jobs:
         run: npm test
 
       - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v2
-        with:
-          publish-dir: ./dist
-          production-branch: main
-          deploy-message: "Deployed by DeployNow workflow"
-          netlify-auth-token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          netlify-site-id: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          curl -X POST -H "Content-Type: application/zip" \
+          -H "Authorization: Bearer ${{ secrets.NETLIFY_AUTH_TOKEN }}" \
+          --data-binary @./dist.zip \
+          https://api.netlify.com/api/v1/sites/${{ secrets.NETLIFY_SITE_ID }}/deploys
+
+      - name: Zip build folder
+        run: zip -r dist.zip ./dist

@@ -9,7 +9,6 @@ jobs:
   build:
     name: Build and Test
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -17,7 +16,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '22'
 
       - name: Install dependencies
         run: npm install
@@ -32,7 +31,6 @@ jobs:
     name: Build and Push Docker Image
     needs: build
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -44,19 +42,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set version tag
+        id: vars
+        run: |
+          # Extract Major, Minor, Patch from package.json or use defaults
+          MAJOR=$(jq -r '.version | split(".")[0]' package.json)
+          MINOR=$(jq -r '.version | split(".")[1]' package.json)
+          PATCH=$(jq -r '.version | split(".")[2]' package.json)
+          echo "version_tag=dev-${MAJOR}.${MINOR}.${PATCH}" >> $GITHUB_OUTPUT
+
       - name: Build Docker image
         run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ github.sha }} .
+          docker build -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ steps.vars.outputs.version_tag }} .
 
       - name: Push Docker image
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ steps.vars.outputs.version_tag }}
 
   deploy:
     name: Deploy to Netlify
     needs: docker
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

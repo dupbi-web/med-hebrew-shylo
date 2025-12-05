@@ -3,7 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Book, HelpCircle, Type, Puzzle, BookOpen, Users, TrendingUp } from "lucide-react";
+import { Book, HelpCircle, Type, Puzzle, IdCard, BookOpen, Sparkles, Users, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useMedicalTerms } from "@/hooks/queries/useMedicalTerms";
 import { useAuthContext } from "@/context/AuthContext";
@@ -24,6 +24,13 @@ const features = [
 		color: "from-indigo-500 to-indigo-300",
 	},
 	{
+		nameKey: "learning",
+		path: "/learning",
+		descriptionKey: "feature_learning_desc",
+		icon: Sparkles,
+		color: "from-primary to-primary/80",
+	},
+	{
 		nameKey: "feature_quiz",
 		path: "/Quiz",
 		descriptionKey: "feature_quiz_desc",
@@ -32,13 +39,21 @@ const features = [
 	},
 	{
 		nameKey: "feature_game",
-		path: "/MatchingGame",
+		path: "/matching-game",
 		descriptionKey: "feature_game_desc",
 		icon: Puzzle,
 		color: "from-yellow-500 to-yellow-300",
 	},
-];
 
+	{
+		nameKey: "feature_flash_cards",
+		path: "/flash-cards",
+		descriptionKey: "feature_flash_cards_desc",
+		icon: IdCard,
+		color: "from-primary to-primary/80",
+	},
+
+];
 const Home = () => {
 	const { t } = useTranslation();
 	const { user } = useAuthContext();
@@ -145,15 +160,15 @@ const Home = () => {
 								className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all bg-[#0088cc] text-white"
 								onClick={() => window.open("https://t.me/+LTqZ-SnyElI0NGFk", "_blank")}
 							>
-								  <svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="20"
-										height="20"
-										fill="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path d="M9.999 15.17 9.88 18.32c.257 0 .368-.11.502-.243l2.406-2.305 4.988 3.63c.914.504 1.566.24 1.807-.85l3.273-15.36.002-.002c.29-1.35-.49-1.88-1.373-1.55L1.64 9.35C.31 9.87.318 10.63 1.41 10.96l5.61 1.75 13.04-8.23c.61-.36 1.17-.16.71.23"/>
-									</svg>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="20"
+									height="20"
+									fill="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path d="M9.999 15.17 9.88 18.32c.257 0 .368-.11.502-.243l2.406-2.305 4.988 3.63c.914.504 1.566.24 1.807-.85l3.273-15.36.002-.002c.29-1.35-.49-1.88-1.373-1.55L1.64 9.35C.31 9.87.318 10.63 1.41 10.96l5.61 1.75 13.04-8.23c.61-.36 1.17-.16.71.23" />
+								</svg>
 								{t("telegram_join_now", "Telegram")}
 							</Button>
 						) : (
@@ -162,15 +177,15 @@ const Home = () => {
 									size="lg"
 									className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all bg-[#0088cc] text-white"
 								>
-									  <svg
-											xmlns="http://www.w3.org/2000/svg"
-											width="20"
-											height="20"
-											fill="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<path d="M9.999 15.17 9.88 18.32c.257 0 .368-.11.502-.243l2.406-2.305 4.988 3.63c.914.504 1.566.24 1.807-.85l3.273-15.36.002-.002c.29-1.35-.49-1.88-1.373-1.55L1.64 9.35C.31 9.87.318 10.63 1.41 10.96l5.61 1.75 13.04-8.23c.61-.36 1.17-.16.71.23"/>
-										</svg>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="20"
+										height="20"
+										fill="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path d="M9.999 15.17 9.88 18.32c.257 0 .368-.11.502-.243l2.406-2.305 4.988 3.63c.914.504 1.566.24 1.807-.85l3.273-15.36.002-.002c.29-1.35-.49-1.88-1.373-1.55L1.64 9.35C.31 9.87.318 10.63 1.41 10.96l5.61 1.75 13.04-8.23c.61-.36 1.17-.16.71.23" />
+									</svg>
 									{t("telegram_join_now", "Join Telegram")}
 								</Button>
 							</Link>

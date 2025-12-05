@@ -83,7 +83,7 @@ const Auth = () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          navigate("/");
+          navigate("/home");
         }
       } catch (err) {
         console.error("Auth failed:");
@@ -118,7 +118,7 @@ const Auth = () => {
       const { error: signInError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${origin}/`,
+          redirectTo: `${origin}/home`,
           queryParams: {
             access_type: "offline",
             prompt: "consent",
@@ -168,7 +168,7 @@ const Auth = () => {
         email: email.trim(),
         password,
         options: {
-          emailRedirectTo: `${origin}/`,
+          emailRedirectTo: `${origin}/home`,
         },
       });
 
@@ -227,7 +227,7 @@ const Auth = () => {
           title: "Welcome back!",
           description: "You have successfully signed in.",
         });
-        navigate("/");
+        navigate("/home");
       }
     } catch (err: any) {
       const errorMessage = err?.message || "Sign in failed. Please check your credentials.";

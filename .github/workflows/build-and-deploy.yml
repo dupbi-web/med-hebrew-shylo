@@ -77,18 +77,19 @@ jobs:
     needs: docker
     runs-on: ubuntu-latest
     steps:
-      # Install Node for netlify-cli
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '22'
 
-      # Download the built dist folder
-      - name: Download dist artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the app
+        run: npm run build
 
       - name: Install Netlify CLI
         run: npm install -g netlify-cli
@@ -99,7 +100,7 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         run: |
           netlify deploy \
-            --message "Deploy ${{ needs.docker.outputs.version_tag }}" \
+            --message "Deploy ${{ github.commit_message }} \n Version: ${{ needs.docker.outputs.version_tag }} \n Event: ${{ github.event_name }} \n Ref: ${{ github.ref }}" \
             --site $NETLIFY_SITE_ID \
             --auth $NETLIFY_AUTH_TOKEN \
             --prod \

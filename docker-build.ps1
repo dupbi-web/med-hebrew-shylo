@@ -2,7 +2,7 @@
 # This script builds and runs the production Docker container
 
 Write-Host "Building Docker image..." -ForegroundColor Cyan
-docker build --build-arg VITE_SUPABASE_URL=https://zpvzmxhpplaknkagwyrh.supabase.co --build-arg VITE_SUPABASE_ANON_KEY=sb_publishable_XKP9Lc2gfGSXuZUWVaAX4Q_2LMkBT1f -t dev-med-ivrit:latest .
+docker build --build-arg VITE_SUPABASE_URL="" --build-arg VITE_SUPABASE_ANON_KEY="" -t dev-med-ivrit:latest .
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "`nBuild successful!" -ForegroundColor Green

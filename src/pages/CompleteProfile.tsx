@@ -55,7 +55,7 @@ const CompleteProfile = () => {
       const isProfileComplete = profile?.full_name && profile.full_name.trim().length >= 2;
       if (isProfileComplete && hasConsent) {
         if (!location.state?.justCompletedProfile) {
-          navigate("/");
+          navigate("/home");
         }
       }
     } else if (!authLoading && !user) {

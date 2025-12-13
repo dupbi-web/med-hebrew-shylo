@@ -10,50 +10,50 @@ import { useAuthContext } from "@/context/AuthContext";
 
 const features = [
 	{
-		nameKey: "feature_typing_practice", // new feature
-		path: "#", // coming soon
-		descriptionKey: "feature_typing_practice_desc", // new i18n key
-		icon: Type,
-		color: "from-green-500 to-green-300",
+	  nameKey: "feature_typing_practice",
+	  path: "#", // coming soon
+	  descriptionKey: "feature_typing_practice_desc",
+	  icon: Type,
+	  color: "from-green-400 to-green-200",
 	},
-	{
-		nameKey: "feature_dictionary",
-		path: "/Dictionary",
-		descriptionKey: "feature_dictionary_desc",
-		icon: BookOpen,
-		color: "from-indigo-500 to-indigo-300",
-	},
-	{
-		nameKey: "learning",
-		path: "/learning",
-		descriptionKey: "feature_learning_desc",
-		icon: Sparkles,
-		color: "from-primary to-primary/80",
-	},
-	{
-		nameKey: "feature_quiz",
-		path: "/Quiz",
-		descriptionKey: "feature_quiz_desc",
-		icon: HelpCircle,
-		color: "from-blue-500 to-blue-300",
-	},
-	{
-		nameKey: "feature_game",
-		path: "/matching-game",
-		descriptionKey: "feature_game_desc",
-		icon: Puzzle,
-		color: "from-yellow-500 to-yellow-300",
-	},
-
 	{
 		nameKey: "feature_flash_cards",
 		path: "/flash-cards",
 		descriptionKey: "feature_flash_cards_desc",
 		icon: IdCard,
-		color: "from-primary to-primary/80",
+		color: "from-pink-500 to-pink-300",
+	},
+	{
+	nameKey: "learning",
+	path: "/learning",
+	descriptionKey: "feature_learning_desc",
+	icon: Sparkles,
+	color: "from-purple-500 to-purple-300",
+	},
+	{
+	  nameKey: "feature_dictionary",
+	  path: "/Dictionary",
+	  descriptionKey: "feature_dictionary_desc",
+	  icon: BookOpen,
+	  color: "from-indigo-600 to-indigo-400",
 	},
 
-];
+	{
+	  nameKey: "feature_quiz",
+	  path: "/Quiz",
+	  descriptionKey: "feature_quiz_desc",
+	  icon: HelpCircle,
+	  color: "from-blue-600 to-blue-400",
+	},
+	{
+	  nameKey: "feature_game",
+	  path: "/matching-game",
+	  descriptionKey: "feature_game_desc",
+	  icon: Puzzle,
+	  color: "from-yellow-400 to-yellow-200",
+	},
+
+  ];
 const Home = () => {
 	const { t } = useTranslation();
 	const { user } = useAuthContext();
@@ -209,35 +209,64 @@ const Home = () => {
 						</p>
 					</motion.div>
 
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
 						{features.map((feature, index) => {
 							const Icon = feature.icon;
+							const isComingSoon = feature.path === "#";
 							return (
 								<motion.div
 									key={feature.nameKey}
-									whileHover={{ scale: 1.03, y: -5 }}
+									whileHover={{ scale: 1.02, y: -8 }}
 									whileTap={{ scale: 0.98 }}
 									initial={{ opacity: 0, y: 30 }}
 									animate={{ opacity: 1, y: 0 }}
 									transition={{ delay: 0.5 + index * 0.1, duration: 0.4 }}
+									className="h-full"
 								>
-									<Link to={feature.path}>
-										<Card className="relative h-full overflow-hidden border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-card/50 backdrop-blur">
-											{feature.nameKey === "feature_typing_practice" && (
-												<div className="absolute top-2 right-2 bg-yellow-400 text-xs px-2 py-1 rounded font-semibold text-white z-20">
+									<Link 
+										to={feature.path}
+										className={isComingSoon ? "pointer-events-none" : ""}
+									>
+										<Card className="relative h-full overflow-hidden border-2 border-border/50 shadow-lg hover:shadow-2xl transition-all duration-300 bg-card/80 backdrop-blur-sm group cursor-pointer">
+											{/* Coming Soon Badge */}
+											{isComingSoon && (
+												<div className="absolute top-3 right-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-xs px-3 py-1.5 rounded-full font-semibold text-white z-20 shadow-lg animate-pulse">
 													{t("coming_soon", "Coming Soon")}
 												</div>
 											)}
-											<div className={`h-40 flex items-center justify-center bg-gradient-to-br ${feature.color} relative overflow-hidden`}>
-												<div className="absolute inset-0 bg-black/5" />
-												<Icon size={56} className="relative z-10 text-white drop-shadow-lg" />
+											
+											{/* Icon Header with Enhanced Gradient */}
+											<div className={`h-32 flex items-center justify-center bg-gradient-to-br ${feature.color} relative overflow-hidden group-hover:scale-105 transition-transform duration-300`}>
+												{/* Animated background pattern */}
+												<div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors duration-300" />
+												<div className="absolute inset-0 opacity-20">
+													<div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_50%)]" />
+												</div>
+												<Icon 
+													size={64} 
+													className="relative z-10 text-white drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" 
+												/>
 											</div>
-											<CardHeader className="space-y-3">
-												<CardTitle className="text-xl">{t(feature.nameKey)}</CardTitle>
-												<CardDescription className="text-base leading-relaxed">
+											
+											{/* Content */}
+											<CardHeader className="space-y-3 p-6">
+												<CardTitle className="text-xl font-bold group-hover:text-primary transition-colors duration-300">
+													{t(feature.nameKey)}
+												</CardTitle>
+												<CardDescription className="text-base leading-relaxed text-muted-foreground">
 													{t(feature.descriptionKey)}
 												</CardDescription>
+												
+												{/* Hover indicator */}
+												{!isComingSoon && (
+													<div className="flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-2">
+														<span className="text-sm font-medium">Explore →</span>
+													</div>
+												)}
 											</CardHeader>
+											
+											{/* Decorative corner accent */}
+											<div className={`absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl ${feature.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-tl-full`} />
 										</Card>
 									</Link>
 								</motion.div>

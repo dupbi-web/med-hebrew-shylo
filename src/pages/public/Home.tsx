@@ -11,47 +11,47 @@ import { useAuthContext } from "@/context/AuthContext";
 
 const features = [
 	{
-		nameKey: "feature_typing_practice", // new feature
-		path: "#", // coming soon
-		descriptionKey: "feature_typing_practice_desc", // new i18n key
-		icon: Type,
-		color: "from-green-500 to-green-300",
+	  nameKey: "feature_typing_practice",
+	  path: "#", // coming soon
+	  descriptionKey: "feature_typing_practice_desc",
+	  icon: Type,
+	  color: "from-green-400 to-green-200",
 	},
-	{
-		nameKey: "feature_dictionary",
-		path: "/Dictionary",
-		descriptionKey: "feature_dictionary_desc",
-		icon: BookOpen,
-		color: "from-indigo-500 to-indigo-300",
-	},
-	{
-		nameKey: "learning",
-		path: "/learning",
-		descriptionKey: "feature_learning_desc",
-		icon: Sparkles,
-		color: "from-primary to-primary/80",
-	},
-	{
-		nameKey: "feature_quiz",
-		path: "/Quiz",
-		descriptionKey: "feature_quiz_desc",
-		icon: HelpCircle,
-		color: "from-blue-500 to-blue-300",
-	},
-	{
-		nameKey: "feature_game",
-		path: "/matching-game",
-		descriptionKey: "feature_game_desc",
-		icon: Puzzle,
-		color: "from-yellow-500 to-yellow-300",
-	},
-
 	{
 		nameKey: "feature_flash_cards",
 		path: "/flash-cards",
 		descriptionKey: "feature_flash_cards_desc",
 		icon: IdCard,
-		color: "from-primary to-primary/80",
+		color: "from-pink-500 to-pink-300",
+	},
+	{
+	nameKey: "learning",
+	path: "/learning",
+	descriptionKey: "feature_learning_desc",
+	icon: Sparkles,
+	color: "from-purple-500 to-purple-300",
+	},
+	{
+	  nameKey: "feature_dictionary",
+	  path: "/Dictionary",
+	  descriptionKey: "feature_dictionary_desc",
+	  icon: BookOpen,
+	  color: "from-indigo-600 to-indigo-400",
+	},
+
+	{
+	  nameKey: "feature_quiz",
+	  path: "/Quiz",
+	  descriptionKey: "feature_quiz_desc",
+	  icon: HelpCircle,
+	  color: "from-blue-600 to-blue-400",
+	},
+	{
+	  nameKey: "feature_game",
+	  path: "/matching-game",
+	  descriptionKey: "feature_game_desc",
+	  icon: Puzzle,
+	  color: "from-yellow-400 to-yellow-200",
 	},
 
 ];

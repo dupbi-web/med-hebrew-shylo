@@ -1,1 +1,0 @@
-update metadata set value = now() where key = 'words_v';

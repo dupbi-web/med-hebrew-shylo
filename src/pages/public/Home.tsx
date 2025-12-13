@@ -3,9 +3,10 @@ import { Helmet } from "react-helmet-async";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Book, HelpCircle, Type, Puzzle, BookOpen, Users, TrendingUp } from "lucide-react";
+import { Book, HelpCircle, Type, Puzzle, IdCard, BookOpen, Sparkles, Users, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useMedicalTerms } from "@/hooks/queries/useMedicalTerms";
+import { useEffect } from "react";
 import { useAuthContext } from "@/context/AuthContext";
 
 const features = [
@@ -42,6 +43,7 @@ const features = [
 const Home = () => {
 	const { t } = useTranslation();
 	const { user } = useAuthContext();
+	// Prefetch medical terms for faster page loads
 	useMedicalTerms();
 
 	return (
@@ -66,8 +68,13 @@ const Home = () => {
 						<p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
 							{t("home_description")}
 						</p>
-
-						{!user ? (
+							<motion.div
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								transition={{ delay: 0.3 }}
+								className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
+							>
+								{!user ? (
 							<motion.div
 								initial={{ opacity: 0 }}
 								animate={{ opacity: 1 }}
@@ -104,6 +111,7 @@ const Home = () => {
 								</Link>
 							</motion.div>
 						)}
+							</motion.div>
 
 						{/* Social Proof */}
 						<motion.div
@@ -190,7 +198,10 @@ const Home = () => {
 							{t("home_what_can_do")}
 						</h2>
 						<p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-							{t("home_comprehensive_learning", "A comprehensive platform to master medical Hebrew through interactive learning")}
+							{t(
+								"home_comprehensive_learning",
+								"A comprehensive platform to master medical Hebrew through interactive learning"
+							)}
 						</p>
 					</motion.div>
 
@@ -207,13 +218,17 @@ const Home = () => {
 									transition={{ delay: 0.5 + index * 0.1, duration: 0.4 }}
 								>
 									<Link to={feature.path}>
-										<Card className="relative h-full overflow-hidden border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-card/50 backdrop-blur">
+										<Card className="h-full overflow-hidden border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-card/50 backdrop-blur">
+											{/* Coming Soon badge for Typing Practice */}
 											{feature.nameKey === "feature_typing_practice" && (
 												<div className="absolute top-2 right-2 bg-yellow-400 text-xs px-2 py-1 rounded font-semibold text-white z-20">
 													{t("coming_soon", "Coming Soon")}
 												</div>
 											)}
-											<div className={`h-40 flex items-center justify-center bg-gradient-to-br ${feature.color} relative overflow-hidden`}>
+
+											<div
+												className={`h-40 flex items-center justify-center bg-gradient-to-br ${feature.color} relative overflow-hidden`}
+											>
 												<div className="absolute inset-0 bg-black/5" />
 												<Icon size={56} className="relative z-10 text-white drop-shadow-lg" />
 											</div>
@@ -232,6 +247,7 @@ const Home = () => {
 				</section>
 
 				{/* Final CTA Section */}
+			
 				{!user && (
 					<motion.section
 						initial={{ opacity: 0, y: 20 }}
@@ -249,6 +265,7 @@ const Home = () => {
 						</Link>
 					</motion.section>
 				)}
+				
 			</main>
 		</>
 	);

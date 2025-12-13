@@ -221,11 +221,12 @@ const Profile = () => {
     setExporting(true);
 
     try {
+      // Fetch learning progress from `user_progress_v2` (stores a JSONB `progress` column)
       const { data: progressRow, error: progressError } = await supabase
         .from("user_progress_v2")
         .select("progress")
         .eq("user_id", user.id)
-        .maybeSingle(); // FIX: safe
+        .maybeSingle();
 
       if (progressError) throw progressError;
 

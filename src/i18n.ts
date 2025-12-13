@@ -22,6 +22,9 @@ const i18nInit = async () => {
     resources: {
       en: {
         translation: {
+          feature_flash_cards: "Flashcards",
+          learning: "learning",
+          feature_flash_cards_desc: "Learn with Flashcards",
           try_quiz: "Try Quiz",
           telegram_waiting_list_desc: "Private Group (Registration limited)",
           telegram_waiting_list: "Join the Weekly Sentences Telegram Channel",
@@ -38,6 +41,7 @@ const i18nInit = async () => {
           home_practice_games: "Practice Hebrew through games and quizzes",
           home_choose_method: "Choose your way to learn:",
           feature_dictionary: "Dictionary",
+          feature_learning_desc: "Learn With Progress Tracking",
           feature_dictionary_desc: "Browse all words and categories",
           feature_quiz: "Quiz",
           feature_quiz_desc: "Check your knowledge",
@@ -147,6 +151,10 @@ const i18nInit = async () => {
       },
       he: {
         translation: {
+          feature_flash_cards: "כרטיסיות",
+          learning: "למידה",
+          feature_flash_cards_desc: "למדו עם כרטיסיות",
+          feature_learning_desc: "למדו עם מעקב התקדמות",
           try_quiz: "נסה חידון",
           telegram_waiting_list_desc: "קבוצה פרטית (הרשמה מוגבלת)",
           telegram_waiting_list: "הצטרפו לערוץ הטלגרם של המשפטים השבועיים",
@@ -273,6 +281,10 @@ const i18nInit = async () => {
       },
       ru: {
         translation: {
+          feature_flash_cards: "Карточки",
+          learning: "обучение",
+          feature_flash_cards_desc: "Учитесь с помощью карточек",
+          feature_learning_desc: "Учитесь с отслеживанием прогресса",
           try_quiz: "Попробовать викторину",
           telegram_waiting_list_desc: "Приватная группа (ограниченная регистрация)",
           telegram_waiting_list: "Присоединяйтесь к Telegram-каналу",

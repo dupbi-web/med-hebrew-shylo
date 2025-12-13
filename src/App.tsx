@@ -54,7 +54,6 @@ const App = () => (
                   <Route path="/public-quiz" element={<PublicQuiz />} />
                   <Route path="/" element={<PublicHome />} />
                   <Route path="/complete-profile" element={<CompleteProfile />} />
-
                 </Route>  
 
                 {/* Protected routes with Layout */}
@@ -69,13 +68,13 @@ const App = () => (
                   <Route  path="home" element={<Home />} />
                   <Route path="contact" element={<ContactUs />} />
                   <Route path="about" element={<About />} />
-                  <Route path="flash-cards" element={<FlashCards />} />
                   <Route path="typing-game" element={<TypingGame />} />
                   <Route path="matching-game" element={<MatchingGame />} />
                   <Route path="learning" element={<Learning />} />
                   <Route path="dictionary" element={<Dictionary />} />
                   <Route path="profile" element={<Profile />} />
                   <Route path="quiz" element={<Quiz />} />
+                  <Route path="flash-cards" element={<FlashCards />} />
 
                 </Route>
 

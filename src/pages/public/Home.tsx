@@ -11,33 +11,49 @@ import { useAuthContext } from "@/context/AuthContext";
 
 const features = [
 	{
-		nameKey: "feature_typing_practice", // new feature
-		path: "#", // coming soon
-		descriptionKey: "feature_typing_practice_desc", // new i18n key
-		icon: Type,
-		color: "from-green-500 to-green-300",
+	  nameKey: "feature_typing_practice",
+	  path: "#", // coming soon
+	  descriptionKey: "feature_typing_practice_desc",
+	  icon: Type,
+	  color: "from-green-400 to-green-200",
 	},
 	{
-		nameKey: "feature_dictionary",
-		path: "/Dictionary",
-		descriptionKey: "feature_dictionary_desc",
-		icon: BookOpen,
-		color: "from-indigo-500 to-indigo-300",
+		nameKey: "feature_flash_cards",
+		path: "/flash-cards",
+		descriptionKey: "feature_flash_cards_desc",
+		icon: IdCard,
+		color: "from-pink-500 to-pink-300",
 	},
 	{
-		nameKey: "feature_quiz",
-		path: "/Quiz",
-		descriptionKey: "feature_quiz_desc",
-		icon: HelpCircle,
-		color: "from-blue-500 to-blue-300",
+	nameKey: "learning",
+	path: "/learning",
+	descriptionKey: "feature_learning_desc",
+	icon: Sparkles,
+	color: "from-purple-500 to-purple-300",
 	},
 	{
-		nameKey: "feature_game",
-		path: "/MatchingGame",
-		descriptionKey: "feature_game_desc",
-		icon: Puzzle,
-		color: "from-yellow-500 to-yellow-300",
+	  nameKey: "feature_dictionary",
+	  path: "/Dictionary",
+	  descriptionKey: "feature_dictionary_desc",
+	  icon: BookOpen,
+	  color: "from-indigo-600 to-indigo-400",
 	},
+
+	{
+	  nameKey: "feature_quiz",
+	  path: "/Quiz",
+	  descriptionKey: "feature_quiz_desc",
+	  icon: HelpCircle,
+	  color: "from-blue-600 to-blue-400",
+	},
+	{
+	  nameKey: "feature_game",
+	  path: "/matching-game",
+	  descriptionKey: "feature_game_desc",
+	  icon: Puzzle,
+	  color: "from-yellow-400 to-yellow-200",
+	},
+
 ];
 
 const Home = () => {
@@ -68,50 +84,50 @@ const Home = () => {
 						<p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
 							{t("home_description")}
 						</p>
-							<motion.div
-								initial={{ opacity: 0 }}
-								animate={{ opacity: 1 }}
-								transition={{ delay: 0.3 }}
-								className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
-							>
-								{!user ? (
-							<motion.div
-								initial={{ opacity: 0 }}
-								animate={{ opacity: 1 }}
-								transition={{ delay: 0.3 }}
-								className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
-							>
-								<Link to="/auth">
-									<Button size="lg" className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all">
-										{t("get_started_free", "Get Started Free")}
-									</Button>
-								</Link>
-								<Link to="/public-quiz">
-									<Button size="lg" variant="outline" className="text-base px-8 py-6">
-										{t("try_quiz", "Try Quiz")}
-									</Button>
-								</Link>
-							</motion.div>
-						) : (
-							<motion.div
-								initial={{ opacity: 0 }}
-								animate={{ opacity: 1 }}
-								transition={{ delay: 0.3 }}
-								className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
-							>
-								<Link to="/Learning">
-									<Button size="lg" className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all">
-										{t("continue_learning", "Continue Learning")}
-									</Button>
-								</Link>
-								<Link to="/matching-game">
-									<Button size="lg" variant="outline" className="text-base px-8 py-6">
-										{t("play_game", "Play Game")}
-									</Button>
-								</Link>
-							</motion.div>
-						)}
-							</motion.div>
+						<motion.div
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							transition={{ delay: 0.3 }}
+							className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
+						>
+							{!user ? (
+								<motion.div
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									transition={{ delay: 0.3 }}
+									className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
+								>
+									<Link to="/auth">
+										<Button size="lg" className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all">
+											{t("get_started_free", "Get Started Free")}
+										</Button>
+									</Link>
+									<Link to="/public-quiz">
+										<Button size="lg" variant="outline" className="text-base px-8 py-6">
+											{t("try_quiz", "Try Quiz")}
+										</Button>
+									</Link>
+								</motion.div>
+							) : (
+								<motion.div
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									transition={{ delay: 0.3 }}
+									className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
+								>
+									<Link to="/Learning">
+										<Button size="lg" className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all">
+											{t("continue_learning", "Continue Learning")}
+										</Button>
+									</Link>
+									<Link to="/matching-game">
+										<Button size="lg" variant="outline" className="text-base px-8 py-6">
+											{t("play_game", "Play Game")}
+										</Button>
+									</Link>
+								</motion.div>
+							)}
+						</motion.div>
 
 						{/* Social Proof */}
 						<motion.div
@@ -153,15 +169,15 @@ const Home = () => {
 								className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all bg-[#0088cc] text-white"
 								onClick={() => window.open("https://t.me/+LTqZ-SnyElI0NGFk", "_blank")}
 							>
-								  <svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="20"
-										height="20"
-										fill="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path d="M9.999 15.17 9.88 18.32c.257 0 .368-.11.502-.243l2.406-2.305 4.988 3.63c.914.504 1.566.24 1.807-.85l3.273-15.36.002-.002c.29-1.35-.49-1.88-1.373-1.55L1.64 9.35C.31 9.87.318 10.63 1.41 10.96l5.61 1.75 13.04-8.23c.61-.36 1.17-.16.71.23"/>
-									</svg>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="20"
+									height="20"
+									fill="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path d="M9.999 15.17 9.88 18.32c.257 0 .368-.11.502-.243l2.406-2.305 4.988 3.63c.914.504 1.566.24 1.807-.85l3.273-15.36.002-.002c.29-1.35-.49-1.88-1.373-1.55L1.64 9.35C.31 9.87.318 10.63 1.41 10.96l5.61 1.75 13.04-8.23c.61-.36 1.17-.16.71.23" />
+								</svg>
 								{t("telegram_join_now", "Telegram")}
 							</Button>
 						) : (
@@ -170,15 +186,15 @@ const Home = () => {
 									size="lg"
 									className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all bg-[#0088cc] text-white"
 								>
-									  <svg
-											xmlns="http://www.w3.org/2000/svg"
-											width="20"
-											height="20"
-											fill="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<path d="M9.999 15.17 9.88 18.32c.257 0 .368-.11.502-.243l2.406-2.305 4.988 3.63c.914.504 1.566.24 1.807-.85l3.273-15.36.002-.002c.29-1.35-.49-1.88-1.373-1.55L1.64 9.35C.31 9.87.318 10.63 1.41 10.96l5.61 1.75 13.04-8.23c.61-.36 1.17-.16.71.23"/>
-										</svg>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="20"
+										height="20"
+										fill="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path d="M9.999 15.17 9.88 18.32c.257 0 .368-.11.502-.243l2.406-2.305 4.988 3.63c.914.504 1.566.24 1.807-.85l3.273-15.36.002-.002c.29-1.35-.49-1.88-1.373-1.55L1.64 9.35C.31 9.87.318 10.63 1.41 10.96l5.61 1.75 13.04-8.23c.61-.36 1.17-.16.71.23" />
+									</svg>
 									{t("telegram_join_now", "Join Telegram")}
 								</Button>
 							</Link>
@@ -247,7 +263,7 @@ const Home = () => {
 				</section>
 
 				{/* Final CTA Section */}
-			
+
 				{!user && (
 					<motion.section
 						initial={{ opacity: 0, y: 20 }}
@@ -265,7 +281,7 @@ const Home = () => {
 						</Link>
 					</motion.section>
 				)}
-				
+
 			</main>
 		</>
 	);

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { useAuthContext } from "@/context/AuthContext";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { useMedicalTerms, useFreeMedicalTerms } from "@/hooks/queries/useMedicalTerms";
@@ -36,19 +35,17 @@ function shuffleCopy<T>(arr: T[]): T[] {
 }
 
 const Quiz = () => {
-  const { user } = useAuthContext();
   const { t, i18n } = useTranslation();
 
-  const { data: allMedicalTerms = [], isLoading: wordsLoading } = user
-    ? useMedicalTerms()
-    : useFreeMedicalTerms();
-
+  // FREE DATA ONLY — public visitors
+  const { data: allMedicalTerms = [], isLoading: wordsLoading } = useFreeMedicalTerms();
   const { data: allCategories = [], isLoading: categoriesLoading } = useCategories();
 
   const normalizeLang = (lang: string): Lang => {
     if (lang.startsWith("ru") || lang === "rus") return "rus";
     return "en";
   };
+
   const targetLang = normalizeLang(i18n.language);
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -61,17 +58,20 @@ const Quiz = () => {
 
   const categories = useMemo(() => allCategories, [allCategories]);
 
-  // FIX: Memoize getRandomDistractors to prevent recreation
-  const getRandomDistractors = useCallback((words: Word[], correct: Word, lang: Lang, count: number) => {
-    const filtered = words.filter((w) => w[lang] !== correct[lang]);
-    return shuffleCopy(filtered).slice(0, count);
-  }, []);
+  const getRandomDistractors = useCallback(
+    (words: Word[], correct: Word, lang: Lang, count: number) => {
+      const filtered = words.filter((w) => w[lang] !== correct[lang]);
+      return shuffleCopy(filtered).slice(0, count);
+    },
+    []
+  );
 
-  // Filter and set words
+  // Filter + set words
   useEffect(() => {
     if (!allMedicalTerms.length) return;
 
     let filtered = allMedicalTerms;
+
     if (selectedCategory) {
       filtered = allMedicalTerms.filter((w) => {
         const categoryIds = Array.isArray(w.category_id) ? w.category_id : [w.category_id];
@@ -98,7 +98,6 @@ const Quiz = () => {
 
   const current = useMemo(() => words[currentIndex], [words, currentIndex]);
 
-  // FIX: Set options based on current word, but don't depend on words array
   useEffect(() => {
     if (!current || words.length === 0) {
       setOptions([]);
@@ -107,16 +106,18 @@ const Quiz = () => {
     const distractors = getRandomDistractors(words, current, targetLang, 3);
     const opts = shuffleCopy([current[targetLang], ...distractors.map((w) => w[targetLang])]);
     setOptions(opts);
-  }, [current, targetLang, getRandomDistractors]); // Removed 'words' from dependencies
+  }, [current, targetLang, getRandomDistractors]);
 
   const isDone = currentIndex >= words.length;
 
   const handleSelect = (choice: string) => {
     if (selected || !current) return;
     setSelected(choice);
+
     if (choice === current[targetLang]) {
       setScore((s) => s + 1);
     }
+
     setTimeout(() => {
       setSelected(null);
       setCurrentIndex((i) => i + 1);
@@ -130,6 +131,7 @@ const Quiz = () => {
     setOptions([]);
   };
 
+  // CATEGORY NAME
   const getCategoryLabel = (cat: Category) => {
     if (!cat) return "";
     switch (i18n.language) {
@@ -143,6 +145,7 @@ const Quiz = () => {
     }
   };
 
+  // UPSALE BANNER (unchanged)
   const UpsellBanner = () => (
     <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded relative mb-4 dark:bg-yellow-900/20 dark:border-yellow-700 dark:text-yellow-200">
       <span>{t("Unlock all categories and words!")}</span>
@@ -161,6 +164,7 @@ const Quiz = () => {
           content="Test your knowledge of medical Hebrew with multiple choice questions."
         />
       </Helmet>
+
       <main className="container mx-auto max-w-6xl">
         <section className="container py-8 md:py-12 px-4 max-w-4xl mx-auto">
           {wordsLoading || categoriesLoading ? (
@@ -171,11 +175,9 @@ const Quiz = () => {
               title="Quiz Complete!"
               description={
                 <>
-                  You scored <span className="font-semibold text-foreground">{score}</span> out of{" "}
+                  You scored{" "}
+                  <span className="font-semibold text-foreground">{score}</span> out of{" "}
                   <span className="font-semibold text-foreground">{words.length}</span> correct
-                  <span className="sr-only">
-                    . That's {words.length ? Math.round((score / words.length) * 100) : 0}% accuracy.
-                  </span>
                 </>
               }
               onAction={restartQuiz}
@@ -189,20 +191,25 @@ const Quiz = () => {
                   <label htmlFor="category-select" className="sr-only">
                     {t("select_category")}
                   </label>
+
+                  {/* CATEGORY SELECT: ALWAYS PUBLIC, ALWAYS SHOW LOCKS */}
                   <select
                     id="category-select"
                     value={selectedCategory ?? ""}
                     onChange={(e) => {
                       const val = e.target.value || null;
-                      if (!user && categories.length) {
-                        const bodyOrgansCategory = categories.find(
-                          (cat) => cat.name_en.toLowerCase() === "body organs"
-                        );
-                        if (val && val !== String(bodyOrgansCategory?.id)) {
-                          setShowUpsell(true);
-                          return;
-                        }
+
+                      // Find "Body organs" (free)
+                      const freeCategory = categories.find(
+                        (cat) => cat.name_en.toLowerCase() === "body organs"
+                      );
+
+                      // Anyone selecting locked category → show upsell
+                      if (val && val !== String(freeCategory?.id)) {
+                        setShowUpsell(true);
+                        return;
                       }
+
                       setShowUpsell(false);
                       setSelectedCategory(val);
                     }}
@@ -212,7 +219,7 @@ const Quiz = () => {
                     {categories.map((cat) => (
                       <option key={cat.id} value={String(cat.id)}>
                         {getCategoryLabel(cat)}
-                        {!user && cat.name_en.toLowerCase() !== "body organs" ? " 🔒" : ""}
+                        {cat.name_en.toLowerCase() !== "body organs" ? " 🔒" : ""}
                       </option>
                     ))}
                   </select>
@@ -223,108 +230,78 @@ const Quiz = () => {
                 <div
                   className="bg-card/50 border border-border rounded-lg p-6 md:p-8 mb-6"
                   role="region"
-                  aria-label="Hebrew term to translate"
                 >
-                  <h3
-                    className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary"
-                    dir="rtl"
-                    lang="he"
-                    aria-label={`Hebrew term: ${current.he}`}
-                  >
+                  <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary" dir="rtl">
                     {current.he}
                   </h3>
                 </div>
               </div>
 
-              <div
-                className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 max-w-2xl mx-auto"
-                role="radiogroup"
-                aria-label="Answer options"
-              >
+              {/* OPTIONS */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 max-w-2xl mx-auto">
                 {options.map((opt, index) => {
-                  const isCorrect = current && opt === current[targetLang];
+                  const isCorrect = opt === current[targetLang];
                   const isSelected = opt === selected;
                   const optionLetter = String.fromCharCode(65 + index);
+
                   return (
                     <button
                       key={`${opt}-${index}`}
-                      role="radio"
-                      aria-checked={isSelected}
-                      aria-labelledby={`option-${index}-text`}
-                      className={`
-                        group relative p-4 md:p-5 border-2 rounded-lg transition-all duration-200 text-left min-h-[60px] md:min-h-[80px]
-                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background
-                        ${
-                          selected
-                            ? isCorrect
-                              ? "bg-green-50 border-green-500 text-green-900 dark:bg-green-950 dark:text-green-100"
-                              : isSelected
-                              ? "bg-red-50 border-red-500 text-red-900 dark:bg-red-950 dark:text-red-100"
-                              : "opacity-50 bg-muted border-muted-foreground/20"
-                            : "bg-card border-border hover:bg-accent hover:border-accent-foreground/20 active:scale-[0.98]"
-                        }
-                      `}
+                      className={`group relative p-4 md:p-5 border-2 rounded-lg transition-all duration-200 text-left min-h-[60px] md:min-h-[80px] ${
+                        selected
+                          ? isCorrect
+                            ? "bg-green-50 border-green-500 text-green-900 dark:bg-green-950 dark:text-green-100"
+                            : isSelected
+                            ? "bg-red-50 border-red-500 text-red-900 dark:bg-red-950 dark:text-red-100"
+                            : "opacity-50 bg-muted border-muted-foreground/20"
+                          : "bg-card border-border hover:bg-accent hover:border-accent-foreground/20 active:scale-[0.98]"
+                      }`}
                       onClick={() => handleSelect(opt)}
                       disabled={!!selected}
-                      aria-describedby={
-                        selected && isCorrect
-                          ? "correct-answer"
-                          : selected && isSelected
-                          ? "incorrect-answer"
-                          : undefined
-                      }
                     >
                       <div className="flex items-start gap-3">
                         <span
-                          className={`
-                            flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold
-                            ${
-                              selected && isCorrect
+                          className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold ${
+                            selected
+                              ? isCorrect
                                 ? "bg-green-500 border-green-500 text-white"
-                                : selected && isSelected
+                                : isSelected
                                 ? "bg-red-500 border-red-500 text-white"
-                                : "border-muted-foreground/40 text-muted-foreground group-hover:border-accent-foreground/60 group-hover:text-accent-foreground"
-                            }
-                          `}
-                          aria-hidden="true"
+                                : "border-muted-foreground/40 text-muted-foreground"
+                              : "border-muted-foreground/40 text-muted-foreground group-hover:border-accent-foreground/60 group-hover:text-accent-foreground"
+                          }`}
                         >
-                          {selected && isCorrect ? "✓" : selected && isSelected ? "✗" : optionLetter}
+                          {selected && isCorrect
+                            ? "✓"
+                            : selected && isSelected
+                            ? "✗"
+                            : optionLetter}
                         </span>
-                        <span id={`option-${index}-text`} className="flex-1 break-words leading-relaxed">
-                          {opt}
-                        </span>
+                        <span className="flex-1 break-words leading-relaxed">{opt}</span>
                       </div>
-                      {selected && isCorrect && (
-                        <span id="correct-answer" className="sr-only">
-                          {t("quiz_correct_answer")}
-                        </span>
-                      )}
-                      {selected && isSelected && !isCorrect && (
-                        <span id="incorrect-answer" className="sr-only">
-                          {t("quiz_incorrect_answer")}
-                        </span>
-                      )}
                     </button>
                   );
                 })}
               </div>
 
               <div className="mt-8 text-center">
-                <p className="text-sm text-muted-foreground" aria-live="polite">
-                  {t("quiz_counter")} <span className="font-medium">{currentIndex + 1}</span> {t("of")}{" "}
-                  <span className="font-medium">{words.length}</span>
+                <p className="text-sm text-muted-foreground">
+                  {t("quiz_counter")} <span className="font-medium">{currentIndex + 1}</span>{" "}
+                  {t("of")} <span className="font-medium">{words.length}</span>
                 </p>
               </div>
             </div>
           ) : (
-            <div className="text-center" aria-live="polite">
+            <div className="text-center">
               {words.length === 0 ? (
                 <div className="max-w-md mx-auto">
                   <p className="text-muted-foreground">
                     {t("No words found for this category. Try another one or show all.")}
                   </p>
                   <div className="mt-4">
-                    <Button onClick={() => setSelectedCategory(null)}>{t("Show all categories")}</Button>
+                    <Button onClick={() => setSelectedCategory(null)}>
+                      {t("Show all categories")}
+                    </Button>
                   </div>
                 </div>
               ) : (

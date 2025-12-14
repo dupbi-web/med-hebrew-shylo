@@ -1,250 +1,273 @@
-import { useEffect, useState } from "react";
-import { useMedicalTerms } from "@/hooks/queries/useMedicalTerms";
-import { Button } from "@/components/ui/button";
-import { Helmet } from "react-helmet-async";
-import { Link } from "react-router-dom";
-import { PageContainer, PageHeader } from "@/components/common";
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import promptsData from '../data/soap_prompts.json';
 
-type Word = {
-  en: string;
-  he: string;
-  rus: string;
+type Category = 'S' | 'O' | 'A' | 'P';
+
+interface Prompt {
+  id: string;
+  category: Category;
+  prompt: string;
+  answer: string;
+}
+
+const CATEGORY_LABELS: Record<Category, string> = {
+  S: 'סובייקטיבי',
+  O: 'אובייקטיבי',
+  A: 'הערכה',
+  P: 'תכנית',
 };
 
-type Mode = "EN→HE" | "RU→HE" | "HE→EN" | "HE→RU";
+const allPrompts: Prompt[] = promptsData as Prompt[];
 
-const TypingGame = () => {
-  const { data: allMedicalTerms = [], isLoading } = useMedicalTerms();
-  const [words, setWords] = useState<Word[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [input, setInput] = useState("");
-  const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(60);
-  const [running, setRunning] = useState(false);
-  const [mode, setMode] = useState<Mode>("EN→HE");
-  const [toastMsg, setToastMsg] = useState<{ title: string; description: string; type: "success" | "error" | null } | null>(null);
-  const [showAnswerOnWrong, setShowAnswerOnWrong] = useState(true);
+type Metrics = {
+  correct: number;
+  incorrect: number;
+  total: number;
+  accuracy: number;
+  cpm: number;
+  wpm: number;
+  elapsed: number;
+};
 
-  const current = words[currentIndex];
+const getMetrics = (input: string, answer: string, start: number | null, end: number): Metrics => {
+  const inputChars = Array.from(input);
+  const answerChars = Array.from(answer);
+  let correct = 0;
+  for (let i = 0; i < inputChars.length; i++) {
+    if (inputChars[i] === answerChars[i]) correct++;
+  }
+  const total = inputChars.length;
+  const incorrect = total - correct;
+  const elapsed = start ? (end - start) / 1000 : 0;
+  const minutes = elapsed / 60;
+  const cpm = minutes > 0 ? Math.round(total / minutes) : 0;
+  const wpm = minutes > 0 ? Math.round(total / 5 / minutes) : 0;
+  const accuracy = total === 0 ? 100 : Math.round((correct / total) * 100);
+  return { correct, incorrect, total, accuracy, cpm, wpm, elapsed };
+};
+
+const TypingGame: React.FC<{ prompts: Prompt[]; onBack: () => void }> = ({ prompts, onBack }) => {
+  const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
+  const [userInput, setUserInput] = useState('');
+  const [sessionStart, setSessionStart] = useState<number | null>(null);
+  const [promptStart, setPromptStart] = useState<number | null>(null);
+  const [sessionStats, setSessionStats] = useState<Metrics[]>([]);
+  const [showSummary, setShowSummary] = useState(false);
+  const [metricMode, setMetricMode] = useState<'cpm' | 'wpm'>('cpm');
+  const [forgiving, setForgiving] = useState(false);
+
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const currentPrompt = prompts[currentPromptIndex];
+  const totalPrompts = prompts.length;
+
+  const normalize = (s: string) => s.replace(/[\s.,!?\-–—:;"'()\[\]{}]/g, '');
+
+  const metrics = useMemo(() => {
+    const end = Date.now();
+    const answerText = forgiving ? normalize(currentPrompt?.answer || '') : currentPrompt?.answer || '';
+    const inputText = forgiving ? normalize(userInput) : userInput;
+    return getMetrics(inputText, answerText, promptStart, end);
+  }, [userInput, currentPrompt, promptStart, forgiving]);
+
+  const sessionMetrics = useMemo(() => {
+    const totalCorrect = sessionStats.reduce((a, s) => a + s.correct, 0) + metrics.correct;
+    const totalIncorrect = sessionStats.reduce((a, s) => a + s.incorrect, 0) + metrics.incorrect;
+    const total = totalCorrect + totalIncorrect;
+    const accuracy = total === 0 ? 100 : Math.round((totalCorrect / total) * 100);
+    return { totalCorrect, totalIncorrect, total, accuracy };
+  }, [sessionStats, metrics]);
 
   useEffect(() => {
-    if (running && timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
-      return () => clearTimeout(timer);
+    if (userInput.length === 1 && !promptStart) {
+      const now = Date.now();
+      setPromptStart(now);
+      if (!sessionStart) setSessionStart(now);
     }
-    if (timeLeft === 0) setRunning(false);
-  }, [running, timeLeft]);
+  }, [userInput, promptStart, sessionStart]);
 
   useEffect(() => {
-    if (toastMsg) {
-      const timer = setTimeout(() => setToastMsg(null), 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [toastMsg]);
+    inputRef.current?.focus();
+  }, [currentPromptIndex]);
 
-  const fetchWords = () => {
-    const words = allMedicalTerms.map(w => ({
-      en: w.en,
-      he: w.he,
-      rus: w.rus
-    }));
-    setWords(words.sort(() => Math.random() - 0.5));
-    setCurrentIndex(0);
-    setScore(0);
-    setTimeLeft(60);
-    setRunning(true);
+  useEffect(() => {
+    if (!currentPrompt) return;
+    const end = Date.now();
+    const answerText = forgiving ? normalize(currentPrompt.answer) : currentPrompt.answer;
+    const inputText = forgiving ? normalize(userInput) : userInput;
+    if (inputText === answerText) {
+      const completedMetrics = getMetrics(inputText, answerText, promptStart, end);
+      setSessionStats((prev) => [...prev, completedMetrics]);
+
+      setTimeout(() => {
+        if (currentPromptIndex + 1 < totalPrompts) {
+          setCurrentPromptIndex((prev) => prev + 1);
+          setUserInput('');
+          setPromptStart(null);
+        } else {
+          setShowSummary(true);
+        }
+      }, 600);
+    }
+  }, [userInput, currentPrompt, currentPromptIndex, totalPrompts, forgiving, promptStart]);
+
+  const handleRestart = () => {
+    setCurrentPromptIndex(0);
+    setUserInput('');
+    setSessionStart(null);
+    setPromptStart(null);
+    setSessionStats([]);
+    setShowSummary(false);
+    setMetricMode('cpm');
+    setForgiving(false);
+    inputRef.current?.focus();
   };
 
-  const stopGame = () => setRunning(false);
+  const handleNext = () => {
+    const end = Date.now();
+    const answerText = forgiving ? normalize(currentPrompt.answer) : currentPrompt.answer;
+    const inputText = forgiving ? normalize(userInput) : userInput;
+    const completedMetrics = getMetrics(inputText, answerText, promptStart, end);
+    setSessionStats((prev) => [...prev, completedMetrics]);
 
-  const getPrompt = (word: Word) => {
-    switch (mode) {
-      case "EN→HE": return word.en;
-      case "RU→HE": return word.rus;
-      case "HE→EN": return word.he;
-      case "HE→RU": return word.he;
-    }
-  };
-
-  const getAnswer = (word: Word) => {
-    switch (mode) {
-      case "EN→HE": return word.he;
-      case "RU→HE": return word.he;
-      case "HE→EN": return word.en;
-      case "HE→RU": return word.rus;
-    }
-  };
-
-  const checkAnswer = () => {
-    if (!current) return;
-
-    const correctAnswer = getAnswer(current);
-
-    if (input.trim() === correctAnswer.trim()) {
-      setScore((s) => s + 10);
-      setCurrentIndex((i) => (i + 1) % words.length);
-      setToastMsg({ title: "נכון!", description: "כל הכבוד!", type: "success" });
+    if (currentPromptIndex + 1 < totalPrompts) {
+      setCurrentPromptIndex((prev) => prev + 1);
+      setUserInput('');
+      setPromptStart(null);
     } else {
-      setScore((s) => s - 5);
-      setToastMsg({
-        title: "שגוי",
-        description: showAnswerOnWrong ? `התשובה הנכונה: ${correctAnswer}` : "",
-        type: "error"
-      });
+      setShowSummary(true);
     }
-    setInput("");
   };
 
-  const isRTL = () => mode.includes("HE");
+  const handleRetry = () => {
+    setUserInput('');
+    setPromptStart(null);
+    inputRef.current?.focus();
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    let value = e.target.value;
+    if (currentPrompt) value = Array.from(value).slice(0, Array.from(currentPrompt.answer).length).join('');
+    setUserInput(value);
+  };
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (showSummary && (e.key === 'Enter' || e.key === ' ')) handleRestart();
+      if (!showSummary && e.key === 'Escape') handleRetry();
+      if (!showSummary && e.key === 'Enter' && userInput !== currentPrompt?.answer) handleNext();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [showSummary, userInput, currentPrompt]);
+
+  const progress = Math.round(((currentPromptIndex + 1) / totalPrompts) * 100);
+
+  if (showSummary) {
+    const totalTime = sessionStart ? (Date.now() - sessionStart) / 1000 : 0;
+    const totalMinutes = totalTime / 60;
+    const totalTyped = sessionStats.reduce((a, s) => a + s.total, 0);
+    const cpm = totalMinutes > 0 ? Math.round(totalTyped / totalMinutes) : 0;
+    const wpm = totalMinutes > 0 ? Math.round(totalTyped / 5 / totalMinutes) : 0;
+    const accuracy = sessionMetrics.accuracy;
+
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] rtl font-hebrew">
+        <div className="bg-white shadow-lg rounded-lg p-8 max-w-md w-full text-center">
+          <h2 className="text-2xl font-bold mb-4">סיום תרגול</h2>
+          <div className="mb-4">
+            <div className="text-lg">דיוק: <span className="font-mono text-green-700">{accuracy}%</span></div>
+            <div className="text-lg">{metricMode === 'cpm' ? 'תווים לדקה' : 'מילים לדקה'}: <span className="font-mono text-blue-700">{metricMode === 'cpm' ? cpm : wpm}</span></div>
+            <div className="text-lg">הושלמו {totalPrompts} תרגולים</div>
+          </div>
+          <div className="flex justify-center gap-4">
+            <button className="mt-4 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onClick={handleRestart}>התחל מחדש</button>
+            <button className="mt-4 px-6 py-2 bg-gray-400 text-white rounded hover:bg-gray-500" onClick={onBack}>בחר קטגוריה</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const renderPrompt = () => {
+    const chars = Array.from(currentPrompt.prompt);
+    return (
+      <div className="flex flex-row-reverse flex-wrap gap-1 justify-end font-mono text-xl select-none leading-relaxed tracking-wide">
+        {chars.map((char, i) => {
+          let state = '';
+          const inputChar = Array.from(userInput)[i];
+          if (inputChar === undefined) state = 'text-gray-400';
+          else if (forgiving ? normalize(inputChar) === normalize(char) : inputChar === char) state = 'text-green-600';
+          else state = 'text-red-500 underline';
+          return <span key={i} className={state}>{char}</span>;
+        })}
+      </div>
+    );
+  };
 
   return (
-    <>
-      <Helmet>
-        <title>Typing Game</title>
-      </Helmet>
-
-      <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <PageContainer maxWidth="2xl" padding={false} className="py-8 md:py-12">
-          {!running ? (
-            <div className="text-center">
-              <PageHeader
-                title="Typing Challenge"
-                subtitle="Test your speed and accuracy with medical terminology"
-                className="mb-8"
-              />
-              <div className="bg-card border rounded-2xl p-8 shadow-lg">
-                <div className="mb-6">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <span className="text-2xl">⚡</span>
-                    </div>
-                    <h2 className="text-2xl font-semibold mb-2">Ready to Start?</h2>
-                    <p className="text-muted-foreground">
-                      You'll have 60 seconds to type as many correct translations as possible
-                    </p>
-                  </div>
-                  <Button onClick={fetchWords} size="lg" className="text-lg px-8 py-6">
-                    Start Game
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Score and Timer */}
-                <div className="bg-card border rounded-xl p-4 shadow-sm">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-muted-foreground">Score</span>
-                      <span className="text-2xl font-bold text-primary">{score}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-muted-foreground">Time</span>
-                      <span className={`text-2xl font-bold ${timeLeft <= 10 ? 'text-destructive' : 'text-foreground'}`}>
-                        {timeLeft}s
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mode Selection */}
-                <div className="bg-card border rounded-xl p-4 shadow-sm">
-                  <h3 className="text-sm font-medium text-muted-foreground mb-3">Translation Mode</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {["EN→HE","RU→HE","HE→EN","HE→RU"].map((m) => (
-                      <Button
-                        key={m}
-                        onClick={() => setMode(m as Mode)}
-                        variant={mode === m ? "default" : "outline"}
-                        size="sm"
-                        className="font-mono"
-                      >
-                        {m}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Game Area */}
-                {current && (
-                  <div className="bg-card border rounded-xl p-6 shadow-sm">
-                    <div className="text-center mb-6">
-                      <h3 className="text-sm font-medium text-muted-foreground mb-2">Translate this word:</h3>
-                      <p className="text-3xl md:text-4xl font-bold text-foreground mb-1">
-                        {getPrompt(current)}
-                      </p>
-                    </div>
-
-                    <div className="space-y-4">
-                      <input
-                        dir={isRTL() ? "rtl" : "ltr"}
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && checkAnswer()}
-                        className="w-full h-14 px-4 text-lg border border-input rounded-lg bg-background text-center focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
-                        placeholder={isRTL() ? "הקלד כאן..." : "Type here..."}
-                        autoFocus
-                      />
-
-                      <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                        <Button 
-                          onClick={checkAnswer} 
-                          size="lg" 
-                          className="flex-1 sm:flex-none px-8"
-                          disabled={!input.trim()}
-                        >
-                          Submit Answer
-                        </Button>
-                        <Button 
-                          onClick={stopGame} 
-                          variant="outline" 
-                          size="lg"
-                          className="flex-1 sm:flex-none"
-                        >
-                          End Game
-                        </Button>
-                        {/* Show answer on wrong checkbox */}
-                        <div className="flex items-center gap-2 mb-2">
-                          <input
-                            type="checkbox"
-                            id="showAnswerOnWrong"
-                            checked={showAnswerOnWrong}
-                            onChange={() => setShowAnswerOnWrong((v) => !v)}
-                          />
-                          <label htmlFor="showAnswerOnWrong" className="text-sm text-muted-foreground cursor-pointer">
-                            Show Answer
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </PageContainer>
-        </main>
-
-      {/* Toast Popup - middle bottom */}
-      {toastMsg && (
-        <div
-          className={`fixed z-50 left-1/2 bottom-10 transform -translate-x-1/2 transition-all`}
-          style={{
-            minWidth: "260px",
-            maxWidth: "90vw",
-            background: toastMsg.type === "success" ? "#d1fae5" : "#fee2e2",
-            color: toastMsg.type === "success" ? "#065f46" : "#991b1b",
-            borderRadius: "1rem",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
-            padding: "1rem 1.5rem",
-            textAlign: "center",
-            fontWeight: 500,
-            fontSize: "1.1rem",
-          }}
-        >
-          <div>{toastMsg.title}</div>
-          <div style={{ fontSize: "0.95rem", fontWeight: 400 }}>{toastMsg.description}</div>
+    <div className="max-w-3xl mx-auto p-6 space-y-6 font-hebrew" lang="he">
+      <div className="flex flex-col items-center w-full">
+        <h1 className="text-2xl font-bold mb-2">תרגול הקלדה רפואית</h1>
+        <div className="mt-2 text-sm text-gray-500">{currentPromptIndex + 1} / {totalPrompts}</div>
+        <div className="w-full bg-gray-200 h-2 rounded mt-2">
+          <div className="bg-blue-500 h-2 rounded" style={{ width: `${progress}%` }}></div>
         </div>
-      )}
-    </>
+      </div>
+      <div className="bg-white shadow rounded-lg p-6 mt-4">
+        {renderPrompt()}
+        <textarea
+          ref={inputRef}
+          className="w-full border-2 border-gray-300 rounded px-4 py-3 mt-4 text-lg font-mono focus:outline-none focus:border-blue-500 disabled:bg-gray-100 resize-none"
+          style={{ fontFamily: 'inherit' }}
+          value={userInput}
+          onChange={handleInputChange}
+          placeholder="הקלד כאן..."
+          autoFocus
+          onPaste={(e) => e.preventDefault()}
+          disabled={forgiving ? normalize(userInput) === normalize(currentPrompt.answer) : userInput === currentPrompt.answer}
+          rows={3}
+        />
+        <div className="flex flex-row-reverse gap-2 mt-4">
+          <label className="flex items-center gap-1 cursor-pointer">
+            <input type="checkbox" checked={forgiving} onChange={() => setForgiving(f => !f)} />
+            מצב סלחני (התעלם מרווחים/סימני פיסוק)
+          </label>
+          <button className="px-2 py-1 text-xs bg-gray-100 rounded border ml-2" onClick={() => setMetricMode(m => m === 'cpm' ? 'wpm' : 'cpm')}>
+            {metricMode === 'cpm' ? 'הצג מילים לדקה' : 'הצג תווים לדקה'}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default TypingGame;
+// Main wrapper component to select category
+const TypingGameWrapper: React.FC = () => {
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+
+  if (!selectedCategory) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] rtl font-hebrew">
+        <h1 className="text-2xl font-bold mb-4">בחר קטגוריה לתרגול</h1>
+        <div className="grid grid-cols-2 gap-4">
+          {(['S', 'O', 'A', 'P'] as Category[]).map((cat) => (
+            <button
+              key={cat}
+              className="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700"
+              onClick={() => setSelectedCategory(cat)}
+            >
+              {cat} - {CATEGORY_LABELS[cat]}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const filteredPrompts = allPrompts.filter((p) => p.category === selectedCategory);
+
+  return <TypingGame prompts={filteredPrompts} onBack={() => setSelectedCategory(null)} />;
+};
+
+export default TypingGameWrapper;

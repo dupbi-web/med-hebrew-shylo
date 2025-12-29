@@ -1,0 +1,680 @@
+{
+    "exercises": [
+        {
+            "id": "subj-001",
+            "language": "he",
+            "soapSection": "Subjective",
+            "backStory": {
+                "type": "paragraph",
+                "text": [
+                    "חולה בן 45 מגיע למרפאה עם תלונות על כאבי ראש.",
+                    "הכאבים החלו לפני שלושה ימים והם ממוקמים בצד ימין של הראש.",
+                    "החולה מדווח שהכאבים מחמירים בערב."
+                ]
+            },
+            "task": {
+                "instruction": "כתוב משפט המתאר את התלונה העיקרית של החולה"
+            },
+            "sentence": {
+                "expected": "המטופל מתלונן על כאבי ראש בצד ימין במשך שלושה ימים.",
+                "tokens": [
+                    "המטופל",
+                    "מתלונן",
+                    "על",
+                    "כאבי",
+                    "ראש",
+                    "בצד",
+                    "ימין",
+                    "במשך",
+                    "שלושה",
+                    "ימים",
+                    "."
+                ],
+                "punctuationRequired": true,
+                "exactOrderRequired": true,
+                "exactGrammarRequired": true
+            },
+            "wordBank": {
+                "words": [
+                    "המטופל",
+                    "מתלונן",
+                    "על",
+                    "כאבי",
+                    "ראש",
+                    "בצד",
+                    "ימין",
+                    "במשך",
+                    "שלושה",
+                    "ימים",
+                    "מחמירים",
+                    "בערב"
+                ],
+                "suggestionMode": "autocomplete-only"
+            },
+            "validation": {
+                "allowSpellingErrors": true,
+                "markErrorsOnSubmit": true,
+                "errorTypes": [
+                    "missing_word",
+                    "extra_word",
+                    "wrong_order",
+                    "spelling_error",
+                    "missing_punctuation"
+                ]
+            },
+            "timing": {
+                "enableTimer": true,
+                "startOn": "story_shown"
+            },
+            "difficulty": {
+                "level": "beginner",
+                "note": "Simple complaint documentation"
+            }
+        },
+        {
+            "id": "obj-001",
+            "language": "he",
+            "soapSection": "Objective",
+            "backStory": {
+                "type": "paragraph",
+                "text": [
+                    "במהלך הבדיקה הגופנית נמדדו הסימנים החיוניים.",
+                    "לחץ הדם נמצא 140/90 והדופק 88 פעימות לדקה.",
+                    "הטמפרטורה תקינה."
+                ]
+            },
+            "task": {
+                "instruction": "תעד את לחץ הדם והדופק שנמדדו"
+            },
+            "sentence": {
+                "expected": "לחץ דם 140/90, דופק 88 לדקה.",
+                "tokens": [
+                    "לחץ",
+                    "דם",
+                    "140/90",
+                    ",",
+                    "דופק",
+                    "88",
+                    "לדקה",
+                    "."
+                ],
+                "punctuationRequired": true,
+                "exactOrderRequired": true,
+                "exactGrammarRequired": true
+            },
+            "wordBank": {
+                "words": [
+                    "לחץ",
+                    "דם",
+                    "140/90",
+                    "דופק",
+                    "88",
+                    "לדקה",
+                    "טמפרטורה",
+                    "תקינה",
+                    "פעימות"
+                ],
+                "suggestionMode": "autocomplete-only"
+            },
+            "validation": {
+                "allowSpellingErrors": true,
+                "markErrorsOnSubmit": true,
+                "errorTypes": [
+                    "missing_word",
+                    "extra_word",
+                    "wrong_order",
+                    "spelling_error",
+                    "missing_punctuation"
+                ]
+            },
+            "timing": {
+                "enableTimer": true,
+                "startOn": "story_shown"
+            },
+            "difficulty": {
+                "level": "beginner",
+                "note": "Basic vital signs documentation"
+            }
+        },
+        {
+            "id": "assess-001",
+            "language": "he",
+            "soapSection": "Assessment",
+            "backStory": {
+                "type": "paragraph",
+                "text": [
+                    "לאחר הבדיקה והשיחה עם המטופל, נראה כי מדובר במיגרנה.",
+                    "הסימפטומים תואמים למיגרנה קלאסית.",
+                    "אין סימנים של מצב מסכן חיים."
+                ]
+            },
+            "task": {
+                "instruction": "כתוב את האבחנה הראשונית"
+            },
+            "sentence": {
+                "expected": "חשד למיגרנה ללא סימני אזהרה.",
+                "tokens": [
+                    "חשד",
+                    "למיגרנה",
+                    "ללא",
+                    "סימני",
+                    "אזהרה",
+                    "."
+                ],
+                "punctuationRequired": true,
+                "exactOrderRequired": true,
+                "exactGrammarRequired": true
+            },
+            "wordBank": {
+                "words": [
+                    "חשד",
+                    "למיגרנה",
+                    "ללא",
+                    "סימני",
+                    "אזהרה",
+                    "קלאסית",
+                    "תואמים",
+                    "מסכן",
+                    "חיים"
+                ],
+                "suggestionMode": "autocomplete-only"
+            },
+            "validation": {
+                "allowSpellingErrors": true,
+                "markErrorsOnSubmit": true,
+                "errorTypes": [
+                    "missing_word",
+                    "extra_word",
+                    "wrong_order",
+                    "spelling_error",
+                    "missing_punctuation"
+                ]
+            },
+            "timing": {
+                "enableTimer": true,
+                "startOn": "story_shown"
+            },
+            "difficulty": {
+                "level": "beginner",
+                "note": "Simple assessment statement"
+            }
+        },
+        {
+            "id": "plan-001",
+            "language": "he",
+            "soapSection": "Plan",
+            "backStory": {
+                "type": "paragraph",
+                "text": [
+                    "החולה זקוק לטיפול תרופתי ומעקב.",
+                    "יש לרשום משככי כאבים ולבדוק שוב בעוד שבוע.",
+                    "אם הסימפטומים יחמירו, יש להתייעץ עם נוירולוג."
+                ]
+            },
+            "task": {
+                "instruction": "רשום את התוכנית הטיפולית"
+            },
+            "sentence": {
+                "expected": "נרשמו משככי כאבים ונקבע מעקב בעוד שבוע.",
+                "tokens": [
+                    "נרשמו",
+                    "משככי",
+                    "כאבים",
+                    "ונקבע",
+                    "מעקב",
+                    "בעוד",
+                    "שבוע",
+                    "."
+                ],
+                "punctuationRequired": true,
+                "exactOrderRequired": true,
+                "exactGrammarRequired": true
+            },
+            "wordBank": {
+                "words": [
+                    "נרשמו",
+                    "משככי",
+                    "כאבים",
+                    "ונקבע",
+                    "מעקב",
+                    "בעוד",
+                    "שבוע",
+                    "נוירולוג",
+                    "יחמירו",
+                    "סימפטומים"
+                ],
+                "suggestionMode": "autocomplete-only"
+            },
+            "validation": {
+                "allowSpellingErrors": true,
+                "markErrorsOnSubmit": true,
+                "errorTypes": [
+                    "missing_word",
+                    "extra_word",
+                    "wrong_order",
+                    "spelling_error",
+                    "missing_punctuation"
+                ]
+            },
+            "timing": {
+                "enableTimer": true,
+                "startOn": "story_shown"
+            },
+            "difficulty": {
+                "level": "beginner",
+                "note": "Basic treatment plan"
+            }
+        },
+        {
+            "id": "subj-002",
+            "language": "he",
+            "soapSection": "Subjective",
+            "backStory": {
+                "type": "paragraph",
+                "text": [
+                    "מטופלת בת 62 עם סוכרת מסוג 2 מגיעה לביקורת תקופתית.",
+                    "היא מדווחת על עייפות מוגברת בשבועיים האחרונים.",
+                    "כמו כן, היא מרגישה צמא יותר מהרגיל."
+                ]
+            },
+            "task": {
+                "instruction": "תעד את התלונות הנוכחיות של המטופלת"
+            },
+            "sentence": {
+                "expected": "המטופלת מדווחת על עייפות וצמא מוגבר בשבועיים האחרונים.",
+                "tokens": [
+                    "המטופלת",
+                    "מדווחת",
+                    "על",
+                    "עייפות",
+                    "וצמא",
+                    "מוגבר",
+                    "בשבועיים",
+                    "האחרונים",
+                    "."
+                ],
+                "punctuationRequired": true,
+                "exactOrderRequired": true,
+                "exactGrammarRequired": true
+            },
+            "wordBank": {
+                "words": [
+                    "המטופלת",
+                    "מדווחת",
+                    "על",
+                    "עייפות",
+                    "וצמא",
+                    "מוגבר",
+                    "בשבועיים",
+                    "האחרונים",
+                    "סוכרת",
+                    "תקופתית",
+                    "מרגישה"
+                ],
+                "suggestionMode": "autocomplete-only"
+            },
+            "validation": {
+                "allowSpellingErrors": true,
+                "markErrorsOnSubmit": true,
+                "errorTypes": [
+                    "missing_word",
+                    "extra_word",
+                    "wrong_order",
+                    "spelling_error",
+                    "missing_punctuation"
+                ]
+            },
+            "timing": {
+                "enableTimer": true,
+                "startOn": "story_shown"
+            },
+            "difficulty": {
+                "level": "intermediate",
+                "note": "Multiple symptoms documentation"
+            }
+        },
+        {
+            "id": "obj-002",
+            "language": "he",
+            "soapSection": "Objective",
+            "backStory": {
+                "type": "paragraph",
+                "text": [
+                    "בבדיקת מעבדה נמצאה רמת סוכר בדם גבוהה.",
+                    "התוצאה היא 250 מג/דל לאחר צום של 8 שעות.",
+                    "המשקל עלה ב-3 ק״ג מאז הביקור האחרון."
+                ]
+            },
+            "task": {
+                "instruction": "תעד את תוצאות הסוכר והשינוי במשקל"
+            },
+            "sentence": {
+                "expected": "גלוקוז בצום 250 מג/דל, עלייה במשקל של 3 ק״ג.",
+                "tokens": [
+                    "גלוקוז",
+                    "בצום",
+                    "250",
+                    "מג/דל",
+                    ",",
+                    "עלייה",
+                    "במשקל",
+                    "של",
+                    "3",
+                    "ק״ג",
+                    "."
+                ],
+                "punctuationRequired": true,
+                "exactOrderRequired": true,
+                "exactGrammarRequired": true
+            },
+            "wordBank": {
+                "words": [
+                    "גלוקוז",
+                    "בצום",
+                    "250",
+                    "מג/דל",
+                    "עלייה",
+                    "במשקל",
+                    "של",
+                    "3",
+                    "ק״ג",
+                    "רמת",
+                    "סוכר",
+                    "שעות"
+                ],
+                "suggestionMode": "autocomplete-only"
+            },
+            "validation": {
+                "allowSpellingErrors": true,
+                "markErrorsOnSubmit": true,
+                "errorTypes": [
+                    "missing_word",
+                    "extra_word",
+                    "wrong_order",
+                    "spelling_error",
+                    "missing_punctuation"
+                ]
+            },
+            "timing": {
+                "enableTimer": true,
+                "startOn": "story_shown"
+            },
+            "difficulty": {
+                "level": "intermediate",
+                "note": "Lab values and measurements"
+            }
+        },
+        {
+            "id": "assess-002",
+            "language": "he",
+            "soapSection": "Assessment",
+            "backStory": {
+                "type": "paragraph",
+                "text": [
+                    "על פי התוצאות, נראה שאיזון הסוכרת אינו מספק.",
+                    "הסימפטומים והממצאים מצביעים על היפרגליקמיה.",
+                    "יש צורך בהתאמת הטיפול התרופתי."
+                ]
+            },
+            "task": {
+                "instruction": "רשום את ההערכה המקצועית"
+            },
+            "sentence": {
+                "expected": "סוכרת לא מאוזנת עם היפרגליקמיה סימפטומטית.",
+                "tokens": [
+                    "סוכרת",
+                    "לא",
+                    "מאוזנת",
+                    "עם",
+                    "היפרגליקמיה",
+                    "סימפטומטית",
+                    "."
+                ],
+                "punctuationRequired": true,
+                "exactOrderRequired": true,
+                "exactGrammarRequired": true
+            },
+            "wordBank": {
+                "words": [
+                    "סוכרת",
+                    "לא",
+                    "מאוזנת",
+                    "עם",
+                    "היפרגליקמיה",
+                    "סימפטומטית",
+                    "איזון",
+                    "מספק",
+                    "ממצאים",
+                    "צורך"
+                ],
+                "suggestionMode": "autocomplete-only"
+            },
+            "validation": {
+                "allowSpellingErrors": true,
+                "markErrorsOnSubmit": true,
+                "errorTypes": [
+                    "missing_word",
+                    "extra_word",
+                    "wrong_order",
+                    "spelling_error",
+                    "missing_punctuation"
+                ]
+            },
+            "timing": {
+                "enableTimer": true,
+                "startOn": "story_shown"
+            },
+            "difficulty": {
+                "level": "intermediate",
+                "note": "Medical terminology assessment"
+            }
+        },
+        {
+            "id": "plan-002",
+            "language": "he",
+            "soapSection": "Plan",
+            "backStory": {
+                "type": "paragraph",
+                "text": [
+                    "יש להגדיל את מינון המטפורמין.",
+                    "כמו כן, יש לתת הנחיות תזונתיות ולעקוב אחר רמות הסוכר בבית.",
+                    "נקבע ביקור חוזר בעוד חודש."
+                ]
+            },
+            "task": {
+                "instruction": "כתוב את התוכנית הטיפולית המעודכנת"
+            },
+            "sentence": {
+                "expected": "הגדלת מינון מטפורמין, הנחיות תזונה, ומעקב סוכר בבית.",
+                "tokens": [
+                    "הגדלת",
+                    "מינון",
+                    "מטפורמין",
+                    ",",
+                    "הנחיות",
+                    "תזונה",
+                    ",",
+                    "ומעקב",
+                    "סוכר",
+                    "בבית",
+                    "."
+                ],
+                "punctuationRequired": true,
+                "exactOrderRequired": true,
+                "exactGrammarRequired": true
+            },
+            "wordBank": {
+                "words": [
+                    "הגדלת",
+                    "מינון",
+                    "מטפורמין",
+                    "הנחיות",
+                    "תזונה",
+                    "ומעקב",
+                    "סוכר",
+                    "בבית",
+                    "רמות",
+                    "חודש",
+                    "ביקור"
+                ],
+                "suggestionMode": "autocomplete-only"
+            },
+            "validation": {
+                "allowSpellingErrors": true,
+                "markErrorsOnSubmit": true,
+                "errorTypes": [
+                    "missing_word",
+                    "extra_word",
+                    "wrong_order",
+                    "spelling_error",
+                    "missing_punctuation"
+                ]
+            },
+            "timing": {
+                "enableTimer": true,
+                "startOn": "story_shown"
+            },
+            "difficulty": {
+                "level": "intermediate",
+                "note": "Medication adjustment plan"
+            }
+        },
+        {
+            "id": "subj-003",
+            "language": "he",
+            "soapSection": "Subjective",
+            "backStory": {
+                "type": "paragraph",
+                "text": [
+                    "חולה בן 28 מתלונן על כאבים בבטן התחתונה מאז אמש.",
+                    "הכאב מלווה בחום ובחילות.",
+                    "הוא מדווח גם על אובדן תיאבון."
+                ]
+            },
+            "task": {
+                "instruction": "רשום את התסמינים העיקריים"
+            },
+            "sentence": {
+                "expected": "כאבי בטן תחתונה, חום, בחילות ואובדן תיאבון מאז אמש.",
+                "tokens": [
+                    "כאבי",
+                    "בטן",
+                    "תחתונה",
+                    ",",
+                    "חום",
+                    ",",
+                    "בחילות",
+                    "ואובדן",
+                    "תיאבון",
+                    "מאז",
+                    "אמש",
+                    "."
+                ],
+                "punctuationRequired": true,
+                "exactOrderRequired": true,
+                "exactGrammarRequired": true
+            },
+            "wordBank": {
+                "words": [
+                    "כאבי",
+                    "בטן",
+                    "תחתונה",
+                    "חום",
+                    "בחילות",
+                    "ואובדן",
+                    "תיאבון",
+                    "מאז",
+                    "אמש",
+                    "מתלונן",
+                    "מלווה"
+                ],
+                "suggestionMode": "autocomplete-only"
+            },
+            "validation": {
+                "allowSpellingErrors": true,
+                "markErrorsOnSubmit": true,
+                "errorTypes": [
+                    "missing_word",
+                    "extra_word",
+                    "wrong_order",
+                    "spelling_error",
+                    "missing_punctuation"
+                ]
+            },
+            "timing": {
+                "enableTimer": true,
+                "startOn": "story_shown"
+            },
+            "difficulty": {
+                "level": "advanced",
+                "note": "Multiple symptoms with punctuation"
+            }
+        },
+        {
+            "id": "assess-003",
+            "language": "he",
+            "soapSection": "Assessment",
+            "backStory": {
+                "type": "paragraph",
+                "text": [
+                    "לאור הסימפטומים והממצאים בבדיקה הגופנית, קיים חשד לדלקת.",
+                    "נדרשת בדיקה נוספת לאישור האבחנה.",
+                    "יש לשלול אפנדיציטיס."
+                ]
+            },
+            "task": {
+                "instruction": "כתוב את האבחנה המבדלת"
+            },
+            "sentence": {
+                "expected": "חשד לאפנדיציטיס חריפה, נדרשת הדמייה נוספת.",
+                "tokens": [
+                    "חשד",
+                    "לאפנדיציטיס",
+                    "חריפה",
+                    ",",
+                    "נדרשת",
+                    "הדמייה",
+                    "נוספת",
+                    "."
+                ],
+                "punctuationRequired": true,
+                "exactOrderRequired": true,
+                "exactGrammarRequired": true
+            },
+            "wordBank": {
+                "words": [
+                    "חשד",
+                    "לאפנדיציטיס",
+                    "חריפה",
+                    "נדרשת",
+                    "הדמייה",
+                    "נוספת",
+                    "דלקת",
+                    "בדיקה",
+                    "אבחנה",
+                    "שלול"
+                ],
+                "suggestionMode": "autocomplete-only"
+            },
+            "validation": {
+                "allowSpellingErrors": true,
+                "markErrorsOnSubmit": true,
+                "errorTypes": [
+                    "missing_word",
+                    "extra_word",
+                    "wrong_order",
+                    "spelling_error",
+                    "missing_punctuation"
+                ]
+            },
+            "timing": {
+                "enableTimer": true,
+                "startOn": "story_shown"
+            },
+            "difficulty": {
+                "level": "advanced",
+                "note": "Differential diagnosis with medical terms"
+            }
+        }
+    ]
+}

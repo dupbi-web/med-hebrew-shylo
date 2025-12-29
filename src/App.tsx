@@ -9,82 +9,75 @@ import TypingGame from "./pages/TypingGame";
 import MatchingGame from "./pages/MatchingGame";
 import Learning from "./pages/Learning";
 import NotFound from "./pages/NotFound";
-import Home from "./pages/Home"; // protected home (registered users)
-import PublicHome from "./pages/public/Home";
-import PublicContactUs from "./pages/public/ContactUs";
-import PublicQuiz from "./pages/public/Quiz";
+import Home from "./pages/Home";
+import ContactUs from "./pages/ContactUs";
 import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
-import Dictionary from "@/pages/Dictionary";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
-import PublicAbout from "./pages/public/About";
-import CompleteProfile from "./pages/CompleteProfile";
+import ResetPassword from "./pages/ResetPassword";
+import SOAPGame from "./pages/SOAPGame";
 import { HelmetProvider } from "react-helmet-async";
 import Layout from "@/components/Layout";
 import { AuthProvider } from "@/context/AuthContext";
 import { WordsProvider } from "@/context/WordsContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import About from "./pages/About";
-import ContactUs from "./pages/ContactUs";
+import Dictionary from "@/pages/Dictionary";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            <WordsProvider> {/* ADD THIS - Wrap everything that needs words context */}
-              <Toaster />
-              <Sonner />
+      <AuthProvider>
+        <WordsProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
               <Routes>
-                {/* Public routes */}
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/terms" element={<Terms />} />
-
                 <Route element={<Layout />}>
-                    {/* <Route index element={<Home />} /> */}
-                  <Route path="/public-contact" element={<PublicContactUs />} />
-                  <Route path="/public-about" element={<PublicAbout />} />
-                  <Route path="/public-quiz" element={<PublicQuiz />} />
-                  <Route path="/" element={<PublicHome />} />
-                  <Route path="/complete-profile" element={<CompleteProfile />} />
-                </Route>  
-
-                {/* Protected routes with Layout */}
-                <Route
-                  path="/"
-                  element={
+                  <Route path="/" element={<Home />} />
+                  <Route path="/FlashCards" element={
                     <ProtectedRoute>
-                      <Layout />
+                      <FlashCards />
                     </ProtectedRoute>
-                  }
-                >
-                  <Route  path="home" element={<Home />} />
-                  <Route path="contact" element={<ContactUs />} />
-                  <Route path="about" element={<About />} />
-                  <Route path="typing-game" element={<TypingGame />} />
-                  <Route path="matching-game" element={<MatchingGame />} />
-                  <Route path="learning" element={<Learning />} />
-                  <Route path="dictionary" element={<Dictionary />} />
-                  <Route path="profile" element={<Profile />} />
-                  <Route path="quiz" element={<Quiz />} />
-                  <Route path="flash-cards" element={<FlashCards />} />
-
+                  } />
+                  <Route path="/Quiz" element={<Quiz />} />
+                  <Route path="/TypingGame" element={<TypingGame />} />
+                  <Route path="/SOAPGame" element={<SOAPGame />} />
+                  <Route path="/MatchingGame" element={
+                    <ProtectedRoute>
+                      <MatchingGame />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/Dictionary" element={
+                    <ProtectedRoute>
+                      <Dictionary />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/Learning" element={
+                    <ProtectedRoute>
+                      <Learning />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/profile" element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/ContactUs" element={<ContactUs />} />
+                  <Route path="*" element={<NotFound />} />
                 </Route>
-
-                {/* 404 */}
-                <Route path="*" element={<NotFound />} />
               </Routes>
-            </WordsProvider> {/* CLOSE WordsProvider */}
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+            </BrowserRouter>
+          </TooltipProvider>
+        </WordsProvider>
+      </AuthProvider>
     </QueryClientProvider>
   </HelmetProvider>
 );

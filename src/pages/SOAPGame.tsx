@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { SOAPExercise, ValidationResult, GameState } from "@/types/soapGame";
-import { loadExercises, getRandomExercise } from "@/utils/loadExercises";
+import { SOAPExercise, ValidationResult, GameState, FilterMode, OverallProgress, ExerciseAttempt } from "@/types/soapGame";
+import { loadExercises, getRandomExercise, filterBySection } from "@/utils/loadExercises";
 import { validateSentence } from "@/utils/soapValidation";
+import { loadPreferences, updateFilter } from "@/utils/userPreferences";
+import { loadProgress, recordAttempt } from "@/utils/progressTracker";
 import BackStoryDisplay from "@/components/soap/BackStoryDisplay";
 import TypingInterface from "@/components/soap/TypingInterface";
 import FeedbackDisplay from "@/components/soap/FeedbackDisplay";
 import TimerDisplay from "@/components/soap/TimerDisplay";
+import SectionFilterChips from "@/components/soap/SectionFilterChips";
+import ProgressDashboard from "@/components/soap/ProgressDashboard";
 import { FileText, Play } from "lucide-react";
 
 export default function SOAPGame() {
@@ -18,19 +22,41 @@ export default function SOAPGame() {
     const [startTime, setStartTime] = useState<number | null>(null);
     const [endTime, setEndTime] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedFilter, setSelectedFilter] = useState<FilterMode>("all");
+    const [filteredExercises, setFilteredExercises] = useState<SOAPExercise[]>([]);
+    const [progress, setProgress] = useState<OverallProgress | null>(null);
 
-    // Load exercises on mount
+    // Load exercises and preferences on mount
     useEffect(() => {
         const init = async () => {
             const loadedExercises = await loadExercises();
             setExercises(loadedExercises);
+
+            // Load saved filter preference
+            const preferences = loadPreferences();
+            setSelectedFilter(preferences.selectedFilter);
+
+            // Load progress data
+            const userProgress = loadProgress();
+            setProgress(userProgress);
+
             setIsLoading(false);
         };
         init();
     }, []);
 
+    // Update filtered exercises when filter or exercises change
+    useEffect(() => {
+        if (exercises.length === 0) return;
+
+        const filtered = selectedFilter === "all"
+            ? exercises
+            : filterBySection(exercises, selectedFilter);
+        setFilteredExercises(filtered);
+    }, [exercises, selectedFilter]);
+
     const startNewExercise = () => {
-        const exercise = getRandomExercise(exercises);
+        const exercise = getRandomExercise(filteredExercises);
         if (!exercise) return;
 
         setCurrentExercise(exercise);
@@ -38,6 +64,21 @@ export default function SOAPGame() {
         setValidationResult(null);
         setStartTime(null);
         setEndTime(null);
+    };
+
+    const handleFilterChange = (filter: FilterMode) => {
+        setSelectedFilter(filter);
+        updateFilter(filter);
+    };
+
+    const getExerciseCounts = (): Record<FilterMode, number> => {
+        return {
+            all: exercises.length,
+            Subjective: filterBySection(exercises, "Subjective").length,
+            Objective: filterBySection(exercises, "Objective").length,
+            Assessment: filterBySection(exercises, "Assessment").length,
+            Plan: filterBySection(exercises, "Plan").length,
+        };
     };
 
     const startTyping = () => {
@@ -64,6 +105,22 @@ export default function SOAPGame() {
 
         setValidationResult(result);
         setGameState("feedback");
+
+        // Record attempt for progress tracking
+        const attempt: ExerciseAttempt = {
+            exerciseId: currentExercise.id,
+            soapSection: currentExercise.soapSection,
+            timestamp: end,
+            isCorrect: result.isCorrect,
+            timeTaken: result.timeTaken || 0,
+            errorCount: result.errors.length,
+            errorTypes: result.errors.map(e => e.type),
+        };
+        recordAttempt(attempt);
+
+        // Update progress state
+        const updatedProgress = loadProgress();
+        setProgress(updatedProgress);
     };
 
     const handleContinue = () => {
@@ -130,7 +187,28 @@ export default function SOAPGame() {
                                     </p>
                                 </header>
 
+                                {/* Progress Dashboard */}
+                                {progress && (
+                                    <div className="mb-6">
+                                        <ProgressDashboard
+                                            progress={progress}
+                                            onSectionClick={(section) => {
+                                                handleFilterChange(section);
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
                                 <div className="bg-card border rounded-2xl p-8 shadow-lg">
+                                    {/* Section Filter Chips */}
+                                    <div className="mb-8">
+                                        <SectionFilterChips
+                                            selectedFilter={selectedFilter}
+                                            onFilterChange={handleFilterChange}
+                                            exerciseCounts={getExerciseCounts()}
+                                        />
+                                    </div>
+
                                     <div className="mb-6">
                                         <h2 className="text-2xl font-semibold mb-4">איך זה עובד?</h2>
                                         <div className="space-y-3 text-right" dir="rtl">
@@ -161,13 +239,18 @@ export default function SOAPGame() {
                                         </div>
                                     </div>
 
-                                    <Button onClick={startNewExercise} size="lg" className="text-lg px-8 py-6">
+                                    <Button
+                                        onClick={startNewExercise}
+                                        size="lg"
+                                        className="text-lg px-8 py-6"
+                                        disabled={filteredExercises.length === 0}
+                                    >
                                         <Play className="w-5 h-5 ml-2" />
                                         התחל תרגול
                                     </Button>
 
                                     <p className="text-sm text-muted-foreground mt-4">
-                                        {exercises.length} תרגילים זמינים
+                                        {filteredExercises.length} תרגילים {selectedFilter !== "all" ? `ב-${selectedFilter}` : "זמינים"}
                                     </p>
                                 </div>
                             </div>

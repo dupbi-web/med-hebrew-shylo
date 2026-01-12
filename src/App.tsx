@@ -17,6 +17,8 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import ResetPassword from "./pages/ResetPassword";
 import SOAPGame from "./pages/SOAPGame";
+import SOAPTest from "./pages/SOAPTest";
+import SOAPResults from "./pages/SOAPResults";
 import { HelmetProvider } from "react-helmet-async";
 import Layout from "@/components/Layout";
 import { AuthProvider } from "@/context/AuthContext";
@@ -50,6 +52,16 @@ const App = () => (
                   <Route path="/Quiz" element={<Quiz />} />
                   <Route path="/TypingGame" element={<TypingGame />} />
                   <Route path="/SOAPGame" element={<SOAPGame />} />
+                  <Route path="/soap-test" element={
+                    <ProtectedRoute>
+                      <SOAPTest />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/soap-results" element={
+                    <ProtectedRoute>
+                      <SOAPResults />
+                    </ProtectedRoute>
+                  } />
                   <Route path="/MatchingGame" element={
                     <ProtectedRoute>
                       <MatchingGame />

@@ -11,7 +11,7 @@ import { useAuthContext } from "@/context/AuthContext";
 const features = [
 	{
 	  nameKey: "feature_typing_practice",
-	  path: "#", // coming soon
+	  path: "/typing-game", 
 	  descriptionKey: "feature_typing_practice_desc",
 	  icon: Type,
 	  color: "from-green-400 to-green-200",

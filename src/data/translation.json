@@ -1,0 +1,210 @@
+{
+  "categories": [
+    { "id": "S", "name": "תלונות מטופל", "nameRu": "Жалобы пациента", "icon": "user" },
+    { "id": "O", "name": "בדיקה גופנית", "nameRu": "Физикальный осмотр", "icon": "stethoscope" },
+    { "id": "A", "name": "תוצאות מעבדה", "nameRu": "Лабораторные результаты", "icon": "flask" },
+    { "id": "P", "name": "תוכנית טיפול", "nameRu": "План лечения", "icon": "clipboard" }
+  ],
+  "translations": [
+    {
+      "id": "med-ru-001",
+      "category": "S",
+      "source": {
+        "language": "ru",
+        "sentence": "У пациента болит голова и поднялась температура"
+      },
+      "target": {
+        "language": "he",
+        "sentence": "למטופל כואב הראש והחום עלה"
+      },
+      "words": [
+        { "source": "У", "target": "ל/אצל" },
+        { "source": "пациента", "target": "מטופל" },
+        { "source": "болит", "target": "כואב" },
+        { "source": "голова", "target": "ראש" },
+        { "source": "и", "target": "ו" },
+        { "source": "поднялась", "target": "עלה/עלתה" },
+        { "source": "температура", "target": "חום" }
+      ]
+    },
+    {
+      "id": "med-ru-002",
+      "category": "S",
+      "source": {
+        "language": "ru",
+        "sentence": "Больной жалуется на сильную боль в груди"
+      },
+      "target": {
+        "language": "he",
+        "sentence": "החולה מתלונן על כאב חזק בחזה"
+      },
+      "words": [
+        { "source": "Больной", "target": "חולה" },
+        { "source": "жалуется", "target": "מתלונן" },
+        { "source": "на", "target": "על" },
+        { "source": "сильную", "target": "חזק" },
+        { "source": "боль", "target": "כאב" },
+        { "source": "в", "target": "ב" },
+        { "source": "груди", "target": "חזה" }
+      ]
+    },
+    {
+      "id": "med-ru-003",
+      "category": "S",
+      "source": {
+        "language": "ru",
+        "sentence": "Тошнота и рвота продолжаются три дня"
+      },
+      "target": {
+        "language": "he",
+        "sentence": "בחילה והקאות נמשכות שלושה ימים"
+      },
+      "words": [
+        { "source": "Тошнота", "target": "בחילה" },
+        { "source": "и", "target": "ו" },
+        { "source": "рвота", "target": "הקאות" },
+        { "source": "продолжаются", "target": "נמשכות" },
+        { "source": "три", "target": "שלושה" },
+        { "source": "дня", "target": "ימים" }
+      ]
+    },
+    {
+      "id": "med-ru-004",
+      "category": "O",
+      "source": {
+        "language": "ru",
+        "sentence": "Артериальное давление 120/80, пульс 72 удара в минуту"
+      },
+      "target": {
+        "language": "he",
+        "sentence": "לחץ דם 120/80, דופק 72 פעימות בדקה"
+      },
+      "words": [
+        { "source": "Артериальное", "target": "עורקי" },
+        { "source": "давление", "target": "לחץ" },
+        { "source": "пульс", "target": "דופק" },
+        { "source": "удара", "target": "פעימות" },
+        { "source": "в", "target": "ב" },
+        { "source": "минуту", "target": "דקה" }
+      ]
+    },
+    {
+      "id": "med-ru-005",
+      "category": "O",
+      "source": {
+        "language": "ru",
+        "sentence": "При пальпации живот мягкий, безболезненный"
+      },
+      "target": {
+        "language": "he",
+        "sentence": "במישוש הבטן רכה, ללא כאב"
+      },
+      "words": [
+        { "source": "При", "target": "ב/בזמן" },
+        { "source": "пальпации", "target": "מישוש" },
+        { "source": "живот", "target": "בטן" },
+        { "source": "мягкий", "target": "רכה" },
+        { "source": "безболезненный", "target": "ללא כאב" }
+      ]
+    },
+    {
+      "id": "med-ru-006",
+      "category": "A",
+      "source": {
+        "language": "ru",
+        "sentence": "Анализ крови показывает повышенный уровень сахара"
+      },
+      "target": {
+        "language": "he",
+        "sentence": "בדיקת דם מראה רמת סוכר מוגברת"
+      },
+      "words": [
+        { "source": "Анализ", "target": "בדיקה" },
+        { "source": "крови", "target": "דם" },
+        { "source": "показывает", "target": "מראה" },
+        { "source": "повышенный", "target": "מוגבר" },
+        { "source": "уровень", "target": "רמה" },
+        { "source": "сахара", "target": "סוכר" }
+      ]
+    },
+    {
+      "id": "med-ru-007",
+      "category": "A",
+      "source": {
+        "language": "ru",
+        "sentence": "Гемоглобин в норме, лейкоциты повышены"
+      },
+      "target": {
+        "language": "he",
+        "sentence": "המוגלובין תקין, תאי דם לבנים מוגברים"
+      },
+      "words": [
+        { "source": "Гемоглобин", "target": "המוגלובין" },
+        { "source": "в", "target": "ב" },
+        { "source": "норме", "target": "נורמה/תקין" },
+        { "source": "лейкоциты", "target": "תאי דם לבנים" },
+        { "source": "повышены", "target": "מוגברים" }
+      ]
+    },
+    {
+      "id": "med-ru-008",
+      "category": "P",
+      "source": {
+        "language": "ru",
+        "sentence": "Назначить антибиотики курсом на семь дней"
+      },
+      "target": {
+        "language": "he",
+        "sentence": "לרשום אנטיביוטיקה לקורס של שבעה ימים"
+      },
+      "words": [
+        { "source": "Назначить", "target": "לרשום" },
+        { "source": "антибиотики", "target": "אנטיביוטיקה" },
+        { "source": "курсом", "target": "קורס" },
+        { "source": "на", "target": "ל" },
+        { "source": "семь", "target": "שבעה" },
+        { "source": "дней", "target": "ימים" }
+      ]
+    },
+    {
+      "id": "med-ru-009",
+      "category": "P",
+      "source": {
+        "language": "ru",
+        "sentence": "Рекомендовано повторное обследование через неделю"
+      },
+      "target": {
+        "language": "he",
+        "sentence": "מומלץ לחזור לבדיקה עוד שבוע"
+      },
+      "words": [
+        { "source": "Рекомендовано", "target": "מומלץ" },
+        { "source": "повторное", "target": "חוזר" },
+        { "source": "обследование", "target": "בדיקה" },
+        { "source": "через", "target": "עוד/בעוד" },
+        { "source": "неделю", "target": "שבוע" }
+      ]
+    },
+    {
+      "id": "med-ru-010",
+      "category": "S",
+      "source": {
+        "language": "ru",
+        "sentence": "Пациент не спал три ночи из-за кашля"
+      },
+      "target": {
+        "language": "he",
+        "sentence": "המטופל לא ישן שלושה לילות בגלל שיעול"
+      },
+      "words": [
+        { "source": "Пациент", "target": "מטופל" },
+        { "source": "не", "target": "לא" },
+        { "source": "спал", "target": "ישן" },
+        { "source": "три", "target": "שלושה" },
+        { "source": "ночи", "target": "לילות" },
+        { "source": "из-за", "target": "בגלל" },
+        { "source": "кашля", "target": "שיעול" }
+      ]
+    }
+  ]
+}

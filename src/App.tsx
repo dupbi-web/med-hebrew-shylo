@@ -28,6 +28,7 @@ import { WordsProvider } from "@/context/WordsContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import About from "./pages/About";
 import ContactUs from "./pages/ContactUs";
+import Statistics from "./pages/Statistics";
 
 const queryClient = new QueryClient();
 
@@ -54,7 +55,8 @@ const App = () => (
                   <Route path="/public-quiz" element={<PublicQuiz />} />
                   <Route path="/" element={<PublicHome />} />
                   <Route path="/complete-profile" element={<CompleteProfile />} />
-                                    <Route path="/typing-game" element={<TypingGame />} />
+                  <Route path="/typing-game" element={<TypingGame />} />
+                  <Route path="/statistics" element={<Statistics />} />
 
                 </Route>  
 
@@ -67,6 +69,8 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 >
+                    <Route path="typing-game" element={<TypingGame />} />
+
                   <Route  path="home" element={<Home />} />
                   <Route path="contact" element={<ContactUs />} />
                   <Route path="about" element={<About />} />
